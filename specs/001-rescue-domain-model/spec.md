@@ -377,7 +377,7 @@ operational market state is not mutated.
 | MobilisationDecision | `decision_id`, `recorded_at`, `remaining_demand` | One mission and policy revision; owns offer evaluations |
 | OfferEvaluation | `evaluation_id`, `rank`, `proposed_seats`, `selected`, `reason` | One decision and one immutable offer revision |
 | CommunicationMessage | `message_id`, `correlation_id`, `kind`, `payload`, `sent_at` | One request; has one or more delivery records, including lost attempts |
-| MessageDelivery | `delivery_id`, `attempt_number`, optional `received_at`, `disposition`, `reason` | One logical message; duplicate deliveries retain the same message identity |
+| MessageDelivery | `delivery_id`, `attempt_number`, optional `received_at`, `disposition`, `reason`, optional `communication_rtt_seconds` | One logical message; duplicate deliveries retain the same message identity; a received response may report outbound-plus-return RTT |
 | RescueScenario | `scenario_id`, `revision`, `name`, `baseline`, `response_rules`, `availability_changes`, `time_horizon_seconds`, `seed` | Owns communication profiles and baseline data; used by runs |
 | CommunicationProfile | `profile_id`, `outbound_delay_seconds`, `decision_delay_seconds`, `return_delay_seconds`, `loss_rule`, `duplication_rule`, `reordering_rule` | One scenario; applies to one baseline ship |
 | SimulationRun | `run_id`, `started_at`, `finished_at`, `status` | One scenario revision and policy revision; owns isolated mission and B3Market availability/hold state and result; does not mutate operational market state |
@@ -440,7 +440,9 @@ zero and cannot apply after any response has closed the request.
 - Applied history explains state changes; delivery records explain ignored messages. This does
   not require event sourcing or reconstructing state from history.
 - All simulated timing shares one timeline. Equal-time expiration precedes response delivery;
-  other ties use stable scenario event order. Message identity never changes across duplication.
+  other ties use stable scenario event order. A response ordinal named by `reordering_rule` is
+  processed after unmarked response deliveries at the same instant. A response ordinal cannot be
+  both lost and duplicated or reordered. Message identity never changes across duplication.
 - Communication RTT is the simulated outbound plus return transport delay. Response elapsed
   time includes ship decision delay. Real one-way network latency is not inferred from timestamps.
 - Scenario responses are scripted by ship and request ordinal, with accepted quantities capped

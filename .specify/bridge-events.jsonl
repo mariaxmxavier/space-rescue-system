@@ -12,3 +12,21 @@
 
 {"timestamp":"2026-11-16T11:56:29.8579073Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
 
+{"timestamp":"2026-11-16T14:19:04.6385335Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.plan"}
+
+{"timestamp":"2026-11-16T14:20:05.9610349Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:writing-plans"}
+
+{"timestamp":"2026-11-16T14:31:23.1989381Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
+
+{"timestamp":"2026-11-16T14:34:39.6571872Z","action":"handoff","status":"ready","feature_directory":"specs/001-rescue-domain-model","decision":"updated","reason":"","actor":"codex","prior_actor":"","snapshot_id":"20261116T1434395911654Z-ready"}
+
+{"timestamp":"2026-11-16T14:51:18.0941964Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
+
+{"timestamp":"2026-11-16T14:55:22.5072356Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
+
+{"timestamp":"2026-11-16T16:24:32.2377303Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
+
+{"timestamp":"2026-11-16T17:14:20.3486056Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
+
+{"timestamp":"2026-11-16T17:15:13.7818099Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
+
