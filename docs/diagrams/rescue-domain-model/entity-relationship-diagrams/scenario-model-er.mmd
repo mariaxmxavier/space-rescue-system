@@ -1,0 +1,126 @@
+---
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+erDiagram
+    direction TB
+    %% Logical ER view; dashed lines do not imply UML dependency or lifecycle ownership.
+    %% Experiments
+    RescueScenario {
+        string scenario_id PK
+        integer revision
+        string name
+        data baseline
+        data response_rules
+        data availability_changes
+        number time_horizon_seconds
+        integer seed
+    }
+    CommunicationProfile {
+        string profile_id PK
+        number outbound_delay_seconds
+        number decision_delay_seconds
+        number return_delay_seconds
+        data loss_rule
+        data duplication_rule
+        data reordering_rule
+    }
+    SimulationRun {
+        string run_id PK
+        datetime started_at
+        datetime finished_at
+        string status
+    }
+    SimulationResult {
+        boolean completed
+        integer confirmed_seats
+        integer unmet_demand
+        integer requests_sent
+        integer released_seats
+        number confirmation_elapsed_seconds "optional"
+        number latest_arrival_estimate_seconds "optional"
+    }
+    %% Communication
+    CommunicationMessage {
+        string message_id PK
+        string correlation_id
+        string kind
+        data payload
+        datetime sent_at
+    }
+    MessageDelivery {
+        string delivery_id PK
+        integer attempt_number
+        datetime received_at "optional"
+        string disposition
+        string reason
+    }
+    %% CoreReferences
+    RescueMission {
+        string mission_id PK
+        string station_name
+        integer people_count
+        datetime created_at
+    }
+    Ship {
+        string ship_id PK
+        string name
+    }
+    SeatRequest {
+        string request_id PK
+        string command_id
+        integer requested_seats
+        integer confirmed_seats
+        string outcome
+        datetime submitted_at
+        datetime response_received_at "optional"
+        datetime response_deadline "optional"
+        datetime closed_at "optional"
+    }
+    RequestHistoryEntry {
+        string event_id PK
+        integer mission_sequence
+        datetime recorded_at
+        string action
+        integer confirmed_seats_delta
+        integer pending_seats_delta
+        string reason
+    }
+    MobilisationPolicy {
+        string policy_id PK
+        integer revision
+        string name
+        data selection_criteria
+    }
+    RescueScenario ||..o{ CommunicationProfile : "configures"
+    CommunicationProfile }o..|| Ship : "targets baseline ship"
+    SimulationRun }o..|| RescueScenario : "uses revision"
+    SimulationRun }o..|| MobilisationPolicy : "compares revision"
+    SimulationRun ||..|| RescueMission : "owns isolated copy"
+    SimulationRun ||..o| SimulationResult : "produces at finish"
+    RescueMission ||..o{ SeatRequest : "owns"
+    SeatRequest ||..o{ CommunicationMessage : "correlates"
+    CommunicationMessage ||..|{ MessageDelivery : "tracks attempts"
+    RequestHistoryEntry }o..o| CommunicationMessage : "triggered by"

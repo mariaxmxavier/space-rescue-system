@@ -1,0 +1,126 @@
+---
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+    hideEmptyMembersBox: true
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+classDiagram
+    direction LR
+    %% Full conceptual attributes; namespace boxes are visual groups only.
+    namespace MissionOperations {
+        class RescueCentral {
+            registerMission(mission)
+            mobilise(mission)
+            recordResponse(request, response)
+            cancelRequest(request)
+            expireRequest(request)
+            getProgress(mission)
+        }
+        class RescueMission {
+            string mission_id
+            string station_name
+            integer people_count
+            datetime created_at
+        }
+        class SeatRequest {
+            string request_id
+            string command_id
+            integer requested_seats
+            integer confirmed_seats
+            string outcome
+            datetime submitted_at
+            datetime response_received_at
+            datetime response_deadline
+            datetime closed_at
+        }
+        class RequestHistoryEntry {
+            string event_id
+            integer mission_sequence
+            datetime recorded_at
+            string action
+            integer confirmed_seats_delta
+            integer pending_seats_delta
+            string reason
+        }
+        class MissionProgress {
+            integer demand
+            integer confirmed
+            integer pending
+            integer unconfirmed
+            integer additional_needed
+            string status
+        }
+    }
+    namespace ShipsAndOffers {
+        class Ship {
+            string ship_id
+            string name
+        }
+        class ShipOffer {
+            string offer_id
+            string mission_id
+            string ship_id
+        }
+        class ShipOfferRevision {
+            string revision_id
+            integer revision_number
+            integer capacity
+            number arrival_estimate_seconds
+            boolean available
+            datetime recorded_at
+        }
+    }
+    namespace Mobilisation {
+        class MobilisationPolicy {
+            string policy_id
+            integer revision
+            string name
+            data selection_criteria
+        }
+        class MobilisationDecision {
+            string decision_id
+            datetime recorded_at
+            integer remaining_demand
+        }
+        class OfferEvaluation {
+            string evaluation_id
+            integer rank
+            integer proposed_seats
+            boolean selected
+            string reason
+        }
+    }
+    RescueCentral "1" --> "0..*" RescueMission : coordinates
+    RescueMission "1" *-- "0..*" SeatRequest : owns
+    RescueMission "1" --> "0..*" ShipOffer : receives
+    Ship "1" --> "0..*" ShipOffer : supplies
+    ShipOffer "1" *-- "1..*" ShipOfferRevision : versions
+    SeatRequest "0..*" --> "1" ShipOfferRevision : preserves basis
+    SeatRequest "1" *-- "1..*" RequestHistoryEntry : records changes
+    RescueMission "1" --> "1" MissionProgress : derives
+    RescueMission "1" --> "0..*" MobilisationDecision : records
+    MobilisationDecision "0..*" --> "1" MobilisationPolicy : applies revision
+    MobilisationDecision "1" *-- "0..*" OfferEvaluation : explains candidates
+    OfferEvaluation "0..*" --> "1" ShipOfferRevision : assesses
+    SeatRequest "0..*" --> "0..1" MobilisationDecision : originates from

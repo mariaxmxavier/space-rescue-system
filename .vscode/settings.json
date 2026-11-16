@@ -1,0 +1,7 @@
+{
+    "mermaidPreviewOffline.diagramTheme": "adaptive",
+    "mermaidPreviewOffline.canvas.background": "paper",
+    "mermaidPreviewOffline.canvas.customColor": "#ffffff",
+    "mermaidPreviewOffline.canvas.pattern": "dots",
+    "mermaidPreviewOffline.diagramDensity": "spacious"
+}
