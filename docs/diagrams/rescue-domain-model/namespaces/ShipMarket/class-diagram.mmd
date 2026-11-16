@@ -1,0 +1,84 @@
+---
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+    hideEmptyMembersBox: true
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+classDiagram
+    direction LR
+    %% Authoritative scoped view of ShipMarket; see the diagram index for boundary relationships.
+    class B3Market {
+        -string market_id
+    }
+    class Ship {
+        -string ship_id
+        -string name
+    }
+    class ShipAvailability {
+        -string availability_id
+        -integer total_seats
+        -number arrival_estimate_seconds
+        -boolean available
+        -datetime recorded_at
+    }
+    class ShipOffer {
+        -string offer_id
+        -string mission_id
+        -string ship_id
+    }
+    class ShipOfferRevision {
+        -string revision_id
+        -integer revision_number
+        -integer capacity
+        -number arrival_estimate_seconds
+        -boolean available
+        -datetime recorded_at
+    }
+    class SeatRFQ {
+        -string rfq_id
+        -string mission_id
+        -string ship_id
+        -string availability_id
+        -integer requested_seats
+        -string status
+        -datetime sent_at
+        -datetime response_deadline
+    }
+    class RFQOffer {
+        -string offer_id
+        -integer offered_seats
+        -number arrival_estimate_seconds
+        -datetime expires_at
+        -datetime recorded_at
+        -string status
+    }
+    B3Market "1" --> "0..*" ShipAvailability : tracks changing capacity
+    Ship "1" --> "0..*" ShipAvailability : reports availability
+    B3Market "1" --> "0..*" SeatRFQ : sends one per available ship
+    ShipAvailability "1" --> "0..*" SeatRFQ : snapshot referenced by
+    Ship "1" --> "0..*" SeatRFQ : addressed ship
+    SeatRFQ "1" *-- "0..1" RFQOffer : receives at most one response
+    Ship "1" --> "0..*" ShipOffer : supplies
+    ShipOffer "1" *-- "1..*" ShipOfferRevision : versions
+    note for B3Market "External interactions: MissionOperations issues RFQs and owns requests; this space supplies market availability and offers."

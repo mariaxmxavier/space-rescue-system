@@ -1,0 +1,67 @@
+---
+title: Mission operations + ShipMarket (ER logical groups; Mission owns request state)
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+erDiagram
+    direction TB
+    %% Scoped logical ER view of Experiments. Cross-space relationships: Communication profiles target baseline ShipMarket ships; each run uses MissionOperations, ShipMarket and Mobilisation copies.
+    RescueScenario {
+        string scenario_id PK
+        integer revision
+        string name
+        data baseline
+        data response_rules
+        data availability_changes
+        number time_horizon_seconds
+        integer seed
+    }
+    CommunicationProfile {
+        string profile_id PK
+        number outbound_delay_seconds
+        number decision_delay_seconds
+        number return_delay_seconds
+        data loss_rule
+        data duplication_rule
+        data reordering_rule
+    }
+    SimulationRun {
+        string run_id PK
+        datetime started_at
+        datetime finished_at
+        string status
+    }
+    SimulationResult {
+        boolean completed
+        integer confirmed_seats
+        integer unmet_demand
+        integer requests_sent
+        integer released_seats
+        number confirmation_elapsed_seconds "optional"
+        number latest_arrival_estimate_seconds "optional"
+    }
+    RescueScenario ||..o{ CommunicationProfile : "configures"
+    SimulationRun }o..|| RescueScenario : "uses revision"
+    SimulationRun ||..o| SimulationResult : "produces at finish"
