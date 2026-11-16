@@ -28,21 +28,27 @@ and [scenario ER source](../../docs/diagrams/rescue-domain-model/entity-relation
   attributes, and cardinalities; UML for class structure and, when agreed, behaviour,
   visibility, composition, and inheritance.
 - Q: Should the rescue central be a separate orchestrator from a rescue mission? → A: Yes.
-  The central receives and registers missions, coordinates mobilisation and request outcomes,
-  handles cancellation and expiration, and provides progress; RescueMission remains a separate
-  concept with its existing state and rules.
+  RescueCentral receives and registers missions, coordinates mobilisation and request outcomes,
+  handles cancellation and expiration, and provides progress. RescueMission remains separate and
+  owns its requests, their state transitions, and mission invariants.
+  RescueCentral coordinates mission operations and delegates request changes to the mission.
+- Q: Which concept owns request state transitions and mission invariants? → A: RescueMission.
+- Q: Should the central’s mission registry and mission history survive application restarts?
+  → A: No. The registry, its missions, and their history live for one application run and reset
+  when a new run starts. The central is used through callable API-style operations, with transport
+  unspecified.
 
 The [diagram index and legends](../../docs/diagrams/rescue-domain-model/README.md) link both
 views of mission operations and scenario experiments. ER and UML views MUST preserve the same
 data concepts, attributes, relationships, and cardinalities. UML also shows the agreed
-RescueCentral application orchestrator, which has no persistent identity and is omitted from ER.
-It receives and registers missions, coordinates mobilisation and request outcomes, handles
-cancellation and expiration, and provides progress. RescueMission remains separate, with its
-existing data and rules; this clarification does not decide which concept enforces those rules.
+RescueCentral application orchestrator, which has an identity scoped to one application run and is
+represented in the operational ER view. It receives and registers missions, coordinates
+mobilisation and request outcomes, handles cancellation and expiration, and provides progress. It
+delegates request state changes to RescueMission, which owns requests, their state transitions, and
+mission invariants.
 Relationship roles describe domain participation; they do not introduce access-control roles.
-Other methods, visibility, and
-inheritance remain undecided until each concept is reviewed. No superclass or permission model
-is implied by the access-control example.
+Specific method signatures, visibility, and inheritance remain undecided until each concept is
+reviewed. No superclass or permission model is implied by the access-control example.
 
 Rendering MUST use ELK hierarchical layout with orthogonal connections, consistent spacing,
 and visual grouping. Rendered views MUST be inspected for overlapping nodes, labels, and
@@ -80,6 +86,14 @@ without automatic selection or communication simulation.
 8. **Given** an operator submits a mission to RescueCentral, **When** the mission is registered,
    **Then** the central can coordinate mobilisation, request responses, cancellation or expiration,
    and provide progress while the mission remains a separate concept.
+9. **Given** a registered mission has a pending request, **When** RescueCentral coordinates a
+   response, cancellation, or expiration, **Then** RescueMission validates and owns the resulting
+   request transition and mission invariants, and the central provides the resulting progress.
+10. **Given** a mission is registered during an application run, **When** the central is called
+    again to coordinate it or provide progress, **Then** its registry entry, request state, and
+    applied mission history remain available and consistent between calls.
+11. **Given** an application run has ended, **When** a new run starts, **Then** its central has a
+    new run-scoped identity and an empty mission registry and history.
 
 ### User Story 2 - Explain decisions and changing offers (Priority: P2)
 
@@ -216,22 +230,28 @@ delivery to observe how rescue commitments survive communication failures.
 - **FR-016**: Keep scenario execution isolated from operational missions and stop runs at their
   horizon even when messages remain pending. See Stories 4 and 5.
 - **FR-017**: Provide a separate rescue central that receives and registers missions, coordinates
-  mobilisation and request outcomes, handles cancellation and expiration, and provides mission
-  progress. The mission remains a separate concept with its existing data and rules; this does not
-  assign responsibility for enforcing them. See Story 1.
+  mobilisation and request outcomes, delegates request changes to RescueMission, handles
+  cancellation and expiration, and provides mission progress. RescueMission owns its requests,
+  their state transitions, and mission invariants. See Story 1.
+- **FR-018**: Keep the central's identity, mission registry, registered mission state, and
+  associated mission history in memory for one application run. Callable API-style operations
+  must preserve that state between calls; starting a new application run starts with an empty
+  registry and history. See Story 1.
 
 ### Key Entities *(include if feature involves data)*
 
 These are conceptual classes, not prescribed Python implementations. IDs identify data concepts;
 linked objects need not duplicate relationship fields. Optional fields are explicitly marked.
-RescueCentral is an application service, not a data entity, and has no persistent ID or ER box.
+RescueCentral is a run-scoped application entity: its `central_id` is unique within its
+`application_run_id`. Its in-memory registry relates it to zero or more registered missions; the
+existing mission request history remains available through those missions for the run.
 Mission operations and scenario experiments are two views of this single feature: the latter
 uses isolated copies of the former, rather than introducing a second set of rescue rules.
 
 | Concept | Meaning and fields | Relationships |
 | --- | --- | --- |
-| RescueCentral | Application orchestrator; no persistent fields | Receives and registers missions; coordinates mobilisation, request responses, cancellation, expiration, and progress for zero or more missions |
-| RescueMission | `mission_id`, `station_name`, `people_count`, `created_at` | Owns requests and applied history; has calculated progress |
+| RescueCentral | `central_id`, `application_run_id`; both identify the central within one run | Registers zero or more missions and retains their in-memory state and existing request history for that run; coordinates mobilisation and outcomes, delegating request changes to RescueMission |
+| RescueMission | `mission_id`, `station_name`, `people_count`, `created_at` | Owns requests, their state transitions, mission invariants, and applied history; has calculated progress |
 | Ship | `ship_id`, `name` | Has mission-specific offers; global fleet allocation is excluded |
 | ShipOffer | `offer_id`, `mission_id`, `ship_id` | One logical offer per ship and mission; has one or more revisions |
 | ShipOfferRevision | `revision_id`, `revision_number`, `capacity`, `arrival_estimate_seconds`, `available`, `recorded_at` | Immutable revision of one offer; referenced by requests and evaluations |
@@ -272,6 +292,9 @@ zero and cannot apply after any response has closed the request.
 - **SC-005**: The 2 + 5 + 3 second communication example reports a 10-second response elapsed
   time and 5-second communication RTT; responses at or after expiration confirm zero new seats.
 - **SC-006**: Running all comparison scenarios leaves the operational mission and history unchanged.
+- **SC-007**: Across repeated callable operations within one application run, registered missions and
+  their applied request history remain available and consistent; after a new run starts, the
+  central registry and history are empty.
 
 ## Assumptions
 
@@ -307,5 +330,9 @@ zero and cannot apply after any response has closed the request.
 - Simulation run states are `running`, `completed`, and `horizon_reached`. At the horizon,
   process events scheduled at that instant before stopping; deadline precedence still applies.
 - No live market feed, trading integration, HTTP service, real timers, or fleet allocation across
-  missions is required. Python class structure, persistence, and concurrency mechanisms belong
-  in the subsequent plan. Research analogies introduce no runtime dependency.
+  missions is required. Central operations are callable API-style operations; the transport is
+  unspecified and no HTTP or web server is implied. Central identity, registry, registered mission
+  state, and associated request history exist in memory for one application run and reset at the
+  start of a new run. This does not add a separate audit log of every central command. Python class
+  structure and concurrency mechanisms belong in the subsequent plan. Research analogies introduce
+  no runtime dependency.

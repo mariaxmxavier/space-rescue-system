@@ -17,11 +17,15 @@ All six extensions are included. Concepts and proposed assumptions remain open f
 
 [UML Mermaid source](class-diagrams/domain-model.mmd)
 
-`RescueCentral` is a separate application orchestrator. It registers missions, coordinates
-mobilisation and request outcomes, handles cancellation and expiration, and provides progress.
-Its UML association shows one central coordinating zero or more missions. It has no persistent
-identity or ER box. `RescueMission` remains the distinct mission concept; its internal enforcement
-responsibility for state and rules remains open.
+`RescueCentral` is a separate, run-scoped application orchestrator. Its in-memory identity,
+mission registry, registered mission state, and associated request history last for one
+application run and reset when a new run starts. It is used through callable API-style operations;
+the transport is unspecified. It registers missions, coordinates mobilisation and request
+outcomes, handles cancellation and expiration, and provides progress. Its UML association shows
+one central coordinating zero or more missions, and its identity and registry relationship appear
+in the operational ER view. `RescueMission` is the distinct mission concept and owns requests,
+their state transitions, and mission invariants. The central delegates request changes to the
+mission, then provides the resulting progress. Specific method signatures remain open.
 
 The mission owns seat requests; each request preserves its immutable ship-offer revision.
 Offer capacity is total capacity for that ship and mission across revisions, not fresh capacity
@@ -64,8 +68,9 @@ Simulation results exist only after completion or the configured horizon stops a
 - Arrival estimates describe physical arrival and are separate from communication timing.
 - Deadline ties expire first. Late responses are recorded without changing closed outcomes.
 - Optional fields and the full field catalogue are defined in the specification. UML includes the
-  orchestration service; ER shows data concepts and omits application services. Repeated core data
-  concepts have the same attributes in both views.
+  orchestration service; operational ER includes its run-scoped identity and mission registry.
+  Scenario ER describes isolated simulation state and does not include the operational central.
+  Repeated core data concepts have the same attributes in both views.
   Associations show cardinalities and do not prescribe database tables.
 - Deltas are signed changes. Stable mission sequences order history when timestamps coincide.
 
@@ -77,8 +82,8 @@ Simulation results exist only after completion or the configured horizon stops a
 | Object | `auroraRescue : RescueMission` (example notation in prose) | One instance of a class; not an extra class in these diagrams |
 | Entity | Class or ER box with a stable identity | A concept tracked over time, such as a mission or request |
 | Attribute | `integer people_count` | Named information and its conceptual type |
-| Operation | `registerMission(mission)` | Behaviour; coordinator operations are shown on `RescueCentral`; other operations remain undecided |
-| Application service | `RescueCentral` | Coordinates mission operations; not a data entity or ER box |
+| Operation | `registerMission(mission)` | Behaviour; registration and orchestration belong to `RescueCentral`; request transitions and mission invariant enforcement belong to `RescueMission`, while specific method signatures remain undecided |
+| Application service | `RescueCentral` | Coordinates mission operations; its run-scoped identity and registry relationship appear in operational ER |
 | Public | `+` before a member | Publicly accessible; visibility remains undecided |
 | Private | `-` before a member | Accessible inside the class |
 | Protected | `#` before a member | Available to a class and its subclasses |
@@ -128,10 +133,14 @@ and [Mermaid class syntax](https://mermaid.js.org/syntax/classDiagram.html).
 The specification is the source of requirements and field meanings. The `.mmd` files are the
 editable visual sources, not generated Python classes or a persistence schema. The accepted
 representation is both ER and UML, recorded in the specification's clarification session.
-Existing data concepts and cardinalities are preserved. `RescueCentral` is an agreed UML
-orchestrator role, not an access-control role or ER entity. Other methods, visibility, and
-inheritance remain open for concept-by-concept review; the access-control example is a notation
-example rather than an additional rescue requirement.
+Existing data concepts and cardinalities are preserved. `RescueCentral` is an agreed run-scoped
+orchestrator entity, not an access-control role. It registers missions and coordinates operations,
+delegating request changes to `RescueMission`, which owns requests, their state transitions, and
+mission invariants. The registry retains mission state and existing request history between calls
+in one application run; a new run starts empty. Callable API-style operations do not imply HTTP or
+a specific transport. Specific method signatures, visibility, and inheritance remain open for
+concept-by-concept review. The access-control example is a notation example rather than an
+additional rescue requirement.
 
 SVGs use the installed Mermaid CLI 11.17.0 with its ELK plugin. Each source selects `layout: elk`,
 with hierarchical placement, orthogonal routing, generous spacing, and a restrained light theme.

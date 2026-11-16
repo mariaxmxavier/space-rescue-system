@@ -1,4 +1,5 @@
 ---
+title: Mission operations — RescueMission owns request state
 config:
   layout: elk
   theme: base
@@ -27,8 +28,14 @@ config:
 erDiagram
     direction TB
     %% Logical ER view; dashed lines do not imply UML dependency or lifecycle ownership.
-    %% RescueCentral is an application orchestrator, not a data entity, so it is omitted here.
+    %% RescueCentral identity, registry, missions, and their history live for one application run.
+    %% Its registry relates registered missions; each mission retains its existing request history.
+    %% RescueMission owns request state transitions and mission invariants; these are behaviours, not additional stored fields.
     %% MissionOperations
+    RescueCentral {
+        string central_id PK
+        string application_run_id PK
+    }
     RescueMission {
         string mission_id PK
         string station_name
@@ -100,6 +107,7 @@ erDiagram
         boolean selected
         string reason
     }
+    RescueCentral ||..o{ RescueMission : "registers and coordinates"
     RescueMission ||..o{ SeatRequest : "owns"
     RescueMission ||..o{ ShipOffer : "receives"
     Ship ||..o{ ShipOffer : "supplies"

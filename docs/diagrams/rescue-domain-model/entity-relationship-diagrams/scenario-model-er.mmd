@@ -1,4 +1,5 @@
 ---
+title: Scenario experiments — isolated RescueMission data
 config:
   layout: elk
   theme: base
@@ -27,6 +28,8 @@ config:
 erDiagram
     direction TB
     %% Logical ER view; dashed lines do not imply UML dependency or lifecycle ownership.
+    %% Simulation runs own isolated mission copies and do not use the operational run-scoped central registry.
+    %% Each run owns an isolated RescueMission copy, which owns request transitions and mission invariants; these are behaviours, not additional ER fields.
     %% Experiments
     RescueScenario {
         string scenario_id PK

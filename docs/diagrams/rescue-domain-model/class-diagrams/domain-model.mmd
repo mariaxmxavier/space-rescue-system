@@ -30,6 +30,8 @@ classDiagram
     %% Full conceptual attributes; namespace boxes are visual groups only.
     namespace MissionOperations {
         class RescueCentral {
+            string central_id
+            string application_run_id
             registerMission(mission)
             mobilise(mission)
             recordResponse(request, response)
@@ -111,8 +113,9 @@ classDiagram
             string reason
         }
     }
-    RescueCentral "1" --> "0..*" RescueMission : coordinates
+    RescueCentral "1" --> "0..*" RescueMission : registers and coordinates
     RescueMission "1" *-- "0..*" SeatRequest : owns
+    note for RescueMission "Owns request transitions and mission invariants"
     RescueMission "1" --> "0..*" ShipOffer : receives
     Ship "1" --> "0..*" ShipOffer : supplies
     ShipOffer "1" *-- "1..*" ShipOfferRevision : versions

@@ -123,6 +123,7 @@ classDiagram
     SimulationRun "0..*" --> "1" RescueScenario : uses revision
     SimulationRun "0..*" --> "1" MobilisationPolicy : compares revision
     SimulationRun "1" *-- "1" RescueMission : owns isolated copy
+    note for RescueMission "Owns request transitions and mission invariants"
     SimulationRun "1" *-- "0..1" SimulationResult : produces at finish
     RescueMission "1" *-- "0..*" SeatRequest : owns
     SeatRequest "1" --> "0..*" CommunicationMessage : correlates
