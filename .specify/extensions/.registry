@@ -13,6 +13,12 @@
           "speckit.speckit-superpowers-bridge.guard",
           "speckit.speckit-superpowers-bridge.execute",
           "speckit.superpowers-bridge"
+        ],
+        "claude": [
+          "speckit.speckit-superpowers-bridge.handoff",
+          "speckit.speckit-superpowers-bridge.guard",
+          "speckit.speckit-superpowers-bridge.execute",
+          "speckit.superpowers-bridge"
         ]
       },
       "registered_skills": [],
