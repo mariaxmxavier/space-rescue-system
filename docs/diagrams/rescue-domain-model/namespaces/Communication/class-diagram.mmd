@@ -1,0 +1,46 @@
+---
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+    hideEmptyMembersBox: true
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+classDiagram
+    direction LR
+    %% Authoritative scoped view of Communication; see the diagram index for boundary relationships.
+    class CommunicationMessage {
+        -string message_id
+        -string correlation_id
+        -string kind
+        -data payload
+        -datetime sent_at
+    }
+    class MessageDelivery {
+        -string delivery_id
+        -integer attempt_number
+        -datetime received_at
+        -string disposition
+        -string reason
+    }
+    CommunicationMessage "1" *-- "1..*" MessageDelivery : tracks attempts
+    note for CommunicationMessage "External interactions: Messages correlate with MissionOperations requests and may trigger request-history entries."

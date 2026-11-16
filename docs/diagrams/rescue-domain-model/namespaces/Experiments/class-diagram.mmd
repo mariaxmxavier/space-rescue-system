@@ -1,0 +1,68 @@
+---
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+    hideEmptyMembersBox: true
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+classDiagram
+    direction LR
+    %% Authoritative scoped view of Experiments; see the diagram index for boundary relationships.
+    class RescueScenario {
+        -string scenario_id
+        -integer revision
+        -string name
+        -data baseline
+        -data response_rules
+        -data availability_changes
+        -number time_horizon_seconds
+        -integer seed
+    }
+    class CommunicationProfile {
+        -string profile_id
+        -number outbound_delay_seconds
+        -number decision_delay_seconds
+        -number return_delay_seconds
+        -data loss_rule
+        -data duplication_rule
+        -data reordering_rule
+    }
+    class SimulationRun {
+        -string run_id
+        -datetime started_at
+        -datetime finished_at
+        -string status
+    }
+    class SimulationResult {
+        -boolean completed
+        -integer confirmed_seats
+        -integer unmet_demand
+        -integer requests_sent
+        -integer released_seats
+        -number confirmation_elapsed_seconds
+        -number latest_arrival_estimate_seconds
+    }
+    RescueScenario "1" *-- "0..*" CommunicationProfile : configures
+    SimulationRun "0..*" --> "1" RescueScenario : uses revision
+    SimulationRun "1" *-- "0..1" SimulationResult : produces at finish
+    note for RescueScenario "External interactions: Communication profiles target baseline ShipMarket ships; each run uses MissionOperations, ShipMarket and Mobilisation copies."

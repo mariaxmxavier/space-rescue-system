@@ -30,102 +30,163 @@ classDiagram
     %% Full conceptual attributes; namespace boxes are visual groups only.
     namespace Experiments {
         class RescueScenario {
-            string scenario_id
-            integer revision
-            string name
-            data baseline
-            data response_rules
-            data availability_changes
-            number time_horizon_seconds
-            integer seed
+            -string scenario_id
+            -integer revision
+            -string name
+            -data baseline
+            -data response_rules
+            -data availability_changes
+            -number time_horizon_seconds
+            -integer seed
         }
         class CommunicationProfile {
-            string profile_id
-            number outbound_delay_seconds
-            number decision_delay_seconds
-            number return_delay_seconds
-            data loss_rule
-            data duplication_rule
-            data reordering_rule
+            -string profile_id
+            -number outbound_delay_seconds
+            -number decision_delay_seconds
+            -number return_delay_seconds
+            -data loss_rule
+            -data duplication_rule
+            -data reordering_rule
         }
         class SimulationRun {
-            string run_id
-            datetime started_at
-            datetime finished_at
-            string status
+            -string run_id
+            -datetime started_at
+            -datetime finished_at
+            -string status
         }
         class SimulationResult {
-            boolean completed
-            integer confirmed_seats
-            integer unmet_demand
-            integer requests_sent
-            integer released_seats
-            number confirmation_elapsed_seconds
-            number latest_arrival_estimate_seconds
+            -boolean completed
+            -integer confirmed_seats
+            -integer unmet_demand
+            -integer requests_sent
+            -integer released_seats
+            -number confirmation_elapsed_seconds
+            -number latest_arrival_estimate_seconds
         }
     }
     namespace Communication {
         class CommunicationMessage {
-            string message_id
-            string correlation_id
-            string kind
-            data payload
-            datetime sent_at
+            -string message_id
+            -string correlation_id
+            -string kind
+            -data payload
+            -datetime sent_at
         }
         class MessageDelivery {
-            string delivery_id
-            integer attempt_number
-            datetime received_at
-            string disposition
-            string reason
+            -string delivery_id
+            -integer attempt_number
+            -datetime received_at
+            -string disposition
+            -string reason
         }
     }
     namespace CoreReferences {
-        class RescueMission {
-            string mission_id
-            string station_name
-            integer people_count
-            datetime created_at
+        class Mission {
+            -string mission_id
+            -string station_name
+            -integer people_count
+            -datetime created_at
         }
-        class Ship {
-            string ship_id
-            string name
-        }
+        %% Shared Mission semantics: people_count is fixed after registration.
         class SeatRequest {
-            string request_id
-            string command_id
-            integer requested_seats
-            integer confirmed_seats
-            string outcome
-            datetime submitted_at
-            datetime response_received_at
-            datetime response_deadline
-            datetime closed_at
+            -string request_id
+            -string command_id
+            -integer requested_seats
+            -integer confirmed_seats
+            -string outcome
+            -datetime submitted_at
+            -datetime response_received_at
+            -datetime response_deadline
+            -datetime closed_at
         }
         class RequestHistoryEntry {
-            string event_id
-            integer mission_sequence
-            datetime recorded_at
-            string action
-            integer confirmed_seats_delta
-            integer pending_seats_delta
-            string reason
+            -string event_id
+            -integer mission_sequence
+            -datetime recorded_at
+            -string action
+            -integer confirmed_seats_delta
+            -integer pending_seats_delta
+            -string reason
         }
         class MobilisationPolicy {
-            string policy_id
-            integer revision
-            string name
-            data selection_criteria
+            -string policy_id
+            -integer revision
+            -string name
+            -data selection_criteria
+        }
+    }
+    namespace ShipMarket {
+        class B3Market {
+            -string market_id
+        }
+        class Ship {
+            -string ship_id
+            -string name
+        }
+        class ShipAvailability {
+            -string availability_id
+            -integer total_seats
+            -number arrival_estimate_seconds
+            -boolean available
+            -datetime recorded_at
+        }
+        class ShipOffer {
+            -string offer_id
+            -string mission_id
+            -string ship_id
+        }
+        class ShipOfferRevision {
+            -string revision_id
+            -integer revision_number
+            -integer capacity
+            -number arrival_estimate_seconds
+            -boolean available
+            -datetime recorded_at
+        }
+        class SeatRFQ {
+            -string rfq_id
+            -string mission_id
+            -string ship_id
+            -string availability_id
+            -integer requested_seats
+            -string status
+            -datetime sent_at
+            -datetime response_deadline
+        }
+        class RFQOffer {
+            -string offer_id
+            -integer offered_seats
+            -number arrival_estimate_seconds
+            -datetime expires_at
+            -datetime recorded_at
+            -string status
         }
     }
     RescueScenario "1" *-- "0..*" CommunicationProfile : configures
     CommunicationProfile "0..*" --> "1" Ship : targets baseline ship
     SimulationRun "0..*" --> "1" RescueScenario : uses revision
     SimulationRun "0..*" --> "1" MobilisationPolicy : compares revision
-    SimulationRun "1" *-- "1" RescueMission : owns isolated copy
-    note for RescueMission "Owns request transitions and mission invariants"
+    SimulationRun "1" *-- "1" Mission : owns isolated copy
+    SimulationRun "1" *-- "1" B3Market : owns isolated market copy
+    note for B3Market "Run-local copy counts active unaccepted RFQOffer holds, pending requests, and confirmed commitments once each per ship against the latest copied ShipAvailability.total_seats. Hold transfer is atomic; operational market is unchanged."
+    note for Mission "Owns request transitions and mission invariants"
     SimulationRun "1" *-- "0..1" SimulationResult : produces at finish
-    RescueMission "1" *-- "0..*" SeatRequest : owns
+    Mission "1" *-- "0..*" SeatRequest : owns
+    note for SeatRequest "Retains command_id so a repeated request-creation command can be recognized; command scope and payload/collision semantics remain open"
+    B3Market "1" --> "0..*" ShipAvailability : tracks copied capacity
+    Ship "1" --> "0..*" ShipAvailability : reports snapshot
+    Mission "1" --> "0..*" ShipOffer : has copied offer history
+    Ship "1" --> "0..*" ShipOffer : supplies
+    ShipOffer "1" *-- "1..*" ShipOfferRevision : versions
+    note for ShipOfferRevision "Highest revision_number is current; recorded_at does not determine order"
+    Mission "1" --> "0..*" SeatRFQ : requests quotations
+    B3Market "1" --> "0..*" SeatRFQ : sends one per available ship in run
+    ShipAvailability "1" --> "0..*" SeatRFQ : copied snapshot referenced by
+    Ship "1" --> "0..*" SeatRFQ : addressed ship
+    SeatRFQ "1" *-- "0..1" RFQOffer : receives at most one response
+    note for RFQOffer "Response from the SeatRFQ's addressed ship; offered_seats cannot exceed the RFQ quantity. Acceptance transfers the full hold into one pending SeatRequest. Rejection or expiry releases only an unaccepted hold; ship refusal releases pending commitment."
+    SeatRequest "0..1" --> "0..1" RFQOffer : follows acceptance for ship confirmation
+    SeatRequest "0..*" --> "0..1" ShipOfferRevision : optionally preserves basis
     SeatRequest "1" --> "0..*" CommunicationMessage : correlates
     CommunicationMessage "1" *-- "1..*" MessageDelivery : tracks attempts
     RequestHistoryEntry "0..*" --> "0..1" CommunicationMessage : triggered by

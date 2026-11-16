@@ -21,6 +21,8 @@
 - [x] Edge cases are identified.
 - [x] Scope is clearly bounded.
 - [x] Dependencies and assumptions identified.
+- [x] Conceptual namespaces and cross-namespace relationships are explicit and do not imply implementation boundaries.
+- [x] Scenario market state remains isolated from operational market state.
 
 ## Feature Readiness
 
@@ -31,12 +33,16 @@
 
 ## Notes
 
-Validated against the original problem, constitution 2.0.1, and the user's inclusion of all six
+Validated against the original problem, constitution 2.1.0, and the user's inclusion of all six
 extensions. The conceptual class catalogue and Mermaid views describe business data rather
-than Python code structure. The existing Python choice is mentioned only as planning context.
+than Python code structure. The `ShipMarket` grouping is conceptual only, preserves cross-group
+relationships, and does not establish a package or service boundary. Simulation runs retain isolated
+market copies and do not mutate operational market state. The existing Python choice is mentioned only as planning context.
 Content checks pass; the document remains a draft pending the requested concept-by-concept
-discussion. Field choices, deadline precedence, and offer-revision semantics are proposed
-assumptions, not recorded user approvals. Implementation planning must follow that review.
+discussion. The fixed-after-registration Mission `people_count` rule is now an accepted
+clarification with a functional requirement and rejection scenario. Remaining field choices,
+deadline precedence, and offer-revision semantics are proposed assumptions, not recorded user
+approvals. Implementation planning must follow that review.
 
 Revalidated by `$speckit-specify rescue-domain-model` on 2026-11-16. Reused the existing feature
 directory and linked diagrams. Made zero-confirmation validation, full request outcomes,

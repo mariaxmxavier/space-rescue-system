@@ -1,5 +1,5 @@
 ---
-title: Mission operations — RescueMission owns request state
+title: Mission operations + ShipMarket (ER logical groups; Mission owns request state)
 config:
   layout: elk
   theme: base
@@ -28,15 +28,22 @@ config:
 erDiagram
     direction TB
     %% Logical ER view; dashed lines do not imply UML dependency or lifecycle ownership.
-    %% RescueCentral identity, registry, missions, and their history live for one application run.
-    %% Its registry relates registered missions; each mission retains its existing request history.
-    %% RescueMission owns request state transitions and mission invariants; these are behaviours, not additional stored fields.
-    %% MissionOperations
+    %% Exactly one RescueCentral exists per application run; identity remains (application_run_id, central_id).
+    %% Its conceptual registry looks up multiple Mission instances by mission_id; this is not a storage FK.
+    %% Registered missions retain their existing request history for the run.
+    %% Mission owns request state transitions and mission invariants; these are behaviours, not additional stored fields.
+    %% Mission people_count is fixed at registration; later attempts to change it are rejected.
+    %% Per ship, B3Market counts active unaccepted RFQOffer holds, pending SeatRequest commitments, and confirmed commitments once each against latest ShipAvailability.total_seats.
+    %% Acceptance atomically transfers a quote hold into a pending request; quote rejection/expiry releases only unaccepted holds; ship refusal releases pending commitment.
+    %% Logical group MissionOperations: RescueCentral, Mission, SeatRequest, history and progress.
     RescueCentral {
         string central_id PK
         string application_run_id PK
     }
-    RescueMission {
+    B3Market {
+        string market_id PK
+    }
+    Mission {
         string mission_id PK
         string station_name
         integer people_count
@@ -52,6 +59,25 @@ erDiagram
         datetime response_received_at "optional"
         datetime response_deadline "optional"
         datetime closed_at "optional"
+    }
+    SeatRFQ {
+        string rfq_id PK
+        string mission_id
+        string ship_id
+        string availability_id
+        integer requested_seats
+        string status
+        datetime sent_at
+        datetime response_deadline "optional"
+    }
+    RFQOffer {
+        string offer_id PK
+        string rfq_id
+        integer offered_seats
+        number arrival_estimate_seconds
+        datetime expires_at
+        datetime recorded_at
+        string status
     }
     RequestHistoryEntry {
         string event_id PK
@@ -70,10 +96,18 @@ erDiagram
         integer additional_needed
         string status
     }
-    %% ShipsAndOffers
+    %% Logical group ShipMarket: B3Market, Ship, ShipAvailability, RFQ concepts and ship offers.
     Ship {
         string ship_id PK
         string name
+    }
+    ShipAvailability {
+        string availability_id PK
+        string ship_id
+        integer total_seats
+        number arrival_estimate_seconds
+        boolean available
+        datetime recorded_at
     }
     ShipOffer {
         string offer_id PK
@@ -88,7 +122,8 @@ erDiagram
         boolean available
         datetime recorded_at
     }
-    %% Mobilisation
+    %% Highest revision_number is current; recorded_at does not determine revision order.
+    %% Logical group MissionOperations: mobilisation decisions and evaluations.
     MobilisationPolicy {
         string policy_id PK
         integer revision
@@ -107,15 +142,24 @@ erDiagram
         boolean selected
         string reason
     }
-    RescueCentral ||..o{ RescueMission : "registers and coordinates"
-    RescueMission ||..o{ SeatRequest : "owns"
-    RescueMission ||..o{ ShipOffer : "receives"
+    RescueCentral ||..o{ Mission : "registry lookup by mission_id"
+    RescueCentral ||..|| B3Market : "coordinates RFQs through"
+    B3Market ||..o{ ShipAvailability : "tracks changing capacity"
+    Ship ||..o{ ShipAvailability : "reports availability"
+    Mission ||..o{ SeatRFQ : "requests quotations"
+    B3Market ||..o{ SeatRFQ : "sends one per available ship"
+    ShipAvailability ||..o{ SeatRFQ : "snapshot referenced by"
+    Ship ||..o{ SeatRFQ : "addressed ship"
+    SeatRFQ ||..o| RFQOffer : "receives at most one response"
+    Mission ||..o{ SeatRequest : "owns"
+    RFQOffer o|..o| SeatRequest : "optional accepted quote starts pending ship confirmation"
+    Mission ||..o{ ShipOffer : "receives"
     Ship ||..o{ ShipOffer : "supplies"
-    ShipOffer ||..|{ ShipOfferRevision : "versions"
-    SeatRequest }o..|| ShipOfferRevision : "preserves basis"
+    ShipOffer ||..|{ ShipOfferRevision : "versions; highest revision_number is current; recorded_at does not order"
+    SeatRequest }o..o| ShipOfferRevision : "optionally preserves basis"
     SeatRequest ||..|{ RequestHistoryEntry : "records changes"
-    RescueMission ||..|| MissionProgress : "derives"
-    RescueMission ||..o{ MobilisationDecision : "records"
+    Mission ||..|| MissionProgress : "derives"
+    Mission ||..o{ MobilisationDecision : "records"
     MobilisationDecision }o..|| MobilisationPolicy : "applies revision"
     MobilisationDecision ||..o{ OfferEvaluation : "explains candidates"
     OfferEvaluation }o..|| ShipOfferRevision : "assesses"

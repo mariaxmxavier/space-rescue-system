@@ -1,0 +1,85 @@
+---
+title: Mission operations + ShipMarket (ER logical groups; Mission owns request state)
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+erDiagram
+    direction TB
+    %% Scoped logical ER view of ShipMarket. Cross-space relationships: MissionOperations issues RFQs and owns requests; this space supplies market availability and offers.
+    B3Market {
+        string market_id PK
+    }
+    Ship {
+        string ship_id PK
+        string name
+    }
+    ShipAvailability {
+        string availability_id PK
+        string ship_id
+        integer total_seats
+        number arrival_estimate_seconds
+        boolean available
+        datetime recorded_at
+    }
+    ShipOffer {
+        string offer_id PK
+        string mission_id
+        string ship_id
+    }
+    ShipOfferRevision {
+        string revision_id PK
+        integer revision_number
+        integer capacity
+        number arrival_estimate_seconds
+        boolean available
+        datetime recorded_at
+    }
+    SeatRFQ {
+        string rfq_id PK
+        string mission_id
+        string ship_id
+        string availability_id
+        integer requested_seats
+        string status
+        datetime sent_at
+        datetime response_deadline "optional"
+    }
+    RFQOffer {
+        string offer_id PK
+        string rfq_id
+        integer offered_seats
+        number arrival_estimate_seconds
+        datetime expires_at
+        datetime recorded_at
+        string status
+    }
+    B3Market ||..o{ ShipAvailability : "tracks changing capacity"
+    Ship ||..o{ ShipAvailability : "reports availability"
+    B3Market ||..o{ SeatRFQ : "sends one per available ship"
+    ShipAvailability ||..o{ SeatRFQ : "snapshot referenced by"
+    Ship ||..o{ SeatRFQ : "addressed ship"
+    SeatRFQ ||..o| RFQOffer : "receives at most one response"
+    Ship ||..o{ ShipOffer : "supplies"
+    ShipOffer ||..|{ ShipOfferRevision : "versions; highest revision_number is current; recorded_at does not order"

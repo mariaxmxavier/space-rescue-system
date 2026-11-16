@@ -1,0 +1,50 @@
+---
+title: Mission operations + ShipMarket (ER logical groups; Mission owns request state)
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+erDiagram
+    direction TB
+    %% Scoped logical ER view of Mobilisation. Cross-space relationships: MissionOperations owns decisions; ShipMarket provides the offer revisions evaluated.
+    MobilisationPolicy {
+        string policy_id PK
+        integer revision
+        string name
+        data selection_criteria
+    }
+    MobilisationDecision {
+        string decision_id PK
+        datetime recorded_at
+        integer remaining_demand
+    }
+    OfferEvaluation {
+        string evaluation_id PK
+        integer rank
+        integer proposed_seats
+        boolean selected
+        string reason
+    }
+    MobilisationDecision }o..|| MobilisationPolicy : "applies revision"
+    MobilisationDecision ||..o{ OfferEvaluation : "explains candidates"
