@@ -1,50 +1,113 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+Version: 1.1.2 -> 2.0.0
+Reason: Remove mandatory design and task structures; align consistency requirements
+with the original problem's option to explain or implement concurrency protection.
+Modified principles:
+- I. Safe Mission Accounting -> I. Safe Seat Accounting (consolidated inputs and status).
+- II. Explicit Request Lifecycle -> II. Final Request Outcomes (simplified lifecycle rules).
+- III. Reliable Operations (outcome-based consistency; detailed policies left to plans).
+- IV. Simple Python Design -> IV. Simple Design (Python identified as a project choice;
+  prescribed abstractions and strategy details removed).
+- V. Evidence and Explainability (consolidated tests, demonstration, and README requirements).
+Renamed sections:
+- Responsibilities and Scope -> Scope and Project Choices.
+- Task Organisation and Quality Gates -> Development Workflow.
+Added sections: None.
+Removed sections: Classes and Modules table; Task Groups; detailed principle subsections.
+Dependent artifacts: Review future specifications, plans, and tasks against these rules;
+no dependent templates or commands changed.
+Follow-up TODOs: None.
+Review scratch material: remove this report before committing.
+-->
+# Space Rescue System Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Safe Seat Accounting
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+- Missions MUST identify the station and a positive integer number of people to rescue.
+  Vessel offers MUST identify the vessel, offered capacity, and estimated arrival time.
+  Quantities and estimates MUST be valid for their context.
+- For demand `D`, confirmed seats `C`, and pending seats `P`, operations MUST preserve
+  `C >= 0`, `P >= 0`, and `C + P <= D`, and respect offered vessel capacity.
+- A mission MUST be complete only when `C = D`. Pending seats MUST NOT count as guaranteed transport.
+- Status MUST show what is confirmed, what awaits responses, whether more help is needed,
+  and the outcomes of individual requests.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Final Request Outcomes
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+- Pending requests MUST support full acceptance, partial acceptance, refusal, cancellation,
+  and expiration. Confirmations MUST NOT exceed the requested quantity.
+- Partial acceptance MUST close the request and release the unconfirmed remainder.
+  Refusal, cancellation, and expiration MUST release all seats pending on that request.
+- Only pending requests MAY be cancelled or expired. Closed outcomes MUST remain unchanged,
+  and confirmed seats MUST be counted exactly once.
+- The system MUST allow further mobilisation whenever confirmed and pending seats leave unmet demand.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Reliable Operations
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+- Repeated, delayed, or out-of-order messages and simultaneous operations MUST NOT distort
+  mission accounting or alter closed decisions.
+- Invalid operations MUST preserve previously accepted data.
+- The solution MUST explain or implement how concurrent requests and responses preserve
+  these commitments. Concrete mechanisms and message-handling policies belong in the plan
+  and README.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Simple Design
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- The design MUST keep rescue rules separate from storage, presentation, and transport.
+  Additional abstractions and infrastructure MUST have a documented need.
+- The system MUST select vessels and request quantities using an explained strategy that
+  considers offered capacity, arrival estimates, and mission rules.
+- The README MUST explain strategy assumptions and how availability changes are handled
+  without invalidating settled request outcomes.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Evidence and Explainability
+
+- Automated tests MUST verify seat accounting, request outcomes, invalid operations,
+  insufficient capacity, and repeated, delayed, or out-of-order communication.
+  Any implemented concurrency mechanism MUST also be tested.
+- A reproducible demonstration MUST involve multiple vessels, partial acceptance, refusal,
+  further mobilisation, and completion through confirmed seats only.
+- The README MUST explain how to run the demonstration and tests, design decisions,
+  assumptions, and the approach to concurrent operations.
+
+## Scope and Project Choices
+
+- The [original problem](../../docs/context/original-problem.md) defines the required scope:
+  reservation confirmation. Flights, boarding, routes, storm simulation, and global fleet
+  allocation across missions are excluded.
+- Python is the project's chosen language; the original problem permits other languages.
+  Dependencies MUST use exact versions.
+- In-memory persistence, direct method calls, and simulated cancellation and expiration
+  are sufficient. A GUI, HTTP API, messaging service, external integration, and real timers
+  are optional.
+- Extras MUST have explicit requirements and preserve the core commitments.
+- Terms are defined in the [project glossary](../../docs/reference/glossary.md).
+
+## Development Workflow
+
+- Specifications, plans, and executable tasks MUST precede implementation and trace to the
+  original problem and this constitution.
+- Input encodings, message identities, selection tie-breakers, and consistency mechanisms
+  MUST be defined in specifications or plans when relevant, without prescribing class names
+  or fixed task groups in this constitution.
+- Tasks MUST identify their scope, dependencies, acceptance criteria, and verification.
+  Parallel writers MUST have non-overlapping file ownership.
+- Completion MUST record relevant check results. The delivered solution MUST pass its full
+  test suite and run the documented demonstration.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+Plans and reviews MUST check compliance with this constitution and repository instructions.
+Conflicts with the original problem MUST be raised explicitly. Assumptions MUST be recorded
+in the README without weakening the rescue commitments. Deviations MUST document their
+rationale and verification impact and receive maintainer approval before implementation.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Amendments MUST receive maintainer approval, record their impact on dependent artifacts,
+and update the version and amendment date. Review affected specifications, plans, tasks,
+and code. Use MAJOR for incompatible rule changes, MINOR for new or expanded rules, and
+PATCH for wording-only changes. Preserve the original ratification date.
+
+**Version**: 2.0.0 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-16
