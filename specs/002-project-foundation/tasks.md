@@ -112,7 +112,7 @@ only their folder; total collected is 100; the link check finds 0 missing target
 **Independent test**: push the branch; the `check` workflow passes.
 
 - [X] T023 [P] [US4] Create `.github/workflows/check.yml`: `on: [push, pull_request]`; job `check` on `ubuntu-24.04`; steps `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1), `astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2` (v10.3.3) with `version: "0.13.8"`, `uv python install`, `make install`, `make check-all`; `permissions: contents: read`
-- [ ] T024 [US4] Verify after the maintainer approves a push: the workflow passes on the branch (SC-006). Not run without that approval
+- [X] T024 [US4] Verify after the maintainer approves a push: the workflow passes on the branch (SC-006). Not run without that approval
 
 **Checkpoint**: US4 delivered.
 
