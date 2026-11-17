@@ -40,12 +40,15 @@ REQUIRED_IN_NAMESPACE = frozenset(
     }
 )
 RELATION_SHOWN = {
-    "RescueScenario": frozenset(
-        {"baseline", "response_rules", "availability_changes", "communication_profiles"}
-    ),
-    "RunBaseline": frozenset({"missions", "market"}),
-    "RunSnapshot": frozenset({"run"}),
-    "SimulationRun": frozenset({"result"}),
+    "RescueScenario": {
+        "baseline": "RunBaseline",
+        "response_rules": "ScriptedResponse",
+        "availability_changes": "ShipAvailability",
+        "communication_profiles": "CommunicationProfile",
+    },
+    "RunBaseline": {"missions": "Mission", "market": "B3Market"},
+    "RunSnapshot": {"run": "SimulationRun"},
+    "SimulationRun": {"result": "SimulationResult"},
 }
 BLOCK = re.compile(
     r"^[ \t]*(?:class[ \t]+)?(\w+)[ \t]*\{[ \t]*\n(.*?)^[ \t]*\}[ \t]*$",
@@ -142,15 +145,46 @@ def _shown(diagram: Path) -> dict[str, frozenset[str]]:
     return _diagram_fields(diagram.read_text(encoding="utf-8"))
 
 
-def _matches(shown: frozenset[str], code: frozenset[str], relation: frozenset[str]) -> bool:
+def _edge_drawn(text: str, owner: str, target: str) -> bool:
+    """Tells whether the diagram draws a relation line that names both classes.
+
+    What: looks for one line of the diagram text that mentions the owner and the target class.
+    Why: a relation field that is left out of its box is only covered when the relation is drawn.
+    """
+    return any(
+        re.search(rf"\b{owner}\b", line) and re.search(rf"\b{target}\b", line)
+        for line in text.splitlines()
+    )
+
+
+def _matches(owner: str, shown: frozenset[str], code: frozenset[str], text: str) -> bool:
     """Tells whether a diagram box lists the code fields it must list.
 
-    What: the box may not invent a field, and must list every code field except those drawn as a
-    relation edge, which may appear in the box or not.
-    Why: the diagrams draw owned values as edges, so an exact field equality would demand
-    duplicate attributes that the reviewed diagrams deliberately leave out.
+    What: the box may not invent a field; every other code field must be listed in the box, or,
+    when RELATION_SHOWN names it, drawn as a relation line between the owner and its target.
+    Why: owned values are drawn as relations, so exact field equality would demand duplicate
+    attributes, but a relation that is missing from the diagram must still fail.
     """
-    return shown <= code and code - relation <= shown
+    relations = RELATION_SHOWN.get(owner, {})
+    if not shown <= code:
+        return False
+    return all(
+        field in shown or (field in relations and _edge_drawn(text, owner, relations[field]))
+        for field in code
+    )
+
+
+def test_relation_field_may_be_left_out_of_the_box_only_when_its_edge_is_drawn():
+    edge = 'RescueScenario ||..|| RunBaseline : "starts from"\n'
+    assert _matches("RescueScenario", frozenset(), frozenset({"baseline"}), edge)
+    assert not _matches(
+        "RescueScenario", frozenset(), frozenset({"baseline"}), "RescueScenario {\n}\n"
+    )
+    assert _matches("RescueScenario", frozenset({"baseline"}), frozenset({"baseline"}), "")
+
+
+def test_box_may_not_list_a_field_the_code_does_not_have():
+    assert not _matches("RunSnapshot", frozenset({"extra"}), frozenset({"run"}), "RunSnapshot")
 
 
 def test_experiments_classes_in_diagrams_list_the_code_fields():
@@ -168,8 +202,9 @@ def test_experiments_classes_in_diagrams_list_the_code_fields():
         f"{diagram.relative_to(DIAGRAM_ROOT).as_posix()} {name}: "
         f"diagram {sorted(fields)} does not match code {sorted(code[name])}"
         for diagram in EXPERIMENTS_DIAGRAMS
-        for name, fields in _shown(diagram).items()
-        if name in code and not _matches(fields, code[name], RELATION_SHOWN.get(name, frozenset()))
+        for diagram_text in [diagram.read_text(encoding="utf-8")]
+        for name, fields in _diagram_fields(diagram_text).items()
+        if name in code and not _matches(name, fields, code[name], diagram_text)
     ]
     assert not mismatches, "\n".join(mismatches)
 

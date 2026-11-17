@@ -18,7 +18,7 @@ def scripted_outcome(
     rule: ScriptedResponse,
     request_seats: int,
     rng: random.Random,
-) -> tuple[str, int]:
+) -> tuple[RequestOutcome, int]:
     """Resolve a scripted response rule into an outcome and a seat count.
 
     What: refuses, accepts all seats, or confirms a partial count, drawing from `rng` only for an

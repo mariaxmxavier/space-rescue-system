@@ -25,6 +25,11 @@ class RunHandle(Protocol):
     Diagram: docs/architecture/diagrams/rescue-domain-model/class-diagrams/scenario-model.mmd
     """
 
-    store: TransactionStore
-    id_source: IdSource
-    central: SimulationCentral
+    @property
+    def store(self) -> TransactionStore: ...
+
+    @property
+    def id_source(self) -> IdSource: ...
+
+    @property
+    def central(self) -> SimulationCentral: ...

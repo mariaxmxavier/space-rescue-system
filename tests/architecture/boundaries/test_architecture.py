@@ -446,7 +446,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             ),
             "experiments-no-bootstrap": (
                 {"rescue.experiments"},
-                {"rescue.bootstrap", "rescue.demo"},
+                {"rescue.bootstrap", "rescue.demo", "rescue.application.central"},
                 False,
             ),
         }

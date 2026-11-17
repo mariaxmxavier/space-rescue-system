@@ -11,9 +11,12 @@ from __future__ import annotations
 from rescue.experiments.simulation.schedule_response import schedule_response
 from rescue.experiments.simulation.session import SimulationSession
 from rescue.experiments.timeline import TimelineEvent
+from rescue.mission.models import SeatRequest
 
 
-def schedule_request_events(session: SimulationSession, mission_id: str, request) -> None:
+def schedule_request_events(
+    session: SimulationSession, mission_id: str, request: SeatRequest
+) -> None:
     """Schedule the events that follow a newly created request.
 
     What: schedules an expire event when the request has a deadline, advances the ship's request

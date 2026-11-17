@@ -16,7 +16,7 @@ from rescue.experiments.simulation._payload import _ResponsePayload
 from rescue.experiments.simulation.scripted_outcome import scripted_outcome
 from rescue.experiments.simulation.session import SimulationSession
 from rescue.experiments.timeline import TimelineEvent
-from rescue.mission.models import Mission
+from rescue.mission.models import Mission, SeatRequest
 
 
 def _response_event(
@@ -42,7 +42,7 @@ def schedule_response(
     session: SimulationSession,
     rule: ScriptedResponse,
     mission: Mission,
-    request,
+    request: SeatRequest,
     ordinal: int,
     profile: CommunicationProfile | None,
     message_id: str,

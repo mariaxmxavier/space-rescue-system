@@ -186,4 +186,4 @@ forbidden_modules = ["rescue.experiments.simulation"]
 name = "experiments-no-bootstrap: Experiments receive their run, never import the composition root"
 type = "forbidden"
 source_modules = ["rescue.experiments"]
-forbidden_modules = ["rescue.bootstrap", "rescue.demo"]
+forbidden_modules = ["rescue.bootstrap", "rescue.demo", "rescue.application.central"]

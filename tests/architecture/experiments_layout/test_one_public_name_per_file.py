@@ -103,17 +103,17 @@ class TestExperimentsLayout:
         module = importlib.import_module(package)
         assert set(module.__all__) == PUBLIC_PACKAGE_EXPORTS[package]
 
-    def test_no_simulation_function_exceeds_the_line_limit(self) -> None:
-        """No function under rescue/experiments/simulation is longer than 60 lines.
+    def test_no_experiments_function_exceeds_the_line_limit(self) -> None:
+        """No function under rescue/experiments is longer than 60 lines.
 
-        What: parses every module under the simulation package and measures each function from its
+        What: parses every module under the experiments package and measures each function from its
           first to its last line.
         When called: pytest runs it in the architecture suite, part of make check-all.
-        Why: short functions keep the simulation steps readable and separately testable.
+        Why: short functions keep every experiments step readable and separately testable.
         Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Experiments/class-diagram.mmd
         """
         too_long = []
-        for path in sorted(SIMULATION_ROOT.rglob("*.py")):
+        for path in sorted(EXPERIMENTS_ROOT.rglob("*.py")):
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=path.as_posix())
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
