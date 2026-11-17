@@ -4,10 +4,9 @@ import dataclasses
 import unittest
 from decimal import Decimal
 
-from rescue.mission.models.mission.seat_request import SeatRequest
-
 from rescue.mission.models.mission.mission import Mission
 from rescue.mission.models.mission.request_history_entry import RequestHistoryEntry
+from rescue.mission.models.mission.seat_request import SeatRequest
 from rescue.mission.models.vocabulary import HistoryAction, RequestOutcome
 from rescue.values import DomainValidationError
 
