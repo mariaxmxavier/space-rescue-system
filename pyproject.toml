@@ -15,6 +15,7 @@ dev = [
 
 [tool.uv]
 required-version = "==0.13.8"
+python-preference = "system"
 
 [tool.ruff]
 line-length = 100
@@ -49,6 +50,7 @@ source_modules = [
     "rescue.mobilisation",
     "rescue.communication",
     "rescue.experiments.models",
+    "rescue.experiments.timeline",
     "rescue.experiments.results",
 ]
 forbidden_modules = [
@@ -66,6 +68,7 @@ source_modules = [
     "rescue.mobilisation",
     "rescue.communication",
     "rescue.experiments.models",
+    "rescue.experiments.timeline",
     "rescue.experiments.results",
     "rescue.state",
 ]
@@ -97,7 +100,7 @@ forbidden_modules = [
     "rescue.adapters.memory",
     "rescue.bootstrap",
     "rescue.demo",
-    "rescue.experiments.runner",
+    "rescue.experiments.simulation",
     "rescue.experiments.simulator",
     "rescue.experiments.timeline",
 ]
@@ -205,7 +208,7 @@ forbidden_modules = [
     "rescue.demo",
     "rescue.application",
     "rescue.experiments.results",
-    "rescue.experiments.runner",
+    "rescue.experiments.simulation",
     "rescue.experiments.timeline",
     "rescue.mobilisation.algorithms",
     "rescue.mobilisation.services",
@@ -214,3 +217,19 @@ forbidden_modules = [
     "rescue.communication",
 ]
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "experiments-pure-core: Experiment models, timeline and results do not import the simulation"
+type = "forbidden"
+source_modules = [
+    "rescue.experiments.models",
+    "rescue.experiments.timeline",
+    "rescue.experiments.results",
+]
+forbidden_modules = ["rescue.experiments.simulation"]
+
+[[tool.importlinter.contracts]]
+name = "experiments-no-bootstrap: Experiments receive their run, never import the composition root"
+type = "forbidden"
+source_modules = ["rescue.experiments"]
+forbidden_modules = ["rescue.bootstrap", "rescue.demo", "rescue.application.central"]

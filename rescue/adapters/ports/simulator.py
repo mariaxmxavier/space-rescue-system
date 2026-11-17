@@ -3,9 +3,9 @@
 What: declares one operation that turns a scenario and a policy into a run snapshot.
 
 When: held by the simulation use case of the application layer; implemented by an adapter over
-``rescue.experiments.runner``.
+the experiments simulation package.
 
-Why: breaks the application to experiments.runner import cycle (FR-006), so the application
+Why: keeps the application from importing the simulation package (FR-006), so the application
 names the capability and never imports the runner.
 """
 

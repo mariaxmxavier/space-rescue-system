@@ -10,7 +10,7 @@ from rescue.application.contracts import (
 )
 from rescue.bootstrap import new_run
 from rescue.experiments.models import RescueScenario, RunBaseline, ScriptedResponse
-from rescue.experiments.runner import simulate
+from rescue.experiments.simulation import simulate
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.offers import ShipOfferRevision
 from rescue.mobilisation.models import MobilisationPolicy
@@ -96,7 +96,7 @@ class SessionCopyTests(unittest.TestCase):
         baseline = _baseline(received_first=True)
         source = baseline.session_index[0]
 
-        snapshot = simulate(_scenario(baseline, 2), _policy(), "RUN-A")
+        snapshot = simulate(_scenario(baseline, 2), _policy(), "RUN-A", start_run=new_run)
 
         copied = _session(snapshot)
         self.assertEqual(copied.session_id, source.session_id)
@@ -117,7 +117,7 @@ class SessionCopyTests(unittest.TestCase):
         counters_before = (session_before.next_inbound, session_before.next_outbound)
         reports_before = len(session_before.reports)
 
-        simulate(_scenario(baseline, 2), _policy(), "RUN-A")
+        simulate(_scenario(baseline, 2), _policy(), "RUN-A", start_run=new_run)
 
         self.assertEqual(baseline, _baseline(received_first=True))
         self.assertIs(baseline.session_index[0], session_before)
@@ -131,8 +131,10 @@ class SessionCopyTests(unittest.TestCase):
         baseline = _baseline(received_first=True)
         source = baseline.session_index[0]
 
-        advanced = simulate(_scenario(baseline, 2, "ADVANCE"), _policy(), "RUN-A")
-        idle = simulate(_scenario(baseline, None, "IDLE"), _policy(), "RUN-B")
+        advanced = simulate(
+            _scenario(baseline, 2, "ADVANCE"), _policy(), "RUN-A", start_run=new_run
+        )
+        idle = simulate(_scenario(baseline, None, "IDLE"), _policy(), "RUN-B", start_run=new_run)
 
         self.assertEqual(_session(advanced).next_inbound, source.next_inbound + 1)
         self.assertEqual(_session(idle), source)
@@ -145,7 +147,7 @@ class SessionCopyTests(unittest.TestCase):
         baseline = _baseline(received_first=False)
         self.assertEqual(baseline.session_index, ())
 
-        snapshot = simulate(_scenario(baseline, 1), _policy(), "RUN-A")
+        snapshot = simulate(_scenario(baseline, 1), _policy(), "RUN-A", start_run=new_run)
 
         created = _session(snapshot)
         self.assertEqual(created.version, 1)

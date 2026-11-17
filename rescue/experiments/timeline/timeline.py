@@ -1,46 +1,33 @@
-"""Finite deterministic heap scheduler for simulated scenario events."""
+"""Finite deterministic heap scheduler for simulated scenario events.
+
+What: Defines Timeline, a run-local heap that orders TimelineEvent values and bounds their count.
+When called: Created once per simulated run and drained by the run loop.
+Why: One bounded, ordered queue makes every run reproducible and guarantees it terminates.
+Diagram: docs/architecture/diagrams/rescue-domain-model/class-diagrams/scenario-model.mmd
+"""
 
 from __future__ import annotations
 
 import heapq
-from dataclasses import dataclass
 
+from rescue.experiments.timeline.timeline_event import TimelineEvent
 from rescue.values import (
     DomainValidationError,
-    Instant,
     normalize_instant,
-    normalize_nonnegative_quantity,
     normalize_positive_quantity,
 )
 
 
-@dataclass(frozen=True, slots=True)
-class TimelineEvent:
-    instant: Instant
-    kind: str
-    scenario_sequence: int
-    payload: object = None
-    priority: int | None = None
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "instant", normalize_instant(self.instant))
-        if not isinstance(self.kind, str) or not self.kind.strip():
-            raise DomainValidationError("timeline event kind must be nonblank")
-        object.__setattr__(
-            self,
-            "scenario_sequence",
-            normalize_nonnegative_quantity(self.scenario_sequence),
-        )
-        priority = (
-            (0 if self.kind == "expire" else 1)
-            if self.priority is None
-            else normalize_nonnegative_quantity(self.priority)
-        )
-        object.__setattr__(self, "priority", priority)
-
-
 class Timeline:
-    """Run-local mutable heap whose scheduled event count is always bounded."""
+    """Run-local mutable heap whose scheduled event count is always bounded.
+
+    What: Orders events by instant, priority, scenario_sequence and insertion order; peek_next and
+      pop_next return None past the horizon; the event_budget + 1 th schedule raises
+      DomainValidationError.
+    When called: Constructed with a horizon and an event budget at the start of a run.
+    Why: A finite, deterministic event order is what lets two runs of one scenario match exactly.
+    Diagram: docs/architecture/diagrams/rescue-domain-model/class-diagrams/scenario-model.mmd
+    """
 
     def __init__(self, horizon, event_budget: int) -> None:
         self.horizon = normalize_instant(horizon)

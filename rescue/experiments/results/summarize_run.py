@@ -1,4 +1,10 @@
-"""Pure result calculation from immutable stopped-run snapshots."""
+"""Pure result calculation from immutable stopped-run snapshots.
+
+What: Defines summarize, which turns a stopped RunSnapshot into a SimulationResult.
+When called: Imported by the simulation session and by tests that summarize a finished run.
+Why: Summarizing is a pure calculation with no I/O, so it stays in the domain.
+Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Experiments/class-diagram.mmd
+"""
 
 from __future__ import annotations
 
@@ -21,6 +27,11 @@ _TERMINAL_ACTIONS = frozenset(
 
 
 def _revision(mission: Mission, request, snapshot: RunSnapshot) -> ShipOfferRevision | None:
+    """Find the offer revision a request was sent against.
+
+    What: Returns the matching ShipOfferRevision or None.
+    Why: The arrival estimate lives on the revision when no quote exists.
+    """
     if request.revision_id is None:
         return None
     return next(
@@ -36,6 +47,11 @@ def _revision(mission: Mission, request, snapshot: RunSnapshot) -> ShipOfferRevi
 
 
 def _arrival_instant(mission: Mission, request, snapshot: RunSnapshot):
+    """Compute when the ship of a request is expected to arrive.
+
+    What: Prefers the RFQ quote's recorded_at plus arrival estimate, else the revision's.
+    Why: Quotes supersede offer revisions as the latest arrival estimate.
+    """
     if request.quote_id is not None:
         quote = next(
             (item for item in snapshot.market.quotes if item.offer_id == request.quote_id),
@@ -50,7 +66,14 @@ def _arrival_instant(mission: Mission, request, snapshot: RunSnapshot):
 
 
 def summarize(run: RunSnapshot) -> SimulationResult:
-    """Calculate business metrics without changing the supplied run snapshot."""
+    """Calculate business metrics without changing the supplied run snapshot.
+
+    What: Returns a SimulationResult with confirmed seats, unmet demand, requests sent, released
+      seats, elapsed confirmation time and latest arrival estimate.
+    When called: Once a run has stopped and its RunSnapshot is available.
+    Why: Results compare mobilisation policies without mutating the run they describe.
+    Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Experiments/class-diagram.mmd
+    """
     if not isinstance(run, RunSnapshot):
         raise DomainValidationError("summarize requires a RunSnapshot")
     missions = run.missions

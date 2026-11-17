@@ -343,7 +343,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
         """Check that the allowlist itself accepts and refuses the right module names.
 
         What: refuses ``requests``, ``rescue.bootstrap``, ``rescue.application.ports``,
-        ``rescue.application.central``, ``rescue.application.state``, ``rescue.experiments.runner`` and a
+        ``rescue.application.central``, ``rescue.application.state``, ``rescue.experiments.simulation`` and a
         relative import; accepts ``decimal``, ``threading``, ``rescue.values``, ``rescue.state``,
         ``rescue.experiments.models``, ``rescue.mobilisation.models`` and ``rescue.adapters.ports.clock``.
 
@@ -358,7 +358,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             "rescue.application.ports",
             "rescue.application.central",
             "rescue.application.state",
-            "rescue.experiments.runner",
+            "rescue.experiments.simulation",
             ".ports",
         ):
             with self.subTest(import_name=module):
@@ -398,7 +398,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
         """Check that the allowlist itself accepts and refuses the right module names.
 
         What: refuses ``requests``, ``rescue.bootstrap``, ``rescue.demo``, ``rescue.adapters.memory``,
-        ``rescue.experiments.simulator``, ``rescue.experiments.runner`` and a relative import;
+        ``rescue.experiments.simulator``, ``rescue.experiments.simulation`` and a relative import;
         accepts ``decimal``, ``rescue.values``, ``rescue.state``, ``rescue.adapters.ports.clock``,
         ``rescue.experiments.models`` and ``rescue.application.shared``.
 
@@ -413,7 +413,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             "rescue.demo",
             "rescue.adapters.memory",
             "rescue.experiments.simulator",
-            "rescue.experiments.runner",
+            "rescue.experiments.simulation",
             ".shared",
         ):
             with self.subTest(import_name=module):
@@ -438,13 +438,14 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 no_logo=True,
             )
         self.assertEqual(exit_code, 0, output.getvalue())
-        self.assertIn("Contracts: 14 kept, 0 broken.", output.getvalue())
+        self.assertIn("Contracts: 16 kept, 0 broken.", output.getvalue())
 
     def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
             contracts = tomllib.load(file)["tool"]["importlinter"]["contracts"]
         domain_sources = {f"rescue.{package}" for package in DOMAIN_PACKAGES} | {
             "rescue.experiments.models",
+            "rescue.experiments.timeline",
             "rescue.experiments.results",
         }
         io_sources = domain_sources | {"rescue.state"}
@@ -478,7 +479,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                     "rescue.adapters.memory",
                     "rescue.bootstrap",
                     "rescue.demo",
-                    "rescue.experiments.runner",
+                    "rescue.experiments.simulation",
                     "rescue.experiments.simulator",
                     "rescue.experiments.timeline",
                 },
@@ -553,7 +554,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                     "rescue.demo",
                     "rescue.application",
                     "rescue.experiments.results",
-                    "rescue.experiments.runner",
+                    "rescue.experiments.simulation",
                     "rescue.experiments.timeline",
                     "rescue.mobilisation.algorithms",
                     "rescue.mobilisation.services",
@@ -562,6 +563,20 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                     "rescue.communication",
                 },
                 True,
+            ),
+            "experiments-pure-core": (
+                {
+                    "rescue.experiments.models",
+                    "rescue.experiments.timeline",
+                    "rescue.experiments.results",
+                },
+                {"rescue.experiments.simulation"},
+                False,
+            ),
+            "experiments-no-bootstrap": (
+                {"rescue.experiments"},
+                {"rescue.bootstrap", "rescue.demo", "rescue.application.central"},
+                False,
             ),
         }
         expected_layers = {
