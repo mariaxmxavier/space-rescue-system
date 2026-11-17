@@ -41,13 +41,31 @@ visibility, while exact method signatures remain open. No other operations are a
 visibility markers, so it cannot show this UML access decision.
 
 `ShipMarket` is the conceptual grouping for `B3Market`, `Ship`, `ShipAvailability`, `SeatRFQ`,
-`RFQOffer`, `ShipOffer`, and `ShipOfferRevision`. It groups market-side availability, quoting,
+`RFQOffer`, `ShipOffer`, and `ShipOfferRevision`. Its [scoped UML view](namespaces/ShipMarket/class-diagram.mmd)
+and [ER view](namespaces/ShipMarket/entity-relationship-diagram.mmd) split it into six categories
+(Fleet, Availability, Procurement, Quotes, Offers, Inventory), add the `RFQStatus` and
+`QuoteStatus` vocabularies, the append-only `QuoteStatusChange` history and the derived
+`ShipUsage`. UML namespaces visibly group all six categories; ER repeats each category in the
+box label because Mermaid ER has no namespace syntax. Named statuses appear as UML enumerations
+and ER attribute types with their complete allowed values. The code mirrors them:
+`rescue/market/models/<category>/<entity>.py` ([spec 005](../../../../specs/005-market-conformance/spec.md)). It groups market-side availability, quoting,
 and ship offer data; namespace boxes are visual groupings and do not prescribe Python packages
 or runtime service boundaries. `MissionOperations` contains `Mission`, `SeatRequest`, and the
 mission-owned workflow and history concepts. Relationships crossing these UML namespaces remain
 explicit: missions request quotations, ship offers supply mission offer history, and accepted
 RFQ offers can start seat requests. In simulation, the same ShipMarket concepts are run-local
 copies owned by `SimulationRun` and isolated from operational market state.
+
+The scoped ShipMarket diagrams distinguish stored market values from inventory views.
+`B3Market` is saved whole inside the run state by the application transaction store; its
+availability publications, offer revisions and quote status history are append-only.
+`QuoteStatusChange` entries retain insertion order and supplied instants; only an acceptance
+names the request it became. `ShipUsage` is calculated from availability, held quotes and
+mission commitments; it has no independently persisted identity. `CommitmentSource` and
+`CommitmentRequest` are read-only structural protocols satisfied by mission objects and
+requests, not additional stored entities. Their ER boxes have no `PK` or `FK` markers; the
+`requests` relationship describes a structural view. Stored IDs remain references to the
+owning concepts, and no mission-package import is implied.
 
 The mission owns seat requests; each request preserves its immutable ship-offer revision.
 For each offer, the highest `revision_number` is current; `recorded_at` is not used to order revisions.
@@ -134,7 +152,7 @@ Simulation results exist only after completion or the configured horizon stops a
 | Association | `A --> B` | A concept is related to another; not an ownership claim |
 | Composition | `A *-- B` | B is an exclusively owned part of A; diamond is at the whole |
 | Aggregation | `A o-- B` | Shared whole-part association; not currently used |
-| Dependency | `A ..> B` | A uses B; not currently used |
+| Dependency | `A ..> B` | A uses B; scoped `ShipUsage` uses availability, quotes and commitment views |
 | Inheritance | `Parent <\|-- Child` | Child is a kind of Parent; no inheritance is currently specified |
 | Realisation | `Implementation ..\|> Interface` | An implementation fulfils a contract; not currently specified |
 | Relationship role | `: owns`, `: supplies`, `: assesses` | Domain participation, not an access-control permission |
@@ -196,7 +214,8 @@ placeholder operations or fields. Inheritance remains open.
 The access-control example is notation guidance, not an additional rescue requirement.
 
 The ER syntax has no namespace construct. Its section comments and titled diagrams identify the
-same logical `ShipMarket` grouping, while the README legend names the concepts in that group;
+same logical `ShipMarket` grouping; scoped ShipMarket box aliases visibly name its six categories,
+while the README legend names the concepts in that group;
 these labels are editorial aids rather than ER entities or package declarations.
 
 SVGs use the installed Mermaid CLI 11.17.0 with its ELK plugin. Each source selects `layout: elk`,

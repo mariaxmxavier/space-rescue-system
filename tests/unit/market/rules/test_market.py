@@ -2,23 +2,16 @@ import unittest
 from dataclasses import FrozenInstanceError
 from decimal import Decimal
 
-from rescue.market.models import (
-    B3Market,
-    RFQOffer,
-    SeatRFQ,
-    Ship,
-    ShipAvailability,
-    ShipOffer,
-    ShipOfferRevision,
-)
-from rescue.market.rules import (
-    close_quote,
-    hold_quote,
-    publish_availability,
-    publish_offer_revision,
-    transfer_quote,
-    usage,
-)
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.availability.rules import publish_availability
+from rescue.market.models.b3_market import B3Market
+from rescue.market.models.fleet import Ship
+from rescue.market.models.inventory.rules import usage
+from rescue.market.models.offers import ShipOffer, ShipOfferRevision
+from rescue.market.models.offers.rules import publish_offer_revision
+from rescue.market.models.procurement import SeatRFQ
+from rescue.market.models.quotes import RFQOffer
+from rescue.market.models.quotes.rules import close_quote, hold_quote, transfer_quote
 from rescue.mission.models import Mission, SeatRequest
 
 

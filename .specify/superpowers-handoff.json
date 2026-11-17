@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-17T03:28:32Z",
-  "feature_directory": "C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance",
+  "updated_at": "2026-11-17T04:06:44.7472674Z",
+  "feature_directory": "specs/005-market-conformance",
   "source_of_truth": {
     "constitution": ".specify/memory/constitution.md",
-    "spec": "C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance/spec.md",
-    "plan": "C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance/plan.md",
-    "tasks": "C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance/tasks.md"
+    "spec": "specs/005-market-conformance/spec.md",
+    "plan": "specs/005-market-conformance/plan.md",
+    "tasks": "specs/005-market-conformance/tasks.md"
   },
   "supersedes": [
     "speckit.implement"
@@ -19,16 +19,16 @@
     "requesting-code-review",
     "finishing-a-development-branch"
   ],
-  "status": "complete",
+  "status": "executing",
   "blocked_reason": null,
-  "artifact_owner": "claude",
+  "artifact_owner": "codex",
   "review_only_agents": [],
   "notes": null,
-  "last_snapshot_id": "20261117T032831638Z-complete",
+  "last_snapshot_id": "20261117T0406447242282Z-executing",
   "instructions": "Use /speckit-superpowers-bridge (Claude Code) or $speckit-superpowers-bridge (Codex). The bridge orchestrates native Superpowers skills against tasks.md; do not run speckit.implement and do not invoke superpowers:writing-plans / :brainstorming for an active Spec Kit feature.",
   "artifacts_sha256": {
-    "spec.md": "c874d6420c6024e896ee41f748c10621caa95c8445c627f781f29df0b28cbe09",
-    "plan.md": "5718d3d4de232d2745116488c986a86e4bef64d88268d551d2a57c873a86393a",
-    "tasks.md": "b024517cbaabc7abc3da7446385957ea669c98fb44cad834068379a1070b8ebb"
+    "spec.md": "c7cf53ca986df35bc3aef46b1a7292a2a140486dd28762575a213d501deb6577",
+    "plan.md": "4c71160b8e2a18e36561fdb1fa5d3a2892147b66cb5b42ed9de81f24234d09d1",
+    "tasks.md": "dbe6a5d0ad750c2a731b902ba01f83864cb9bf8d30dfca22dd402acee12d5dc1"
   }
 }

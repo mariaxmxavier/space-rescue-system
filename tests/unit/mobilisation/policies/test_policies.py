@@ -3,16 +3,13 @@
 import unittest
 from copy import deepcopy
 
-from rescue.market.models import (
-    B3Market,
-    RFQOffer,
-    SeatRFQ,
-    Ship,
-    ShipAvailability,
-    ShipOffer,
-    ShipOfferRevision,
-)
-from rescue.market.rules import publish_offer_revision
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.b3_market import B3Market
+from rescue.market.models.fleet import Ship
+from rescue.market.models.offers import ShipOffer, ShipOfferRevision
+from rescue.market.models.offers.rules import publish_offer_revision
+from rescue.market.models.procurement import SeatRFQ
+from rescue.market.models.quotes import RFQOffer
 from rescue.mission.models import Mission, SeatRequest
 from rescue.mission.rules import progress
 from rescue.mobilisation.models import Candidate, DecisionContext, MobilisationPolicy

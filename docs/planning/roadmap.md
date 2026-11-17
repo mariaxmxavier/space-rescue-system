@@ -13,7 +13,7 @@ domain-first layout stays as it is (decision recorded 2026-11-16).
 | 002 | Project foundation: pinned toolchain, one check command, declared import contracts, tests at `tests/<type>/<package>/<topic>/`, docs grouped by kind, CI, agent instructions | 001 | `002-project-foundation` | Implemented |
 | 003 | `rescue/adapters/` | 002 | `003-adapters-conformance` | Specified |
 | 004 | `rescue/mission/`: invariant table tests, named outcomes | 002 | `004-mission-conformance` | Specified |
-| 005 | `rescue/market/`: generated capacity tests, drop mission type ref | 002 | `005-market-conformance` | Specified |
+| 005 | `rescue/market/`: six categories, one file per entity, named statuses, quote history, generated capacity tests | 002 | `005-market-conformance` | Implemented; final review pending |
 | 006 | `rescue/mobilisation/`: strategy tests, declared one-way peers | 002 | `006-mobilisation-conformance` | Specified |
 | 007 | `rescue/communication/`: extract delivery classification from central | 002 | `007-communication-conformance` | Specified |
 | 008 | `rescue/application/`: one service per use case, break import cycle, move `RunState` inward | 002, 003, 007 | `008-application-conformance` | Specified |

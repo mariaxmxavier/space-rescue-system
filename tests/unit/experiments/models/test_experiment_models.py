@@ -9,7 +9,9 @@ from rescue.experiments.models import (
     RunBaseline,
     ScriptedResponse,
 )
-from rescue.market.models import B3Market, Ship, ShipAvailability
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.b3_market import B3Market
+from rescue.market.models.fleet import Ship
 from rescue.mission.models import MissionData
 from rescue.mission.rules import register
 

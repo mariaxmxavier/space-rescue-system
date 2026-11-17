@@ -5,7 +5,8 @@ from decimal import Decimal
 
 from rescue.experiments.models import RunSnapshot, SimulationRun
 from rescue.experiments.results import summarize
-from rescue.market.models import B3Market, ShipOffer, ShipOfferRevision
+from rescue.market.models.b3_market import B3Market
+from rescue.market.models.offers import ShipOffer, ShipOfferRevision
 from rescue.mission.models import MissionData, SeatRequest
 from rescue.mission.rules import add_request, apply_outcome, register
 from rescue.values import TransitionContext
