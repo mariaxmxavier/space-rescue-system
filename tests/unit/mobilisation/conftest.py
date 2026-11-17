@@ -7,7 +7,8 @@ from typing import Callable
 
 import pytest
 
-from rescue.market.models import RFQOffer, ShipOfferRevision
+from rescue.market.models.offers import ShipOfferRevision
+from rescue.market.models.quotes import RFQOffer
 from rescue.mission.models import Mission, SeatRequest
 from rescue.mobilisation.models import Candidate, DecisionContext, MobilisationPolicy
 

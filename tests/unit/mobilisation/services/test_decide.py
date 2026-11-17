@@ -8,15 +8,13 @@ from dataclasses import replace
 
 import pytest
 
-from rescue.market.models import (
-    B3Market,
-    RFQOffer,
-    SeatRFQ,
-    Ship,
-    ShipAvailability,
-    ShipOffer,
-)
-from rescue.market.rules import publish_offer_revision
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.b3_market import B3Market
+from rescue.market.models.fleet import Ship
+from rescue.market.models.offers import ShipOffer
+from rescue.market.models.offers.rules import publish_offer_revision
+from rescue.market.models.procurement import SeatRFQ
+from rescue.market.models.quotes import RFQOffer
 from rescue.mobilisation.algorithms import ALLOCATORS
 from rescue.mobilisation.models.algorithm_name import AlgorithmName
 from rescue.mobilisation.models.allocation import Allocation, AllocationResult

@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 from rescue.experiments.models import RunSnapshot, SimulationResult
-from rescue.market.models import RFQOffer, ShipOfferRevision
-from rescue.mission.models import Mission
+from rescue.market.models.offers import ShipOfferRevision
+from rescue.market.models.quotes import RFQOffer
+from rescue.mission.models import HistoryAction, Mission
 from rescue.mission.rules import progress
 from rescue.values import DomainValidationError
 
-_TERMINAL_ACTIONS = frozenset({"accepted", "partially_accepted", "refused", "cancelled", "expired"})
+_TERMINAL_ACTIONS = frozenset(
+    {
+        HistoryAction.ACCEPTED,
+        HistoryAction.PARTIALLY_ACCEPTED,
+        HistoryAction.REFUSED,
+        HistoryAction.CANCELLED,
+        HistoryAction.EXPIRED,
+    }
+)
 
 
 def _revision(mission: Mission, request, snapshot: RunSnapshot) -> ShipOfferRevision | None:
@@ -60,7 +69,7 @@ def summarize(run: RunSnapshot) -> SimulationResult:
     released_seats = 0
     for mission in missions:
         requests_sent += sum(
-            entry.action == "request_created" and entry.recorded_at >= started_at
+            entry.action == HistoryAction.REQUEST_CREATED and entry.recorded_at >= started_at
             for entry in mission.history
         )
         released_seats += sum(

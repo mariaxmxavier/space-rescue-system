@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from rescue.market.models import ShipOfferRevision
+from rescue.market.models.offers import ShipOfferRevision
 from rescue.mobilisation.algorithms.cp_sat.allocate import allocate
 from rescue.mobilisation.models.candidate import Candidate
 from rescue.values import DomainValidationError

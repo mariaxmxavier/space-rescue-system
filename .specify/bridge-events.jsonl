@@ -51,4 +51,14 @@
 {"timestamp":"2026-11-17T04:09:52.3193423Z","action":"guard","status":"allow","feature_directory":"specs/006-mobilisation-conformance","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:executing-plans"}
 
 {"timestamp":"2026-11-17T04:39:50.8396346Z","action":"guard","status":"allow","feature_directory":"specs/006-mobilisation-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:executing-plans"}
+{"timestamp":"2026-11-17T03:12:07Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.clarify"}
+{"timestamp":"2026-11-17T03:41:27.3528929Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.plan"}
+
+{"timestamp":"2026-11-17T03:59:53.8425628Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
+
+{"timestamp":"2026-11-17T04:01:54.8692622Z","action":"handoff","status":"ready","feature_directory":"specs/005-market-conformance","decision":"updated","reason":"actor change claude → codex","actor":"codex","prior_actor":"claude","snapshot_id":"20261117T0401548179908Z-ready"}
+
+{"timestamp":"2026-11-17T04:06:44.8047288Z","action":"handoff","status":"executing","feature_directory":"specs/005-market-conformance","decision":"updated","reason":"","actor":"codex","prior_actor":"codex","snapshot_id":"20261117T0406447242282Z-executing"}
+
+{"timestamp":"2026-11-17T04:06:44.9283553Z","action":"guard","status":"allow","feature_directory":"specs/005-market-conformance","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:executing-plans"}
 

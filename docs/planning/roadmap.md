@@ -13,7 +13,7 @@ domain-first layout stays as it is (decision recorded 2026-11-16).
 | 002 | Project foundation: pinned toolchain, one check command, declared import contracts, tests at `tests/<type>/<package>/<topic>/`, docs grouped by kind, CI, agent instructions | 001 | `002-project-foundation` | Implemented |
 | 003 | `rescue/adapters/` | 002 | `003-adapters-conformance` | Specified |
 | 004 | `rescue/mission/`: invariant table tests, named outcomes | 002 | `004-mission-conformance` | Specified |
-| 005 | `rescue/market/`: generated capacity tests, drop mission type ref | 002 | `005-market-conformance` | Specified |
+| 005 | `rescue/market/`: six categories, one file per entity, named statuses, quote history, generated capacity tests | 002 | `005-market-conformance` | Implemented; final review pending |
 | 006 | `rescue/mobilisation/`: strategy tests, declared one-way peers | 002 | `006-mobilisation-conformance` | Specified |
 | 007 | `rescue/communication/`: extract delivery classification from central | 002 | `007-communication-conformance` | Specified |
 | 008 | `rescue/application/`: one service per use case, break import cycle, move `RunState` inward | 002, 003, 007 | `008-application-conformance` | Specified |
@@ -33,6 +33,8 @@ Worktrees live under `~/worktrees/github.com/mariaxmxavier/space-rescue-system/<
 - Conform in place: fix rule violations inside the package; no cross-package restructure.
 - Each package declares its allowed imports as a contract checked by the 002 tooling.
 - Each package meets its own layer's coverage target and test style (cosmic-python test table).
+- One class or rule per file, in nested folders that mirror the package's UML diagram; every
+  module, class and public function has a What / When called / Why / Diagram docstring (set by 004).
 - Constitution invariants (seat accounting, final outcomes, reliable operations) stay green
   throughout: the full existing test suite passes on every branch.
 

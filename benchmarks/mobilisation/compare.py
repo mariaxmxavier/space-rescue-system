@@ -13,7 +13,8 @@ import sys
 import time
 from collections.abc import Sequence
 
-from rescue.market.models import RFQOffer, ShipOfferRevision
+from rescue.market.models.offers import ShipOfferRevision
+from rescue.market.models.quotes import RFQOffer
 from rescue.mission.models import Mission
 from rescue.mobilisation.algorithms import ALLOCATORS
 from rescue.mobilisation.models import AlgorithmName, Candidate, DecisionContext

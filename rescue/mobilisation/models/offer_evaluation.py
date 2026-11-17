@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from rescue.market.models import RFQOffer, ShipOfferRevision
+from rescue.market.models.offers import ShipOfferRevision
+from rescue.market.models.quotes import RFQOffer
 from rescue.mobilisation.models.policy import _name
 from rescue.values import (
     DomainValidationError,

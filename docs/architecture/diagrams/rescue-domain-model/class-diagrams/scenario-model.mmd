@@ -87,26 +87,62 @@ classDiagram
             -integer people_count
             -datetime created_at
         }
+        class MissionData {
+            -string mission_id
+            -string station_name
+            -integer people_count
+            -datetime created_at
+        }
         %% Shared Mission semantics: people_count is fixed after registration.
         class SeatRequest {
             -string request_id
             -string command_id
+            -string mission_id
+            -string ship_id
             -integer requested_seats
             -integer confirmed_seats
-            -string outcome
+            -RequestOutcome outcome
             -datetime submitted_at
             -datetime response_received_at
             -datetime response_deadline
             -datetime closed_at
+            -string quote_id
+            -string revision_id
+            -string decision_id
+        }
+        class RequestTiming {
+            -datetime submitted_at
+            -datetime response_received_at
+            -decimal waiting_seconds
+            -decimal response_elapsed_seconds
         }
         class RequestHistoryEntry {
             -string event_id
             -integer mission_sequence
             -datetime recorded_at
-            -string action
+            -HistoryAction action
             -integer confirmed_seats_delta
             -integer pending_seats_delta
             -string reason
+            -string message_id
+        }
+        class RequestOutcome {
+            <<enumeration>>
+            pending
+            accepted
+            partially_accepted
+            refused
+            cancelled
+            expired
+        }
+        class HistoryAction {
+            <<enumeration>>
+            request_created
+            accepted
+            partially_accepted
+            refused
+            cancelled
+            expired
         }
         class MobilisationPolicy {
             -string policy_id
@@ -172,6 +208,11 @@ classDiagram
     note for Mission "Owns request transitions and mission invariants"
     SimulationRun "1" *-- "0..1" SimulationResult : produces at finish
     Mission "1" *-- "0..*" SeatRequest : owns
+    Mission "1" *-- "0..*" RequestHistoryEntry : records changes
+    MissionData ..> Mission : registers
+    SeatRequest "1" --> "1" RequestTiming : derives
+    SeatRequest ..> RequestOutcome : outcome
+    RequestHistoryEntry ..> HistoryAction : action
     note for SeatRequest "Retains command_id so a repeated request-creation command can be recognized; command scope and payload/collision semantics remain open"
     B3Market "1" --> "0..*" ShipAvailability : tracks copied capacity
     Ship "1" --> "0..*" ShipAvailability : reports snapshot

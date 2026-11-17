@@ -37,22 +37,58 @@ classDiagram
     class SeatRequest {
         -string request_id
         -string command_id
+        -string mission_id
+        -string ship_id
         -integer requested_seats
         -integer confirmed_seats
-        -string outcome
+        -RequestOutcome outcome
         -datetime submitted_at
         -datetime response_received_at
         -datetime response_deadline
         -datetime closed_at
+        -string quote_id
+        -string revision_id
+        -string decision_id
     }
     class RequestHistoryEntry {
         -string event_id
         -integer mission_sequence
         -datetime recorded_at
-        -string action
+        -HistoryAction action
         -integer confirmed_seats_delta
         -integer pending_seats_delta
         -string reason
+        -string message_id
+    }
+    class RequestTiming {
+        -datetime submitted_at
+        -datetime response_received_at
+        -decimal waiting_seconds
+        -decimal response_elapsed_seconds
+    }
+    class MissionData {
+        -string mission_id
+        -string station_name
+        -integer people_count
+        -datetime created_at
+    }
+    class RequestOutcome {
+        <<enumeration>>
+        pending
+        accepted
+        partially_accepted
+        refused
+        cancelled
+        expired
+    }
+    class HistoryAction {
+        <<enumeration>>
+        request_created
+        accepted
+        partially_accepted
+        refused
+        cancelled
+        expired
     }
     class MobilisationPolicy {
         -string policy_id
@@ -61,4 +97,7 @@ classDiagram
         -data selection_criteria
     }
     Mission "1" *-- "0..*" SeatRequest : owns
+    Mission "1" *-- "0..*" RequestHistoryEntry : records changes
+    MissionData ..> Mission : registers
+    SeatRequest "1" --> "1" RequestTiming : derives
     note for Mission "External interactions: Mission/request basis may refer to ShipMarket offers; requests correlate with Communication messages."

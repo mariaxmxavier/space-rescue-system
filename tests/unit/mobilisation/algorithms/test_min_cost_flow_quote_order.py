@@ -1,6 +1,7 @@
 """Min-cost flow decides held quotes before open ships, whatever their arrival times."""
 
-from rescue.market.models import RFQOffer, ShipOfferRevision
+from rescue.market.models.offers import ShipOfferRevision
+from rescue.market.models.quotes import RFQOffer
 from rescue.mobilisation.algorithms.min_cost_flow.allocate import allocate
 from rescue.mobilisation.models.candidate import Candidate
 

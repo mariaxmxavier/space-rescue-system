@@ -11,7 +11,7 @@ from rescue.application.central import RescueCentral
 from rescue.application.ports import Clock, IdSource, TransactionStore
 from rescue.application.state import RunState
 from rescue.experiments.models import RescueScenario
-from rescue.market.models import B3Market
+from rescue.market.models.b3_market import B3Market
 from rescue.mobilisation.models import MobilisationPolicy
 from rescue.values import DomainValidationError, Id, Instant, normalize_id
 

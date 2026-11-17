@@ -38,6 +38,7 @@ show_missing = true
 [tool.importlinter]
 root_package = "rescue"
 include_external_packages = true
+exclude_type_checking_imports = false
 
 [[tool.importlinter.contracts]]
 name = "domain-outward: Domain packages do not import application, adapters or bootstrap"
@@ -81,6 +82,13 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "market-standalone: Market imports no other rescue package except rescue.values"
+type = "forbidden"
+source_modules = ["rescue.market"]
+forbidden_modules = ["rescue.*"]
+ignore_imports = ["rescue.market.** -> rescue.values"]
+
+[[tool.importlinter.contracts]]
 name = "application-no-memory: Application does not import the memory adapter"
 type = "forbidden"
 source_modules = ["rescue.application"]
@@ -92,6 +100,21 @@ name = "mobilisation-peers-one-way: Mission and market do not import mobilisatio
 type = "forbidden"
 source_modules = ["rescue.mission", "rescue.market"]
 forbidden_modules = ["rescue.mobilisation"]
+
+[[tool.importlinter.contracts]]
+name = "mission-isolated: Mission imports only rescue.values and the standard library"
+type = "forbidden"
+source_modules = ["rescue.mission"]
+forbidden_modules = [
+    "rescue.market",
+    "rescue.mobilisation",
+    "rescue.communication",
+    "rescue.experiments",
+    "rescue.application",
+    "rescue.adapters",
+    "rescue.bootstrap",
+    "rescue.demo",
+]
 
 [[tool.importlinter.contracts]]
 name = "mobilisation-allowed-imports: Mobilisation imports no communication, experiments or outer layers"
@@ -121,3 +144,11 @@ type = "forbidden"
 source_modules = ["rescue.mobilisation.models", "rescue.mobilisation.services"]
 forbidden_modules = ["ortools"]
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "mission-layers: Mission rules build on models, never the reverse"
+type = "layers"
+layers = [
+    "rescue.mission.rules",
+    "rescue.mission.models",
+]

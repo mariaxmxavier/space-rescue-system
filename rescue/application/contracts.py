@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from rescue.values import Id, Instant
 
 if TYPE_CHECKING:
-    from rescue.market.models import RFQOffer, ShipAvailability, ShipOfferRevision
+    from rescue.market.models.availability import ShipAvailability
+    from rescue.market.models.offers import ShipOfferRevision
+    from rescue.market.models.quotes import RFQOffer
 
 T = TypeVar("T")
 

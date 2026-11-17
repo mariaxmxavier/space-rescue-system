@@ -68,3 +68,4 @@ Expected:
 - Demo: `uv run python -m rescue.demo` stdout is 93 bytes and byte-identical (`cmp`) to the T001 baseline captured at the merge base `250084d`. A fresh `main` checkout was not compared; `main` has moved past the merge base.
 - Changes outside `rescue/mobilisation/`: `rescue/application/central.py`, one import line. The modules `models.py` and `policies.py` were replaced by packages and removed.
 - Not done: no commits, pushes or pull requests, because the maintainer has not asked for them. The Codex job did not run (usage limit); the implementation was done by Claude subagents, and some documentation was finished by the orchestrator after the subagents hit the account limit.
+- After merging `main` (777919b, which carries the mission and market conformance work): `make check-all` exit 0; 957 tests passed; import contracts 10 kept, 0 broken; demo output byte-identical to `main` (93 bytes), checked against a `git archive` snapshot of `main`.

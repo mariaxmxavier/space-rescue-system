@@ -4,8 +4,13 @@ import ast
 import contextlib
 import io
 import logging
+import shutil
+import subprocess
+import sys
+import tempfile
 import tomllib
 import unittest
+from importlib.util import resolve_name
 from pathlib import Path
 
 from importlinter.cli import lint_imports
@@ -91,7 +96,102 @@ def _imports(tree: ast.Module) -> tuple[tuple[ast.AST, str], ...]:
     return tuple(found)
 
 
+def _forbidden_market_imports(source: str, package: str) -> tuple[str, ...]:
+    """Check every import, including guarded imports, against the market allowlist."""
+    modules = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            module = resolve_name("." * node.level + (node.module or ""), package)
+            if module == "rescue":
+                modules.extend(f"rescue.{alias.name}" for alias in node.names)
+            else:
+                modules.append(module)
+    return tuple(
+        module
+        for module in modules
+        if module != "rescue.values"
+        and module != "rescue.market"
+        and not module.startswith("rescue.market.")
+        and module.split(".")[0] not in sys.stdlib_module_names
+    )
+
+
 class ArchitectureBoundaryTests(unittest.TestCase):
+    def test_market_imports_only_itself_values_and_the_standard_library(self):
+        for path in _python_files("market"):
+            package = ".".join(path.parent.relative_to(REPOSITORY_ROOT).parts)
+            with self.subTest(file=_relative(path)):
+                self.assertEqual(
+                    _forbidden_market_imports(path.read_text(encoding="utf-8"), package),
+                    (),
+                    f"{_relative(path)} imports a dependency outside the market allowlist",
+                )
+
+    def test_market_allowlist_covers_guarded_relative_and_multiple_imports(self):
+        probes = [
+            ("from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n import pytest", ("pytest",)),
+            ("import decimal, rescue.future_capability", ("rescue.future_capability",)),
+            ("from rescue import values, future_capability", ("rescue.future_capability",)),
+            ("from ....mission.models import Mission", ("rescue.mission.models",)),
+            ("from rescue import *", ("rescue.*",)),
+            ("import rescue", ("rescue",)),
+            ("from rescue.values import TimePoint", ()),
+            ("from rescue import values", ()),
+            ("import rescue.market.models", ()),
+            ("from ..fleet import Ship", ()),
+            ("from . import rules", ()),
+            ("from decimal import Decimal\nimport math, sys", ()),
+        ]
+        for source, forbidden in probes:
+            with self.subTest(source=source):
+                self.assertEqual(
+                    _forbidden_market_imports(source, "rescue.market.models.quotes"), forbidden
+                )
+
+    def test_market_contract_rejects_type_only_and_new_sibling_dependencies(self):
+        probes = {
+            "mission type reference": (
+                "from typing import TYPE_CHECKING\n"
+                "if TYPE_CHECKING:\n"
+                "    from rescue.mission.models import Mission\n"
+                "def inspect(mission: 'Mission') -> None: ...\n",
+                "rescue.mission.models",
+            ),
+            "new sibling": ("import rescue.future_capability\n", "rescue.future_capability"),
+        }
+        for label, (source, dependency) in probes.items():
+            with self.subTest(import_kind=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                shutil.copytree(
+                    REPOSITORY_ROOT / "rescue",
+                    root / "rescue",
+                    ignore=shutil.ignore_patterns("__pycache__"),
+                )
+                shutil.copyfile(REPOSITORY_ROOT / "pyproject.toml", root / "pyproject.toml")
+                (root / "rescue" / "future_capability.py").write_text("", encoding="utf-8")
+                (root / "rescue" / "market" / "boundary_probe.py").write_text(
+                    source, encoding="utf-8"
+                )
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-c",
+                        "from importlinter.cli import lint_imports; "
+                        "raise SystemExit(lint_imports(config_filename='pyproject.toml', "
+                        "no_cache=True, no_logo=True))",
+                    ],
+                    cwd=root,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn("market-standalone", result.stdout)
+                self.assertIn("BROKEN", result.stdout)
+                self.assertIn(dependency, result.stdout)
+
     def test_domain_capabilities_do_not_read_environment_or_use_io_clocks_or_network(self):
         for package in DOMAIN_PACKAGES:
             for path in _python_files(package):
@@ -146,7 +246,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 no_logo=True,
             )
         self.assertEqual(exit_code, 0, output.getvalue())
-        self.assertIn("Contracts: 7 kept, 0 broken.", output.getvalue())
+        self.assertIn("Contracts: 10 kept, 0 broken.", output.getvalue())
 
     def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
@@ -174,10 +274,29 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 False,
             ),
             "domain-io": (domain_sources, io_modules, False),
+            "market-standalone": (
+                {"rescue.market"},
+                {"rescue.*"},
+                False,
+            ),
             "application-no-memory": ({"rescue.application"}, {"rescue.adapters.memory"}, True),
             "mobilisation-peers-one-way": (
                 {"rescue.mission", "rescue.market"},
                 {"rescue.mobilisation"},
+                False,
+            ),
+            "mission-isolated": (
+                {"rescue.mission"},
+                {
+                    "rescue.market",
+                    "rescue.mobilisation",
+                    "rescue.communication",
+                    "rescue.experiments",
+                    "rescue.application",
+                    "rescue.adapters",
+                    "rescue.bootstrap",
+                    "rescue.demo",
+                },
                 False,
             ),
             "mobilisation-allowed-imports": (
@@ -203,13 +322,19 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 "rescue.mobilisation.services",
                 "rescue.mobilisation.algorithms",
                 "rescue.mobilisation.models",
-            ]
+            ],
+            "mission-layers": ["rescue.mission.rules", "rescue.mission.models"],
         }
         declared = {}
         declared_layers = {}
         for contract in contracts:
             contract_id = contract["name"].split(":", 1)[0]
-            self.assertNotIn("ignore_imports", contract, contract_id)
+            if contract_id == "market-standalone":
+                self.assertEqual(
+                    contract.get("ignore_imports"), ["rescue.market.** -> rescue.values"]
+                )
+            else:
+                self.assertNotIn("ignore_imports", contract, contract_id)
             if contract["type"] == "layers":
                 declared_layers[contract_id] = contract["layers"]
                 continue

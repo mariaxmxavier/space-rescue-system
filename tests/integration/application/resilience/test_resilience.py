@@ -17,7 +17,8 @@ from rescue.experiments.models import (
     ScriptedResponse,
 )
 from rescue.experiments.runner import simulate
-from rescue.market.models import ShipAvailability, ShipOfferRevision
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.offers import ShipOfferRevision
 from rescue.mobilisation.models import MobilisationPolicy
 
 

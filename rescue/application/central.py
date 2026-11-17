@@ -25,21 +25,22 @@ from rescue.application.contracts import (
 from rescue.application.ports import Clock, IdSource, TransactionStore
 from rescue.application.state import RunState
 from rescue.communication.models import CommunicationMessage, MessageDelivery
-from rescue.market import rules as market_rules
-from rescue.market.models import (
-    RFQOffer,
-    SeatRFQ,
-    Ship,
-    ShipAvailability,
-    ShipOffer,
-    ShipOfferRevision,
-)
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.availability.rules import latest_availability, publish_availability
+from rescue.market.models.fleet import Ship
+from rescue.market.models.inventory.rules import usage
+from rescue.market.models.offers import ShipOffer, ShipOfferRevision
+from rescue.market.models.offers.rules import publish_offer_revision
+from rescue.market.models.procurement import SeatRFQ
+from rescue.market.models.quotes import RFQOffer
+from rescue.market.models.quotes.rules import close_quote, hold_quote, transfer_quote
 from rescue.mission import rules as mission_rules
 from rescue.mission.models import (
     Mission,
     MissionData,
     MissionProgress,
     RequestHistoryEntry,
+    RequestOutcome,
     SeatRequest,
 )
 from rescue.mobilisation.models import (
@@ -140,23 +141,30 @@ def _request_capacity_reason(
     if not revision.available:
         return "unavailable"
     try:
-        latest = market_rules.latest_availability(state.market, ship_id)
+        latest = latest_availability(state.market, ship_id)
     except DomainValidationError:
         return "unknown_ship"
     if latest is None or not latest.available:
         return "unavailable"
     try:
-        inventory = market_rules.usage(state.market, state.missions, ship_id)
+        inventory = usage(state.market, state.missions, ship_id)
     except DomainValidationError:
         return "invalid_input"
     if inventory.shortfall or quantity > inventory.free:
         return "insufficient_capacity"
     revision_usage = sum(
-        request.requested_seats if request.outcome == "pending" else request.confirmed_seats
+        request.requested_seats
+        if request.outcome == RequestOutcome.PENDING
+        else request.confirmed_seats
         for current_mission in state.missions
         for request in current_mission.requests
         if request.revision_id == revision_id
-        and request.outcome in {"pending", "accepted", "partially_accepted"}
+        and request.outcome
+        in {
+            RequestOutcome.PENDING,
+            RequestOutcome.ACCEPTED,
+            RequestOutcome.PARTIALLY_ACCEPTED,
+        }
     )
     if quantity > max(0, revision.capacity - revision_usage):
         return "insufficient_capacity"
@@ -325,7 +333,7 @@ def _create_request(
             ship_id=ship_id,
             requested_seats=requested_seats,
             confirmed_seats=0,
-            outcome="pending",
+            outcome=RequestOutcome.PENDING,
             submitted_at=instant,
             response_deadline=deadline,
             quote_id=None if quote is None else quote.offer_id,
@@ -340,7 +348,7 @@ def _create_request(
         updated_mission = mission_rules.add_request(mission, request, context)
         updated_state = _set_mission(state, updated_mission)
         if quote is not None:
-            updated_market = market_rules.transfer_quote(
+            updated_market = transfer_quote(
                 updated_state.market, quote.offer_id, request.request_id, instant
             )
             updated_state = replace(updated_state, market=updated_market)
@@ -399,7 +407,7 @@ class RescueCentral:
             try:
                 if not isinstance(command.availability, ShipAvailability):
                     raise DomainValidationError("availability must be a ShipAvailability value")
-                market = market_rules.publish_availability(state.market, command.availability)
+                market = publish_availability(state.market, command.availability)
                 if market == state.market:
                     status = "replayed"
                 else:
@@ -437,7 +445,7 @@ class RescueCentral:
                             if offer.offer_id == offer_id and existing == revision:
                                 return state, _result("replayed", offer)
                             return state, _result("rejected", reason="revision_conflict")
-                market = market_rules.publish_offer_revision(
+                market = publish_offer_revision(
                     state.market,
                     offer_id,
                     revision,
@@ -471,10 +479,10 @@ class RescueCentral:
                 market = state.market
                 created: list[SeatRFQ] = []
                 for ship in sorted(market.ships, key=lambda item: item.ship_id):
-                    latest = market_rules.latest_availability(market, ship.ship_id)
+                    latest = latest_availability(market, ship.ship_id)
                     if latest is None or not latest.available:
                         continue
-                    inventory = market_rules.usage(market, state.missions, ship.ship_id)
+                    inventory = usage(market, state.missions, ship.ship_id)
                     if inventory.shortfall or inventory.free == 0:
                         continue
                     requested_seats = min(outstanding, inventory.free)
@@ -510,7 +518,7 @@ class RescueCentral:
                 if rfq is None:
                     return state, _result("rejected", reason="invalid_input")
                 now = normalize_instant(command.now)
-                market = market_rules.hold_quote(state.market, state.missions, quote, now)
+                market = hold_quote(state.market, state.missions, quote, now)
                 return replace(state, market=market), _result("applied", quote)
             except (DomainValidationError, TypeError) as error:
                 return state, _result("rejected", reason=_reason(error))
@@ -545,9 +553,7 @@ class RescueCentral:
                 if rfq is None or rfq.mission_id != mission_id:
                     return state, _result("rejected", reason="identity_conflict")
                 if quote.expires_at <= normalize_instant(command.now):
-                    expired_market = market_rules.close_quote(
-                        state.market, quote_id, "expired", command.now
-                    )
+                    expired_market = close_quote(state.market, quote_id, "expired", command.now)
                     return replace(state, market=expired_market), _result(
                         "rejected", reason="expired_quote"
                     )
@@ -605,7 +611,7 @@ class RescueCentral:
                     return state, _result("rejected", reason="expired_quote")
                 if quote.status != "held":
                     return state, _result("rejected", reason="closed_request")
-                market = market_rules.close_quote(state.market, quote_id, "rejected", command.now)
+                market = close_quote(state.market, quote_id, "rejected", command.now)
                 closed = _find_quote(replace(state, market=market), quote_id)
                 return replace(state, market=market), _result("applied", closed)
             except (DomainValidationError, TypeError) as error:
@@ -621,9 +627,7 @@ class RescueCentral:
                 expired_ids: list[str] = []
                 for quote in tuple(market.quotes):
                     if quote.status == "held" and quote.expires_at <= instant:
-                        market = market_rules.close_quote(
-                            market, quote.offer_id, "expired", instant
-                        )
+                        market = close_quote(market, quote.offer_id, "expired", instant)
                         expired_ids.append(quote.offer_id)
                 updated_rfqs = []
                 for rfq in market.rfqs:
@@ -645,7 +649,11 @@ class RescueCentral:
 
     def cancel_request(self, command: CancelRequest) -> Result[RequestSnapshot]:
         return self._close_request(
-            command.mission_id, command.request_id, command.now, "cancelled", command.reason
+            command.mission_id,
+            command.request_id,
+            command.now,
+            RequestOutcome.CANCELLED,
+            command.reason,
         )
 
     def expire_request(self, command: ExpireRequest) -> Result[RequestSnapshot]:
@@ -658,7 +666,7 @@ class RescueCentral:
             )
             if request is None:
                 return state, _result("rejected", reason="unknown_request")
-            if request.outcome != "pending":
+            if request.outcome != RequestOutcome.PENDING:
                 return state, _result("ignored", request, "closed_request")
             try:
                 instant = normalize_instant(command.now)
@@ -667,7 +675,7 @@ class RescueCentral:
                 updated = mission_rules.apply_outcome(
                     mission,
                     request.request_id,
-                    "expired",
+                    RequestOutcome.EXPIRED,
                     0,
                     TransitionContext(self.id_source.next_id("event"), instant, "request_expired"),
                 )
@@ -693,7 +701,7 @@ class RescueCentral:
             )
             if request is None:
                 return state, _result("rejected", reason="unknown_request")
-            if request.outcome != "pending":
+            if request.outcome != RequestOutcome.PENDING:
                 return state, _result("ignored", request, "closed_request")
             try:
                 updated = mission_rules.apply_outcome(
@@ -842,9 +850,9 @@ class RescueCentral:
                     return publish_delivery(state, "lost", "transport_loss"), _result(
                         "applied", request
                     )
-                if request.outcome != "pending":
+                if request.outcome != RequestOutcome.PENDING:
                     if (
-                        request.outcome == "expired"
+                        request.outcome == RequestOutcome.EXPIRED
                         and request.response_deadline is not None
                         and received_at >= request.response_deadline
                     ):
@@ -861,7 +869,7 @@ class RescueCentral:
                     expired = mission_rules.apply_outcome(
                         mission,
                         request_id,
-                        "expired",
+                        RequestOutcome.EXPIRED,
                         0,
                         TransitionContext(
                             self.id_source.next_id("event"),
@@ -1059,15 +1067,20 @@ class RescueCentral:
                 candidates: list[Candidate] = []
                 for offer in sorted(offers, key=lambda item: item.ship_id):
                     revision = offer.current_revision
-                    inventory = market_rules.usage(state.market, state.missions, offer.ship_id)
+                    inventory = usage(state.market, state.missions, offer.ship_id)
                     revision_used = sum(
                         request.requested_seats
-                        if request.outcome == "pending"
+                        if request.outcome == RequestOutcome.PENDING
                         else request.confirmed_seats
                         for current_mission in state.missions
                         for request in current_mission.requests
                         if request.revision_id == revision.revision_id
-                        and request.outcome in {"pending", "accepted", "partially_accepted"}
+                        and request.outcome
+                        in {
+                            RequestOutcome.PENDING,
+                            RequestOutcome.ACCEPTED,
+                            RequestOutcome.PARTIALLY_ACCEPTED,
+                        }
                     )
                     free_for_revision = max(0, revision.capacity - revision_used)
                     candidates.append(

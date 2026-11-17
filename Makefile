@@ -18,7 +18,7 @@ check-architecture:
 test:
 	uv run pytest --cov=rescue --cov-report=term-missing
 	@echo == rescue/mission
-	uv run coverage report --include="rescue/mission/*"
+	uv run coverage report --include="rescue/mission/*" --fail-under=100
 	@echo == rescue/market
 	uv run coverage report --include="rescue/market/*"
 	@echo == rescue/mobilisation
