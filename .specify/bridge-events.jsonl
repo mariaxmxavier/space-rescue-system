@@ -113,3 +113,17 @@
 
 {"event":"artifact_drift_detected","timestamp":"2026-11-17T12:30:41.8902930Z","actor":"codex","feature_directory":"specs/011-http-api","drifted_artifacts":[{"path":"tasks.md","old_sha256":"4c738aabec10097e06157337dcae3dcea9f2e4603bdf17932d4f3ab3721e5bac","new_sha256":"a6d15cd02a65d3ae2b58ff54082f97926ea5836473fd8701f6306d35763e8f92"}]}
 
+{"timestamp":"2026-11-17T12:48:24.9617859Z","action":"guard","status":"allow","feature_directory":"specs/011-http-api","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.plan"}
+
+{"timestamp":"2026-11-17T12:51:41.4277541Z","action":"guard","status":"allow","feature_directory":"specs/011-http-api","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.plan"}
+
+{"timestamp":"2026-11-17T12:57:05.9193376Z","action":"guard","status":"allow","feature_directory":"specs/011-http-api","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
+
+{"timestamp":"2026-11-17T12:59:17.2766597Z","action":"handoff","status":"ready","feature_directory":"specs/013-web-app","decision":"updated","reason":"","actor":"codex","prior_actor":"codex","snapshot_id":"20261117T1259172353792Z-ready"}
+
+{"timestamp":"2026-11-17T13:00:51.6654372Z","action":"handoff","status":"executing","feature_directory":"specs/013-web-app","decision":"updated","reason":"","actor":"codex","prior_actor":"codex","snapshot_id":"20261117T1300516095787Z-executing"}
+
+{"timestamp":"2026-11-17T13:00:51.7818570Z","action":"guard","status":"allow","feature_directory":"specs/013-web-app","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:executing-plans"}
+
+{"timestamp":"2026-11-17T13:01:29.3946560Z","action":"guard","status":"allow","feature_directory":"specs/013-web-app","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
+

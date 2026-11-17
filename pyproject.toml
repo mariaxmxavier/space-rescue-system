@@ -16,6 +16,8 @@ dev = [
     "pytest-cov==7.1.0",
     "coverage==7.17.3",
     "import-linter==2.16",
+    "pytest-playwright==0.10.0",
+    "playwright==1.65.2",
 ]
 
 [tool.uv]

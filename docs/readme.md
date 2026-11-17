@@ -27,8 +27,11 @@
 
 ## Specifications and Models
 
+- [Web app specification](../specs/013-web-app/spec.md): complete browser operation and inspection scope; [design inputs](../specs/013-web-app/design-inputs.md) and [quality checklist](../specs/013-web-app/checklists/requirements.md).
+
 - [Rescue domain specification](../specs/001-rescue-domain-model/spec.md): core rules and all six extensions.
 - [Application specification](../specs/008-application-conformance/spec.md): focused use cases, nested files, explanations, and diagram links.
+- Composed mission simulations: [specification](../specs/012-simulations/spec.md), [quality checklist](../specs/012-simulations/checklists/requirements.md), [plan](../specs/012-simulations/plan.md), [research](../specs/012-simulations/research.md), [data model](../specs/012-simulations/data-model.md), [CLI/HTTP contract](../specs/012-simulations/contracts/simulation.md), [full timeline](../specs/012-simulations/contracts/timeline.md), [execution diagram](../specs/012-simulations/design-diagrams.md), [quickstart](../specs/012-simulations/quickstart.md), [parallel tasks](../specs/012-simulations/tasks.md), and [SDD dispatch guide](../specs/012-simulations/execution-handoff.md).
 - [Domain model diagrams](architecture/diagrams/rescue-domain-model/README.md): Mermaid sources and rendered views.
 - [Communication specification](../specs/007-communication-conformance/spec.md): safe delivery decisions, explicit order and maintainability requirements.
 - [Communication research](../specs/007-communication-conformance/research.md): B3, exchange protocols, matching algorithms and ordering alternatives.
@@ -61,4 +64,5 @@ Each rule of `rescue/market/` has its own file and a document beside it ([spec 0
 # Design drafts
 
 - [Rescue HTTP API design](superpowers/specs/2026-11-17-rescue-http-api-design.md)
+- Scripted rescue simulations: [short design](superpowers/specs/2026-11-17-rescue-simulations-design.md) and [flow diagram](superpowers/specs/2026-11-17-rescue-simulations-design-diagram.md).
 

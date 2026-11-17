@@ -20,7 +20,7 @@ domain-first layout stays as it is (decision recorded 2026-11-16).
 | 009 | `rescue/experiments/`: inject run factory, one class or step per file, diagrams match code | 002 | `009-experiments-conformance` | Merged to main |
 | 010 | Root modules: `values.py` core, `bootstrap.py` + `demo.py` entrypoints, full layer contract | 002, 003, 008, 009 | `010-root-modules-conformance` | Optional |
 | 011 | HTTP API (FastAPI) entrypoint over the application services; JSON in/out, browser-callable | 008 | `011-http-api` | Implemented |
-| 012 | `simulations/`: scripted scenario runs that drive the system through the 011 HTTP API | 011 | `012-simulations` | Planned |
+| 012 | `simulations/`: composed single-mission timelines through the 011 HTTP API, combining twelve situations and smaller profiles | 011 | `012-simulations` | Planned; parallel tasks and SDD preparation drafted |
 | 013 | Browser app (HTML, CSS, JavaScript) on top of the 011 HTTP API | 011 | `013-web-app` | Planned |
 
 Decisions (2026-11-16): conform in place; ports move to `adapters/` as ABCs (003, option B).
