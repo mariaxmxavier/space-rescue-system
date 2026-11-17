@@ -37,14 +37,25 @@ erDiagram
         string scenario_id PK
         integer revision
         string name
-        data baseline
-        data response_rules
-        data availability_changes
         number time_horizon_seconds
         integer seed
+        integer event_budget
+    }
+    RunBaseline {
+        data command_index
+        data message_index
+        data delivery_index
+        data decision_index
+    }
+    ScriptedResponse {
+        string ship_id
+        integer request_ordinal
+        string outcome
+        integer confirmed_seats "optional"
     }
     CommunicationProfile {
         string profile_id PK
+        string ship_id
         number outbound_delay_seconds
         number decision_delay_seconds
         number return_delay_seconds
@@ -54,6 +65,10 @@ erDiagram
     }
     SimulationRun {
         string run_id PK
+        string scenario_id
+        integer scenario_revision
+        string policy_id
+        integer policy_revision
         datetime started_at
         datetime finished_at
         string status
@@ -66,6 +81,15 @@ erDiagram
         integer released_seats
         number confirmation_elapsed_seconds "optional"
         number latest_arrival_estimate_seconds "optional"
+    }
+    RunSnapshot {
+        data run
+        data missions
+        data market
+        data command_index
+        data message_index
+        data delivery_index
+        data decision_index
     }
     %% Logical group Communication: messages and delivery attempts.
     CommunicationMessage {
@@ -185,6 +209,12 @@ erDiagram
         data selection_criteria
     }
     RescueScenario ||..o{ CommunicationProfile : "configures"
+    RescueScenario ||..|| RunBaseline : "starts from"
+    RescueScenario ||..o{ ScriptedResponse : "scripts"
+    RescueScenario }o..o{ ShipAvailability : "schedules availability changes"
+    RunBaseline ||..|{ Mission : "holds baseline missions"
+    RunBaseline ||..|| B3Market : "holds baseline market"
+    RunSnapshot ||..|| SimulationRun : "wraps"
     CommunicationProfile }o..|| Ship : "targets baseline ship"
     SimulationRun }o..|| RescueScenario : "uses revision"
     SimulationRun }o..|| MobilisationPolicy : "compares revision"

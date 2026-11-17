@@ -33,14 +33,30 @@ classDiagram
             -string scenario_id
             -integer revision
             -string name
-            -data baseline
-            -data response_rules
-            -data availability_changes
+            -RunBaseline baseline
+            -ScriptedResponse response_rules
+            -ShipAvailability availability_changes
             -number time_horizon_seconds
             -integer seed
+            -integer event_budget
+        }
+        class RunBaseline {
+            -Mission missions
+            -B3Market market
+            -data command_index
+            -data message_index
+            -data delivery_index
+            -data decision_index
+        }
+        class ScriptedResponse {
+            -string ship_id
+            -integer request_ordinal
+            -string outcome
+            -integer confirmed_seats
         }
         class CommunicationProfile {
             -string profile_id
+            -string ship_id
             -number outbound_delay_seconds
             -number decision_delay_seconds
             -number return_delay_seconds
@@ -50,9 +66,22 @@ classDiagram
         }
         class SimulationRun {
             -string run_id
+            -string scenario_id
+            -integer scenario_revision
+            -string policy_id
+            -integer policy_revision
             -datetime started_at
             -datetime finished_at
             -string status
+        }
+        class RunSnapshot {
+            -SimulationRun run
+            -Mission missions
+            -B3Market market
+            -data command_index
+            -data message_index
+            -data delivery_index
+            -data decision_index
         }
         class SimulationResult {
             -boolean completed
@@ -199,6 +228,11 @@ classDiagram
         }
     }
     RescueScenario "1" *-- "0..*" CommunicationProfile : configures
+    RescueScenario "1" *-- "1" RunBaseline : starts from
+    RescueScenario "1" *-- "0..*" ScriptedResponse : scripts
+    RunBaseline "1" --> "1..*" Mission : holds baseline missions
+    RunBaseline "1" --> "1" B3Market : holds baseline market
+    RunSnapshot "1" --> "1" SimulationRun : wraps
     CommunicationProfile "0..*" --> "1" Ship : targets baseline ship
     SimulationRun "0..*" --> "1" RescueScenario : uses revision
     SimulationRun "0..*" --> "1" MobilisationPolicy : compares revision
