@@ -30,7 +30,7 @@ Expected:
 ## Solver dependency setup (2026-11-17)
 
 - Added and locked `ortools==9.15.6755` with uv 0.13.8. A fresh GIL-enabled environment selected from `.python-version` (`3.14.10+gil`) installed all 24 locked packages with `uv sync --locked`.
-- Verified `ortools==9.15.6755` and imports of `SimpleMinCostFlow`, `CpModel`, `CpSolver` and `KnapsackSolver` on CPython 3.14.10 (`Py_GIL_DISABLED=0`). The official release provides the CPython 3.14 Windows x86-64 wheel; this machine's earlier free-threaded venv had no compatible Windows wheel, so `.python-version` now selects the cross-platform GIL build. See [research R7](research.md#r7-or-tools-version-and-apis).
+- Verified `ortools==9.15.6755` and imports of `SimpleMinCostFlow`, `CpModel`, `CpSolver` and `KnapsackSolver` on CPython 3.14.10 (`Py_GIL_DISABLED=0`). The official release provides the CPython 3.14 Windows x86-64 wheel; this machine's earlier free-threaded venv had no compatible Windows wheel, so `.python-version` once selected `3.14.10+gil`. That form cannot be downloaded on Linux, so CI failed at its install step. The committed pin is `3.14.10`, which CI can download; on a machine whose first `3.14` on `PATH` is free-threaded, set `UV_PYTHON` to a GIL interpreter (`uv python find 3.14.10+gil`). See [research R7](research.md#r7-or-tools-version-and-apis).
 - The original in-repository `.venv` remains in use by the editor's Python formatter and was not replaced. Setup and later checks use the fresh temp environment `%TEMP%\space-rescue-006-gil-default` to avoid interrupting that process.
 
 ## US1 checkpoint (2026-11-17)
