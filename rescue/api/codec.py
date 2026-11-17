@@ -8,7 +8,17 @@ from enum import Enum
 from types import UnionType
 from typing import TypeVar, Union, get_args, get_origin, get_type_hints
 
+from rescue.communication.models import SessionEnvelope
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.offers import ShipOfferRevision
+
 T = TypeVar("T")
+
+_NESTED_COMMAND_TYPES = {
+    "SessionEnvelope": SessionEnvelope,
+    "ShipAvailability": ShipAvailability,
+    "ShipOfferRevision": ShipOfferRevision,
+}
 
 
 class PayloadError(ValueError):
@@ -89,7 +99,7 @@ def _decode(value: object, expected_type: object) -> object:
             raise PayloadError(
                 f"unknown fields for {expected_type.__name__}: {', '.join(sorted(extra))}"
             )
-        hints = get_type_hints(expected_type)
+        hints = get_type_hints(expected_type, localns=_NESTED_COMMAND_TYPES)
         missing = [
             name
             for name, field in model_fields.items()

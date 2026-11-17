@@ -1,22 +1,22 @@
 export UV_LOCKED := 1
 
-.PHONY: install format lint check-architecture test test-unit test-integration test-e2e test-architecture check-all compare compare-trace
+.PHONY: install format lint check-architecture test test-unit test-integration test-e2e test-architecture check-all compare compare-trace simulations
 
 install:
 	uv sync --locked
 
 format:
-	uv run ruff format rescue tests benchmarks
+	uv run ruff format rescue simulations tests benchmarks
 
 lint:
-	uv run ruff format --check rescue tests benchmarks
-	uv run ruff check rescue tests benchmarks
+	uv run ruff format --check rescue simulations tests benchmarks
+	uv run ruff check rescue simulations tests benchmarks
 
 check-architecture:
 	uv run lint-imports
 
 test:
-	uv run pytest --cov=rescue --cov-report=term-missing
+	uv run pytest --cov=rescue --cov=simulations --cov-report=term-missing
 	@echo == rescue/mission
 	uv run coverage report --include="rescue/mission/*" --fail-under=100
 	@echo == rescue/market
@@ -37,6 +37,17 @@ test:
 	uv run coverage report --include="rescue/adapters/*"
 	@echo == root modules
 	uv run coverage report --include="rescue/values.py,rescue/bootstrap.py,rescue/demo.py"
+	@echo == simulations models
+	uv run coverage report --include="simulations/models/*" --fail-under=80
+	@echo == simulations adapters
+	uv run coverage report --include="simulations/adapters/*" --fail-under=80
+	@echo == simulations services
+	uv run coverage report --include="simulations/services/*" --fail-under=80
+	@echo == simulations entrypoints
+	uv run coverage report --include="simulations/entrypoints/*" --fail-under=80
+
+simulations:
+	uv run python -m simulations $(ARGS)
 
 test-unit:
 	uv run pytest tests/unit
