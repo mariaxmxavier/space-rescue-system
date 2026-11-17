@@ -96,68 +96,68 @@ Each owner creates package __init__.py only in its assigned directories. Task 1 
 **Files:** Task 1 paths above. **Depends on:** design review.
 **Consumes:** entity catalogue and callable contract. **Produces:** Instant, Id, TransitionContext, command dataclasses, Result[T], message/delivery types. DTO snapshot types belong to their capability model files; use deferred type imports to avoid runtime cycles.
 
-- [ ] Write `test_reject_invalid_inputs` asserting True, 1.5 and 0 reject as positive seat quantities; '-1', 'NaN', 'Infinity' and float times reject; time '0' accepts; blank identity rejects. Write `test_dto_snapshot_immutable` asserting collection inputs cannot mutate a constructed DTO.
-- [ ] Run `python -m unittest discover -s tests -p test_values.py -v`; expect failure because rescue.values does not exist.
-- [ ] Implement value normalization and command schemas in assigned files with exact field names from the callable contract; pin Python to 3.14.10, no runtime dependencies. Define TransitionContext(event_id, at, reason, message_id=None).
-- [ ] Run `python -m unittest discover -s tests -p 'test_*contracts.py' -v` and the values command; expect all cases pass. Ensure test_contracts.py covers every command's required fields and rejects unknown fields.
-- [ ] Review the scoped diff; record verification. Commit checkpoint only if user explicitly authorizes it.
+- [X] Write `test_reject_invalid_inputs` asserting True, 1.5 and 0 reject as positive seat quantities; '-1', 'NaN', 'Infinity' and float times reject; time '0' accepts; blank identity rejects. Write `test_dto_snapshot_immutable` asserting collection inputs cannot mutate a constructed DTO.
+- [X] Run `python -m unittest discover -s tests -p test_values.py -v`; expect failure because rescue.values does not exist.
+- [X] Implement value normalization and command schemas in assigned files with exact field names from the callable contract; pin Python to 3.14.10, no runtime dependencies. Define TransitionContext(event_id, at, reason, message_id=None).
+- [X] Run `python -m unittest discover -s tests -p 'test_*contracts.py' -v` and the values command; expect all cases pass. Ensure test_contracts.py covers every command's required fields and rejects unknown fields.
+- [X] Review the scoped diff; record verification. Commit checkpoint only if user explicitly authorizes it.
 
 ### Task 2 [P]: Mission accounting and history
 
 **Files:** mission package and tests/test_mission.py. **Depends on:** Task 1.
 **Consumes:** shared values and TransitionContext. **Produces:** Mission, SeatRequest, RequestHistoryEntry, MissionProgress and mission functions from the callable contract.
 
-- [ ] Write `test_partial_closes_and_releases`: demand=10, request=6, accept=4 yields C=4,P=0,additional_needed=6 and exactly two history entries. Write full-accept/refuse/cancel/expire cases from the transition table; closed requests reject every further transition unchanged.
-- [ ] Run `python -m unittest discover -s tests -p test_mission.py -v`; expect missing mission module failure.
-- [ ] Implement immutable Mission values and pure rule functions; derived totals only, immutable demand, consecutive sequence and unique supplied event IDs. Public snapshots expose no internal mutable references.
-- [ ] Add `test_pending_never_completes` (10 pending -> awaiting_responses), `test_overrequest_preserves_state`, `test_demand_immutable` and `test_terminal_partial_response_cannot_reopen`; rerun same command expecting all pass.
-- [ ] Review scoped diff and record checks; commit only with authorization.
+- [X] Write `test_partial_closes_and_releases`: demand=10, request=6, accept=4 yields C=4,P=0,additional_needed=6 and exactly two history entries. Write full-accept/refuse/cancel/expire cases from the transition table; closed requests reject every further transition unchanged.
+- [X] Run `python -m unittest discover -s tests -p test_mission.py -v`; expect missing mission module failure.
+- [X] Implement immutable Mission values and pure rule functions; derived totals only, immutable demand, consecutive sequence and unique supplied event IDs. Public snapshots expose no internal mutable references.
+- [X] Add `test_pending_never_completes` (10 pending -> awaiting_responses), `test_overrequest_preserves_state`, `test_demand_immutable` and `test_terminal_partial_response_cannot_reopen`; rerun same command expecting all pass.
+- [X] Review scoped diff and record checks; commit only with authorization.
 
 ### Task 3 [P]: Shared market and quote lifecycle
 
 **Files:** market package and tests/test_market.py. **Depends on:** Task 1.
 **Consumes:** shared values; a structural commitment view (ship_id, requested_seats, confirmed_seats, outcome) so this task does not import an unfinished Mission implementation. Final usage accepts Mission values conforming to that view. **Produces:** market entities, ShipUsage and market functions from contract.
 
-- [ ] Write `test_quote_transfer_counts_once`: total=6, held=4 -> transfer -> held=0,pending=4; confirm 3 -> used=3,free=3. Write `test_quote_expiry_cannot_release_accepted_request` and `test_stale_snapshot_does_not_reset_inventory`.
-- [ ] Run `python -m unittest discover -s tests -p test_market.py -v`; expect missing market module failure.
-- [ ] Implement immutable revisions, RFQ response uniqueness, holds, terminal quote closure and derived inventory. Reject equal-time conflicting availability; use highest offer revision_number. Validate quote eligibility against latest capacity, not just the RFQ snapshot.
-- [ ] Add `test_capacity_reduction_preserves_commitments` (used=4,total=2 -> shortfall=2,new allocation rejected); direct-request revision capacity cases; RFQ fan-out skips unavailable ships and quote quantity cannot exceed RFQ quantity. Rerun market tests expecting pass.
-- [ ] Review scoped diff and record checks; commit only with authorization.
+- [X] Write `test_quote_transfer_counts_once`: total=6, held=4 -> transfer -> held=0,pending=4; confirm 3 -> used=3,free=3. Write `test_quote_expiry_cannot_release_accepted_request` and `test_stale_snapshot_does_not_reset_inventory`.
+- [X] Run `python -m unittest discover -s tests -p test_market.py -v`; expect missing market module failure.
+- [X] Implement immutable revisions, RFQ response uniqueness, holds, terminal quote closure and derived inventory. Reject equal-time conflicting availability; use highest offer revision_number. Validate quote eligibility against latest capacity, not just the RFQ snapshot.
+- [X] Add `test_capacity_reduction_preserves_commitments` (used=4,total=2 -> shortfall=2,new allocation rejected); direct-request revision capacity cases; RFQ fan-out skips unavailable ships and quote quantity cannot exceed RFQ quantity. Rerun market tests expecting pass.
+- [X] Review scoped diff and record checks; commit only with authorization.
 
 ### Task 4 [P]: Explainable pure mobilisation policies
 
 **Files:** mobilisation package and tests/test_policies.py. **Depends on:** Task 1.
 **Consumes:** immutable Candidate and mission progress projections; field shapes from data model. **Produces:** MobilisationPolicy, MobilisationDecision, OfferEvaluation, select_offers with the callable contract signature.
 
-- [ ] Write `test_earliest_arrival_uses_absolute_instant` with observations 10+5 versus 0+20 selecting the first; `test_equal_values_use_ship_id` selecting A before B; largest-capacity chooses free 6 before free 4.
-- [ ] Run `python -m unittest discover -s tests -p test_policies.py -v`; expect missing policies module failure.
-- [ ] Implement both sort rules and quantity limits; emit evaluations for selected and skipped candidates with immutable policy/revision basis. Skip unavailable, exhausted and oversized whole holds with reasons. No inventory mutation or I/O.
-- [ ] Add `test_explanation_preserves_old_revision` and `test_selection_does_not_reserve_seats`; rerun policy tests expecting pass.
-- [ ] Review scoped diff and record checks; commit only with authorization.
+- [X] Write `test_earliest_arrival_uses_absolute_instant` with observations 10+5 versus 0+20 selecting the first; `test_equal_values_use_ship_id` selecting A before B; largest-capacity chooses free 6 before free 4.
+- [X] Run `python -m unittest discover -s tests -p test_policies.py -v`; expect missing policies module failure.
+- [X] Implement both sort rules and quantity limits; emit evaluations for selected and skipped candidates with immutable policy/revision basis. Skip unavailable, exhausted and oversized whole holds with reasons. No inventory mutation or I/O.
+- [X] Add `test_explanation_preserves_old_revision` and `test_selection_does_not_reserve_seats`; rerun policy tests expecting pass.
+- [X] Review scoped diff and record checks; commit only with authorization.
 
 ### Task 5: Atomic central, retries and communication dispositions
 
 **Files:** Task 5 paths above. **Depends on:** Tasks 1–4.
 **Consumes:** pure mission/market/policy rules, shared command/message models. **Produces:** RescueCentral callable API, TransactionStore, Clock, IdSource, immutable RunState, RunContext and `new_run(application_run_id: str, central_id: str) -> RunContext` in bootstrap.py. Context contains one central and its store.
 
-- [ ] Write `test_failed_transfer_rolls_back_all_business_state`, `test_retry_after_quote_expiry_returns_original`, `test_changed_command_payload_conflicts`, `test_new_run_empty_registry` and `test_multiple_calls_preserve_history` with the contract's exact dispositions.
-- [ ] Run `python -m unittest discover -s tests -p test_central.py -v`; expect missing central module failure.
-- [ ] Implement transaction staging/publication, all callable operations, registry lookup, read snapshots and identity indexes. Apply pending deadline expiration before late response; unchanged terminal outcomes yield diagnostics only. Generate IDs outside domain logic; no external callbacks inside locked transitions.
-- [ ] Add barrier-synchronized two-thread tests: two 4-seat quotes against total 6 produce exactly one hold; two request commands cannot exceed demand; competing responses apply one terminal transition. Inject failure after staging transfer and assert hold/request/history/command index unchanged. Assert direct requests use the same inventory boundary.
-- [ ] Add import-AST test prohibiting domain imports of application/adapters/bootstrap and any third-party framework; verify all getters return isolated snapshots. Run `python -m unittest discover -s tests -v`; expect all tests pass.
-- [ ] Review aggregate diff including parallel-task contracts; record checks. Commit only with authorization.
+- [X] Write `test_failed_transfer_rolls_back_all_business_state`, `test_retry_after_quote_expiry_returns_original`, `test_changed_command_payload_conflicts`, `test_new_run_empty_registry` and `test_multiple_calls_preserve_history` with the contract's exact dispositions.
+- [X] Run `python -m unittest discover -s tests -p test_central.py -v`; expect missing central module failure.
+- [X] Implement transaction staging/publication, all callable operations, registry lookup, read snapshots and identity indexes. Apply pending deadline expiration before late response; unchanged terminal outcomes yield diagnostics only. Generate IDs outside domain logic; no external callbacks inside locked transitions.
+- [X] Add barrier-synchronized two-thread tests: two 4-seat quotes against total 6 produce exactly one hold; two request commands cannot exceed demand; competing responses apply one terminal transition. Inject failure after staging transfer and assert hold/request/history/command index unchanged. Assert direct requests use the same inventory boundary.
+- [X] Add import-AST test prohibiting domain imports of application/adapters/bootstrap and any third-party framework; verify all getters return isolated snapshots. Run `python -m unittest discover -s tests -v`; expect all tests pass.
+- [X] Review aggregate diff including parallel-task contracts; record checks. Commit only with authorization.
 
 ### Task 6: Reproducible experiments and demonstration
 
 **Files:** Task 6 paths above. **Depends on:** Task 5.
 **Consumes:** new_run, central API, policies and immutable scenario baselines. **Produces:** scenario/run/result models, simulate and summarize signatures from contract, plus `python -m rescue.demo` entry point.
 
-- [ ] Write `test_delay_metrics` asserting 2+5+3 yields elapsed=10,RTT=5; `test_deadline_tie_expires_first` asserting deadline=20 and receipt=20 confirms zero; `test_repeat_seed_three_times` asserting normalized business histories/results equal across three runs.
-- [ ] Run `python -m unittest discover -s tests -p test_experiments.py -v`; expect missing experiments module failure.
-- [ ] Implement finite heap scheduler, seeded scripts, baseline cloning/index remapping, horizon semantics and result calculations. Process current-instant expirations before deliveries; cap scripted event generation by validated finite counts. Pure result calculation never fabricates completion time.
-- [ ] Add three policy-comparison fixtures: ordinary, partial/refusal, delayed/lost/availability-change; assert unchanged operational snapshots, pending horizon reporting, None completion time when incomplete, lost delivery receipt None, duplicate message identity, and zero-delay finite termination.
-- [ ] Implement demo demand=10 using partial acceptance, refusal and further mobilisation; document decisions/concurrency/availability in README. Run `python -m unittest discover -s tests -v` and `python -m rescue.demo`; expect full suite pass and C=10,P=0,complete demo output.
-- [ ] Review aggregate diff and quickstart accuracy; record results. Commit only with authorization.
+- [X] Write `test_delay_metrics` asserting 2+5+3 yields elapsed=10,RTT=5; `test_deadline_tie_expires_first` asserting deadline=20 and receipt=20 confirms zero; `test_repeat_seed_three_times` asserting normalized business histories/results equal across three runs.
+- [X] Run `python -m unittest discover -s tests -p test_experiments.py -v`; expect missing experiments module failure.
+- [X] Implement finite heap scheduler, seeded scripts, baseline cloning/index remapping, horizon semantics and result calculations. Process current-instant expirations before deliveries; cap scripted event generation by validated finite counts. Pure result calculation never fabricates completion time.
+- [X] Add three policy-comparison fixtures: ordinary, partial/refusal, delayed/lost/availability-change; assert unchanged operational snapshots, pending horizon reporting, None completion time when incomplete, lost delivery receipt None, duplicate message identity, and zero-delay finite termination.
+- [X] Implement demo demand=10 using partial acceptance, refusal and further mobilisation; document decisions/concurrency/availability in README. Run `python -m unittest discover -s tests -v` and `python -m rescue.demo`; expect full suite pass and C=10,P=0,complete demo output.
+- [X] Review aggregate diff and quickstart accuracy; record results. Commit only with authorization.
 
 ## Requirement traceability
 
