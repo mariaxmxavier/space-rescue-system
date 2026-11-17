@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
+from enum import Enum
 
-from rescue.market.models import B3Market, ShipAvailability
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.b3_market import B3Market
 from rescue.mission.models import Mission
 from rescue.values import (
     DomainValidationError,
@@ -18,7 +20,7 @@ from rescue.values import (
 
 
 def _frozen_tree(value: object) -> bool:
-    if value is None or type(value) in (str, int, bool, bytes) or isinstance(value, Decimal):
+    if value is None or type(value) in (str, int, bool, bytes) or isinstance(value, Decimal | Enum):
         return True
     if isinstance(value, tuple):
         return all(_frozen_tree(item) for item in value)

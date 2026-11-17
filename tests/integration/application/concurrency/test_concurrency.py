@@ -12,7 +12,8 @@ from rescue.application.contracts import (
     RequestQuotes,
 )
 from rescue.bootstrap import new_run
-from rescue.market.models import RFQOffer, ShipAvailability
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.quotes import RFQOffer
 
 
 class CentralConcurrencyTests(unittest.TestCase):

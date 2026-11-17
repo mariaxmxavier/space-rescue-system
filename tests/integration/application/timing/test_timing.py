@@ -13,7 +13,8 @@ from rescue.application.contracts import (
     RegisterShip,
 )
 from rescue.bootstrap import new_run
-from rescue.market.models import ShipAvailability, ShipOfferRevision
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.offers import ShipOfferRevision
 from rescue.mission.rules import timing
 
 

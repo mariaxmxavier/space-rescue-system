@@ -27,58 +27,131 @@ config:
 ---
 classDiagram
     direction LR
-    %% Authoritative scoped view of ShipMarket; see the diagram index for boundary relationships.
+    %% Authoritative scoped view of ShipMarket; code: rescue/market/models/<namespace>/<entity>.py.
     class B3Market {
+        <<aggregate>>
         -string market_id
     }
-    class Ship {
-        -string ship_id
-        -string name
+    namespace Fleet {
+        class Ship {
+            -string ship_id
+            -string name
+        }
     }
-    class ShipAvailability {
-        -string availability_id
-        -integer total_seats
-        -number arrival_estimate_seconds
-        -boolean available
-        -datetime recorded_at
+    namespace Availability {
+        class ShipAvailability {
+            -string availability_id
+            -string ship_id
+            -integer total_seats
+            -number arrival_estimate_seconds
+            -boolean available
+            -datetime recorded_at
+        }
     }
-    class ShipOffer {
-        -string offer_id
-        -string mission_id
-        -string ship_id
+    namespace Procurement {
+        class SeatRFQ {
+            -string rfq_id
+            -string mission_id
+            -string ship_id
+            -string availability_id
+            -integer requested_seats
+            -RFQStatus status
+            -datetime sent_at
+            -datetime response_deadline
+        }
+        class RFQStatus {
+            <<enumeration>>
+            pending
+            quoted
+            expired
+        }
     }
-    class ShipOfferRevision {
-        -string revision_id
-        -integer revision_number
-        -integer capacity
-        -number arrival_estimate_seconds
-        -boolean available
-        -datetime recorded_at
+    namespace Quotes {
+        class RFQOffer {
+            -string offer_id
+            -string rfq_id
+            -integer offered_seats
+            -number arrival_estimate_seconds
+            -datetime expires_at
+            -datetime recorded_at
+            -QuoteStatus status
+            -string request_id
+        }
+        class QuoteStatus {
+            <<enumeration>>
+            held
+            accepted
+            rejected
+            expired
+        }
+        class QuoteStatusChange {
+            -string quote_id
+            -QuoteStatus status
+            -datetime changed_at
+            -string request_id
+        }
     }
-    class SeatRFQ {
-        -string rfq_id
-        -string mission_id
-        -string ship_id
-        -string availability_id
-        -integer requested_seats
-        -string status
-        -datetime sent_at
-        -datetime response_deadline
+    namespace Offers {
+        class ShipOffer {
+            -string offer_id
+            -string mission_id
+            -string ship_id
+        }
+        class ShipOfferRevision {
+            -string revision_id
+            -integer revision_number
+            -integer capacity
+            -number arrival_estimate_seconds
+            -boolean available
+            -datetime recorded_at
+        }
     }
-    class RFQOffer {
-        -string offer_id
-        -integer offered_seats
-        -number arrival_estimate_seconds
-        -datetime expires_at
-        -datetime recorded_at
-        -string status
+    namespace Inventory {
+        class ShipUsage {
+            <<derived>>
+            -integer total
+            -integer held
+            -integer pending
+            -integer confirmed
+            -integer used
+            -integer free
+            -integer shortfall
+        }
+        class CommitmentSource {
+            <<protocol>>
+            +string mission_id
+            +CommitmentRequest[] requests
+        }
+        class CommitmentRequest {
+            <<protocol>>
+            +string ship_id
+            +integer requested_seats
+            +integer confirmed_seats
+            +string outcome
+        }
     }
-    B3Market "1" --> "0..*" ShipAvailability : tracks changing capacity
+    B3Market "1" --> "0..*" Ship : fleet
+    B3Market "1" --> "0..*" ShipAvailability : tracks changing capacity (append-only)
     Ship "1" --> "0..*" ShipAvailability : reports availability
     B3Market "1" --> "0..*" SeatRFQ : sends one per available ship
     ShipAvailability "1" --> "0..*" SeatRFQ : snapshot referenced by
     Ship "1" --> "0..*" SeatRFQ : addressed ship
+    SeatRFQ --> RFQStatus
     SeatRFQ "1" *-- "0..1" RFQOffer : receives at most one response
+    RFQOffer --> QuoteStatus
+    B3Market "1" --> "0..*" QuoteStatusChange : quote history (append-only)
+    RFQOffer "1" --> "1..*" QuoteStatusChange : status changes
+    QuoteStatusChange --> QuoteStatus
     Ship "1" --> "0..*" ShipOffer : supplies
     ShipOffer "1" *-- "1..*" ShipOfferRevision : versions
-    note for B3Market "External interactions: MissionOperations issues RFQs and owns requests; this space supplies market availability and offers."
+    B3Market "1" --> "0..*" RFQOffer : quotes
+    B3Market "1" --> "0..*" ShipOffer : offers
+    ShipUsage ..> ShipAvailability : total from latest
+    ShipUsage ..> RFQOffer : held from HELD quotes
+    ShipUsage ..> CommitmentSource : pending and confirmed
+    CommitmentSource "1" --> "0..*" CommitmentRequest : requests
+    note for B3Market "Stored as immutable run state by the transaction store: Fleet, Availability, Procurement, Quotes and Offers. Availability publications, offer revisions and quote history are append-only."
+    note for ShipUsage "Derived snapshot, not persisted. used = held + pending + confirmed; free and shortfall are clamped at zero. Unavailable ships have zero free seats."
+    note for CommitmentSource "Read-only structural protocols, not stored entities. MissionOperations Mission and SeatRequest satisfy CommitmentSource and CommitmentRequest."
+    note for QuoteStatusChange "Insertion-ordered history; request_id is present exactly when accepted."
+    note for SeatRFQ "response_deadline is optional. RFQ and quote statuses are closed named values."

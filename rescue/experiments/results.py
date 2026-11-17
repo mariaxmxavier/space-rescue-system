@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from rescue.experiments.models import RunSnapshot, SimulationResult
-from rescue.market.models import RFQOffer, ShipOfferRevision
+from rescue.market.models.offers import ShipOfferRevision
+from rescue.market.models.quotes import RFQOffer
 from rescue.mission.models import Mission
 from rescue.mission.rules import progress
 from rescue.values import DomainValidationError
