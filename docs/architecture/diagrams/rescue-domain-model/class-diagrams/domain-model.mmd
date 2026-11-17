@@ -46,25 +46,37 @@ classDiagram
             -integer people_count
             -datetime created_at
         }
+        class MissionData {
+            -string mission_id
+            -string station_name
+            -integer people_count
+            -datetime created_at
+        }
         class SeatRequest {
             -string request_id
             -string command_id
+            -string mission_id
+            -string ship_id
             -integer requested_seats
             -integer confirmed_seats
-            -string outcome
+            -RequestOutcome outcome
             -datetime submitted_at
             -datetime response_received_at
             -datetime response_deadline
             -datetime closed_at
+            -string quote_id
+            -string revision_id
+            -string decision_id
         }
         class RequestHistoryEntry {
             -string event_id
             -integer mission_sequence
             -datetime recorded_at
-            -string action
+            -HistoryAction action
             -integer confirmed_seats_delta
             -integer pending_seats_delta
             -string reason
+            -string message_id
         }
         class MissionProgress {
             -integer demand
@@ -72,7 +84,37 @@ classDiagram
             -integer pending
             -integer unconfirmed
             -integer additional_needed
-            -string status
+            -ProgressStatus status
+        }
+        class RequestTiming {
+            -datetime submitted_at
+            -datetime response_received_at
+            -decimal waiting_seconds
+            -decimal response_elapsed_seconds
+        }
+        class RequestOutcome {
+            <<enumeration>>
+            pending
+            accepted
+            partially_accepted
+            refused
+            cancelled
+            expired
+        }
+        class ProgressStatus {
+            <<enumeration>>
+            complete
+            awaiting_responses
+            needs_more_help
+        }
+        class HistoryAction {
+            <<enumeration>>
+            request_created
+            accepted
+            partially_accepted
+            refused
+            cancelled
+            expired
         }
     }
     namespace ShipMarket {
@@ -164,8 +206,10 @@ classDiagram
     note for ShipOfferRevision "Highest revision_number is current; recorded_at does not determine order"
     SeatRequest "0..*" --> "0..1" ShipOfferRevision : optionally preserves basis
     SeatRequest "0..1" --> "0..1" RFQOffer : follows acceptance for ship confirmation
-    SeatRequest "1" *-- "1..*" RequestHistoryEntry : records changes
+    Mission "1" *-- "0..*" RequestHistoryEntry : records changes
     Mission "1" --> "1" MissionProgress : derives
+    MissionData ..> Mission : registers
+    SeatRequest "1" --> "1" RequestTiming : derives
     Mission "1" --> "0..*" MobilisationDecision : records
     MobilisationDecision "0..*" --> "1" MobilisationPolicy : applies revision
     MobilisationDecision "1" *-- "0..*" OfferEvaluation : explains candidates

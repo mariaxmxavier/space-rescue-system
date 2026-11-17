@@ -23,7 +23,7 @@ from rescue.experiments.models import (
 )
 from rescue.experiments.results import summarize
 from rescue.experiments.timeline import Timeline, TimelineEvent
-from rescue.mission.models import Mission
+from rescue.mission.models import Mission, RequestOutcome
 from rescue.mission.rules import progress
 from rescue.mobilisation.models import MobilisationPolicy
 from rescue.values import DomainValidationError, normalize_id
@@ -82,21 +82,21 @@ def _scripted_response(
     request_seats: int,
     rng: random.Random,
 ) -> tuple[str, int]:
-    if rule.outcome == "refused":
-        return "refused", 0
+    if rule.outcome == RequestOutcome.REFUSED:
+        return RequestOutcome.REFUSED, 0
     specified = rule.confirmed_seats
     if specified is None:
-        if rule.outcome == "accepted":
-            return "accepted", request_seats
+        if rule.outcome == RequestOutcome.ACCEPTED:
+            return RequestOutcome.ACCEPTED, request_seats
         if request_seats <= 1:
-            return "refused", 0
-        return "partially_accepted", rng.randint(1, request_seats - 1)
+            return RequestOutcome.REFUSED, 0
+        return RequestOutcome.PARTIALLY_ACCEPTED, rng.randint(1, request_seats - 1)
     confirmed = min(specified, request_seats)
     if confirmed <= 0:
-        return "refused", 0
+        return RequestOutcome.REFUSED, 0
     if confirmed == request_seats:
-        return "accepted", request_seats
-    return "partially_accepted", confirmed
+        return RequestOutcome.ACCEPTED, request_seats
+    return RequestOutcome.PARTIALLY_ACCEPTED, confirmed
 
 
 def simulate(
@@ -182,7 +182,7 @@ def simulate(
             ship_request_ordinals[request.ship_id] = (
                 ship_request_ordinals.get(request.ship_id, 0) + 1
             )
-            if request.outcome != "pending":
+            if request.outcome != RequestOutcome.PENDING:
                 continue
             if request.response_deadline is not None:
                 timeline.schedule(
@@ -393,7 +393,7 @@ def _schedule_response(
             message_id=message_id,
             mission_id=mission.mission_id,
             request_id=request.request_id,
-            outcome=outcome,
+            outcome=outcome.value,
             confirmed_seats=confirmed,
             attempt_number=attempt_number,
             sent_at=sent_at,

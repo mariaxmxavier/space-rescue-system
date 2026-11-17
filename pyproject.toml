@@ -86,3 +86,26 @@ type = "forbidden"
 source_modules = ["rescue.application"]
 forbidden_modules = ["rescue.adapters.memory"]
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "mission-isolated: Mission imports only rescue.values and the standard library"
+type = "forbidden"
+source_modules = ["rescue.mission"]
+forbidden_modules = [
+    "rescue.market",
+    "rescue.mobilisation",
+    "rescue.communication",
+    "rescue.experiments",
+    "rescue.application",
+    "rescue.adapters",
+    "rescue.bootstrap",
+    "rescue.demo",
+]
+
+[[tool.importlinter.contracts]]
+name = "mission-layers: Mission rules build on models, never the reverse"
+type = "layers"
+layers = [
+    "rescue.mission.rules",
+    "rescue.mission.models",
+]
