@@ -6,8 +6,8 @@
 
 ## Phase 1 - Setup
 
-- [ ] T001 [P] Repair trusted runtime nested-type resolution in rescue/api/codec.py; add tests/integration/api/http/test_nested_commands.py for valid availability/offer/envelope payloads, malformed fields and the solver-proposal-to-request lifecycle. Domain rules and API result shapes must stay unchanged. Verify the focused HTTP tests.
-- [ ] T002 [P] Prepare the simulations package skeleton and parent-owned initializers in simulations/; add pydantic==2.14.3 to pyproject.toml and refresh uv.lock without upgrading dependencies. Update Makefile, pyproject.toml import-linter/coverage settings and tests/architecture/boundaries/test_architecture.py for the new package, retaining all existing coverage floors. Reserve every __init__.py for this owner. Verify locked sync and dependency/import configuration.
+- [x] T001 [P] Repair trusted runtime nested-type resolution in rescue/api/codec.py; add tests/integration/api/http/test_nested_commands.py for valid availability/offer/envelope payloads, malformed fields and the solver-proposal-to-request lifecycle. Domain rules and API result shapes must stay unchanged. Verify the focused HTTP tests. (5 focused tests passed; review approved.)
+- [x] T002 [P] Prepare the simulations package skeleton and parent-owned initializers in simulations/; add pydantic==2.14.3 to pyproject.toml and refresh uv.lock without upgrading dependencies. Update Makefile, pyproject.toml import-linter/coverage settings and tests/architecture/boundaries/test_architecture.py for the new package, retaining all existing coverage floors. Reserve every __init__.py for this owner. Verify locked sync and dependency/import configuration. (18 contracts kept; architecture tests and Ruff passed; review approved.)
 
 ## Phase 2 - Frozen foundations
 

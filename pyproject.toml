@@ -6,6 +6,7 @@ dependencies = [
     "fastapi==0.163.1",
     "httpx==0.28.1",
     "ortools==9.15.6755",
+    "pydantic==2.14.3",
     "uvicorn==0.38.0",
 ]
 
@@ -37,14 +38,14 @@ pythonpath = ["."]
 addopts = "--import-mode=importlib --strict-markers"
 
 [tool.coverage.run]
-source = ["rescue"]
+source = ["rescue", "simulations"]
 branch = true
 
 [tool.coverage.report]
 show_missing = true
 
 [tool.importlinter]
-root_package = "rescue"
+root_packages = ["rescue", "simulations"]
 include_external_packages = true
 exclude_type_checking_imports = false
 
@@ -240,3 +241,24 @@ name = "experiments-no-bootstrap: Experiments receive their run, never import th
 type = "forbidden"
 source_modules = ["rescue.experiments"]
 forbidden_modules = ["rescue.bootstrap", "rescue.demo", "rescue.application.central"]
+
+[[tool.importlinter.contracts]]
+name = "simulations-no-rescue: HTTP simulations depend only on their own package"
+type = "forbidden"
+source_modules = [
+    "simulations.models",
+    "simulations.adapters",
+    "simulations.services",
+    "simulations.entrypoints",
+]
+forbidden_modules = ["rescue"]
+
+[[tool.importlinter.contracts]]
+name = "simulations-layers: Simulation entrypoints depend inward"
+type = "layers"
+layers = [
+    "simulations.entrypoints",
+    "simulations.services",
+    "simulations.adapters",
+    "simulations.models",
+]
