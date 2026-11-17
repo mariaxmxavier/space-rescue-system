@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8fafc">
+    <title>Space Rescue Operations</title>
+    <link rel="stylesheet" href="/shell/styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <header class="app-header">
+      <div><p class="eyebrow">AURORA RESCUE NETWORK</p><h1>Mission control</h1></div>
+      <div class="run-summary" aria-live="polite"><span>Selected run</span><strong id="selected-run">No run selected</strong><span id="refresh-status" role="status">Waiting for a run</span></div>
+    </header>
+    <main id="main">
+      <section class="workspace-card" aria-labelledby="workspace-title">
+        <div><p class="eyebrow">WORKSPACE</p><h2 id="workspace-title">Open or start a rescue run</h2></div>
+        <form id="run-form" class="run-form">
+          <div class="field"><label for="application-run-id">Application run ID</label><input id="application-run-id" name="application_run_id" autocomplete="off" required></div>
+          <div class="field"><label for="central-id">Central ID</label><input id="central-id" name="central_id" autocomplete="off" required></div>
+          <div class="run-actions"><button type="submit">Create run</button><button class="button-secondary" id="open-run" type="button">Open run</button></div>
+        </form>
+        <button class="button-secondary history-action" id="load-history" type="button" aria-label="Load call history">Load history</button>
+        <p id="workspace-error" role="alert" hidden></p>
+      </section>
+
+      <div class="tab-list" role="tablist" aria-label="Rescue workspace">
+        <button id="operations-tab" type="button" role="tab" aria-controls="operations-panel" aria-selected="true" tabindex="0">Operations</button>
+        <button id="exploration-tab" type="button" role="tab" aria-controls="exploration-panel" aria-selected="false" tabindex="-1">Exploration</button>
+      </div>
+
+      <section id="operations-panel" role="tabpanel" aria-labelledby="operations-tab">
+        <div class="section-heading"><div><p class="eyebrow">LIVE RESCUE</p><h2>Coordinate operations</h2></div><button class="button-secondary" id="refresh-operations" type="button">Refresh state</button></div>
+        <div id="mission-summary" class="summary-grid" aria-live="polite"></div>
+        <div id="capabilities" class="capability-grid">
+          <section class="capability-card"><h2>Register mission</h2><form id="mission-form">
+            <div class="field-grid">
+                <div class="field"><label for="mission-id">Mission ID</label><input id="mission-id" name="mission_id"></div>
+                <div class="field"><label for="station-name">Station name</label><input id="station-name" name="station_name"></div>
+                <div class="field"><label for="people-count">People to rescue</label><input id="people-count" name="people_count" type="number" min="1" step="1"></div>
+                <div class="field"><label for="created-at">Created at (seconds)</label><input id="created-at" name="created_at" inputmode="decimal" value="0"></div>
+            </div><button type="submit">Register mission</button><div class="form-result" aria-live="polite"></div>
+          </form></section>
+        </div>
+      </section>
+
+      <section id="exploration-panel" role="tabpanel" aria-labelledby="exploration-tab" hidden>
+        <div class="section-heading"><div><p class="eyebrow">INSPECT AND EXPLAIN</p><h2>Explore this run</h2></div><button class="button-secondary" id="refresh-exploration" type="button">Refresh state</button></div>
+        <p class="notice">Live state belongs to the selected run. Policy comparisons are simulations based on their configured scenario baseline.</p>
+        <div id="exploration-state" class="data-panel"></div>
+        <section class="data-panel history-panel"><div class="section-heading"><div><p class="eyebrow">RECORDED ACTIVITY</p><h3>Call history</h3></div></div><div id="history-content"></div></section>
+      </section>
+    </main>
+    <script type="module" src="/shell/app.js"></script>
+  </body>
+</html>

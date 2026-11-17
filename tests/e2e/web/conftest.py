@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -17,11 +18,7 @@ WEB_ROOT = Path(__file__).resolve().parents[3] / "web"
 def web_origin():
     """Serve the feature's static files at an ephemeral loopback port."""
 
-    handler = type(
-        "WebHandler",
-        (SimpleHTTPRequestHandler,),
-        {"directory": str(WEB_ROOT), "log_message": lambda *_: None},
-    )
+    handler = partial(SimpleHTTPRequestHandler, directory=str(WEB_ROOT))
     server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

@@ -14,11 +14,11 @@
 
 - [x] T004 Define and freeze exported module signatures, ownership, form registration, result rendering, event and shared-workspace interfaces in `specs/013-web-app/contracts/frontend-modules.md` after T001; ensure independent feature modules can register without editing shared files.
 - [ ] T005 [P] Add browser tests for run creation, known-run reopening, run switches, concurrent stale responses, rejected calls, uncertain network outcomes and explicit history loading in `tests/e2e/web/foundation/test_workspace.py` after T002 and T004.
-- [ ] T006 [P] Implement HTTP client and codec boundary in `web/shared/api/client.js` after T004: encode run IDs, send decimal strings or integers, retain all result fields, distinguish HTTP and business rejection, and never auto-retry mutations.
-- [ ] T007 [P] Implement selected-run workspace and request generation guards in `web/shared/state/workspace.js` after T004: shared tabs, latest committed snapshot, refresh timestamps, stale status on failure, invalidation across run switches and out-of-order replies.
+- [x] T006 [P] Implement HTTP client and codec boundary in `web/shared/api/client.js` after T004: encode run IDs, send decimal strings or integers, retain all result fields, distinguish HTTP and business rejection, and never auto-retry mutations.
+- [x] T007 [P] Implement selected-run workspace and request generation guards in `web/shared/state/workspace.js` after T004: shared tabs, latest committed snapshot, refresh timestamps, stale status on failure, invalidation across run switches and out-of-order replies.
 - [ ] T008 [P] Implement reusable labelled input, nested repeatable forms, result details and accessible status primitives in `web/shared/ui/controls.js` and `web/shared/ui/styles.css` after T003 and T004; keep 0, absent and empty distinct.
-- [ ] T009 Implement accessible tabs, run creation/reopen and capability registration shell in `web/index.html`, `web/shell/app.js` and `web/shell/styles.css` after T005–T008; preserve a shared selected run, keyboard focus and explicit state/history controls.
-- [ ] T010 Verify foundation against `tests/e2e/web/foundation/test_workspace.py` and publish the frozen contracts in `specs/013-web-app/contracts/frontend-modules.md` before dispatching feature writers.
+- [x] T009 Implement accessible tabs, run creation/reopen and capability registration shell in `web/index.html`, `web/shell/app.js` and `web/shell/styles.css` after T005–T008; preserve a shared selected run, keyboard focus and explicit state/history controls.
+- [x] T010 Verify foundation against `tests/e2e/web/foundation/test_workspace.py` and publish the frozen contracts in `specs/013-web-app/contracts/frontend-modules.md` before dispatching feature writers.
 
 ## Phase 3: User Story 1 — Coordinate a rescue (P1)
 
