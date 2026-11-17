@@ -34,8 +34,7 @@ No runtime data. The entities are repository conventions.
   `experiments`, `application`, `adapters`, `values`), or the entry point for e2e (`demo`). The
   `architecture` type has no package level.
 - **topic**: what is checked, named after the source module where one exists (`rules`, `policies`).
-- **Invariant**: collected tests after the move = count before the move (100: the 102 baseline less
-  the two import-only tests replaced by contracts).
+- **Invariant**: collected tests after the move = the 102 baseline (the two import-only tests are replaced by two contract tests, convergence T031).
 - Mapping of existing files: spec FR-006.
 
 ## Doc location

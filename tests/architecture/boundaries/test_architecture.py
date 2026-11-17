@@ -1,10 +1,13 @@
 """Import and side-effect boundaries for the rescue architecture."""
 
 import ast
-import subprocess
+import contextlib
+import io
 import tomllib
 import unittest
 from pathlib import Path
+
+from importlinter.cli import lint_imports
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 DOMAIN_PACKAGES = ("mission", "market", "mobilisation", "communication")
@@ -117,21 +120,23 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                     )
 
     def test_declared_import_contracts_are_kept(self):
-        result = subprocess.run(
-            ["lint-imports"],
-            cwd=REPOSITORY_ROOT,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            exit_code = lint_imports(
+                config_filename=str(REPOSITORY_ROOT / "pyproject.toml"),
+                no_cache=True,
+                no_logo=True,
+            )
+        self.assertEqual(exit_code, 0, output.getvalue())
+        self.assertIn("Contracts: 3 kept, 0 broken.", output.getvalue())
 
-    def test_declared_import_contracts_forbid_outer_layers_and_io_modules(self):
+    def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
             contracts = tomllib.load(file)["tool"]["importlinter"]["contracts"]
-        by_id = {contract["name"].split(":", 1)[0]: contract for contract in contracts}
-        domain = by_id["domain-outward"]
-        io = by_id["domain-io"]
+        domain_sources = {f"rescue.{package}" for package in DOMAIN_PACKAGES} | {
+            "rescue.experiments.models",
+            "rescue.experiments.results",
+        }
         io_modules = {
             "os",
             "time",
@@ -144,14 +149,26 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             "httpx",
             "sqlalchemy",
         }
-        for package in DOMAIN_PACKAGES:
-            self.assertIn(f"rescue.{package}", domain["source_modules"])
-            self.assertIn(f"rescue.{package}", io["source_modules"])
-        self.assertLessEqual(
-            {"rescue.application", "rescue.adapters", "rescue.bootstrap"},
-            set(domain["forbidden_modules"]),
-        )
-        self.assertLessEqual(io_modules, set(io["forbidden_modules"]))
+        expected = {
+            "domain-outward": (
+                domain_sources,
+                {"rescue.application", "rescue.adapters", "rescue.bootstrap"},
+                False,
+            ),
+            "domain-io": (domain_sources, io_modules, False),
+            "application-no-memory": ({"rescue.application"}, {"rescue.adapters.memory"}, True),
+        }
+        declared = {}
+        for contract in contracts:
+            contract_id = contract["name"].split(":", 1)[0]
+            self.assertNotIn("ignore_imports", contract, contract_id)
+            self.assertEqual(contract["type"], "forbidden", contract_id)
+            declared[contract_id] = (
+                set(contract["source_modules"]),
+                set(contract["forbidden_modules"]),
+                contract.get("allow_indirect_imports", False),
+            )
+        self.assertEqual(declared, expected)
 
 
 if __name__ == "__main__":

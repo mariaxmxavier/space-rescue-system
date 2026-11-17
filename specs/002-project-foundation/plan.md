@@ -129,7 +129,7 @@ Each step leaves `make check-all` green (the check-all gate exists from step 2 o
    import-only assertions from `test_architecture.py`, keeping the call and environment checks.
    Two methods are wholly import-only and are deleted
    (`…_do_not_import_application_adapters_or_bootstrap`, `…_models_and_results_remain_pure`), so
-   the count goes 102 → 100. SC-003 is measured across the move in step 4: 100 before, 100 after.
+   the count goes 102 → 100 in step 3; convergence task T031 restores 102 with two contract tests (SC-003).
 4. **Test move**: `git mv` per FR-006; delete `tests/__init__.py`; fix `REPOSITORY_ROOT`; collect
    count unchanged.
 5. **Docs move**: `git mv` per R11; update links; link check is 0.

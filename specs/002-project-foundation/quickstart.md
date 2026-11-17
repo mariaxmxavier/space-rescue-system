@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 1 | Fresh clone; `make install` | uv resolves exact pins from `uv.lock` | US1-1, FR-001 |
 | 2 | `make check-all` | pass; under 5 minutes including step 1 | US1-2, SC-001 |
-| 3 | `uv run pytest --collect-only -q \| tail -1` | `100 tests collected` (102 minus the two import-only tests replaced by contracts) | SC-003 |
+| 3 | `uv run pytest --collect-only -q \| tail -1` | `102 tests collected` | SC-003 |
 | 4 | `make test-unit`, `make test-integration`, `make test-e2e`, `make test-architecture` | each passes and runs only its folder | FR-005 |
 | 5 | `find tests -name "test_*.py"` | every path matches `tests/<type>/<package>/<topic>/` (or `tests/architecture/<topic>/`) | SC-005 |
 | 6 | Add `import rescue.adapters` to `rescue/mission/models.py`; `make check-all` | fails at `check-architecture`, names `domain-outward`; revert | US2-1, SC-004 |

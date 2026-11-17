@@ -1,3 +1,5 @@
+export UV_LOCKED := 1
+
 .PHONY: install format lint check-architecture test test-unit test-integration test-e2e test-architecture check-all
 
 install:
@@ -15,8 +17,21 @@ check-architecture:
 
 test:
 	uv run pytest --cov=rescue --cov-report=term-missing
-	for p in mission market mobilisation communication experiments application adapters; do echo "== rescue/$$p"; uv run coverage report --include="rescue/$$p/*"; done
-	echo "== root modules"
+	@echo == rescue/mission
+	uv run coverage report --include="rescue/mission/*"
+	@echo == rescue/market
+	uv run coverage report --include="rescue/market/*"
+	@echo == rescue/mobilisation
+	uv run coverage report --include="rescue/mobilisation/*"
+	@echo == rescue/communication
+	uv run coverage report --include="rescue/communication/*"
+	@echo == rescue/experiments
+	uv run coverage report --include="rescue/experiments/*"
+	@echo == rescue/application
+	uv run coverage report --include="rescue/application/*"
+	@echo == rescue/adapters
+	uv run coverage report --include="rescue/adapters/*"
+	@echo == root modules
 	uv run coverage report --include="rescue/values.py,rescue/bootstrap.py,rescue/demo.py"
 
 test-unit:

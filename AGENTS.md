@@ -25,7 +25,7 @@ make check-all
 
 - `lint`: `ruff format --check` and `ruff check` on `rescue` and `tests`.
 - `check-architecture`: `lint-imports`, which enforces the contracts in section 3.
-- `test`: pytest with a branch-coverage report for `rescue`.
+- `test`: pytest with a branch-coverage report for `rescue`, then a coverage report per package (`rescue/<package>`) and for the root modules.
 
 Run one test type at a time with `make test-unit`, `make test-integration`, `make test-e2e` or `make test-architecture`. `make format` rewrites `rescue` and `tests` with ruff format.
 
@@ -48,7 +48,6 @@ Put every test at `tests/<type>/<package>/<topic>/test_<name>.py`. Never add a t
 - `e2e`: the whole system through its entry point. The package level is the entry point, `demo` today.
 - `architecture`: structure and boundary checks. It has no package level: `tests/architecture/<topic>/`.
 
-Older test files still sit directly under `tests/`. Spec 002 moves them into this layout; do not add more.
 
 ## 5. Docs layout
 

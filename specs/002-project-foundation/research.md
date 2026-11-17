@@ -83,8 +83,8 @@ Probed with import-linter 2.16 against current code:
   move to `tests/architecture/boundaries/` it becomes `parents[3]`. This is the only line changed in a
   moved test file, and no assertion changes.
 - **Baseline**: `python -m unittest discover -s tests` runs **102 tests** today. Replacing the two
-  wholly import-only architecture tests with contracts leaves 100; pytest must collect 100 before and
-  after the move (SC-003).
+  wholly import-only architecture tests with contracts leaves 100; convergence task T031 restores 102
+  with two contract tests (SC-003).
 
 ## R8 Coverage per package
 
