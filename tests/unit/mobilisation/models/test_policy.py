@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pytest
-from rescue.mobilisation.models.algorithm_name import AlgorithmName
 
 from rescue.mobilisation import models
+from rescue.mobilisation.models.algorithm_name import AlgorithmName
 from rescue.mobilisation.models.policy import MobilisationPolicy
 from rescue.values import DomainValidationError
 

@@ -3,9 +3,9 @@ from __future__ import annotations
 import dataclasses
 
 import pytest
+
 from rescue.mobilisation.models.algorithm_name import AlgorithmName
 from rescue.mobilisation.models.allocation import Allocation, AllocationResult
-
 from rescue.values import DomainValidationError
 
 

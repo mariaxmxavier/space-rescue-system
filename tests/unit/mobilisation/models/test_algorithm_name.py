@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
+
 from rescue.mobilisation.models.algorithm_name import AlgorithmName
 
 EXPECTED = (

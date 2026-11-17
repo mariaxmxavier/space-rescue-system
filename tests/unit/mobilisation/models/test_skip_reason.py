@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
+
 from rescue.mobilisation.models.skip_reason import SkipReason, static_skip_reason
 
 EXPECTED = (

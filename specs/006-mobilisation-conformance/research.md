@@ -51,7 +51,7 @@ Rank order for the non-greedy algorithms: chosen ships by (arrival, ship_id), th
 
 - `ortools==9.15.6755` is the latest release and ships `cp314` wheels.
 - APIs: `ortools.graph.python.min_cost_flow.SimpleMinCostFlow`, `ortools.sat.python.cp_model.CpModel` / `CpSolver`, `ortools.algorithms.python.knapsack_solver.KnapsackSolver`. Each is verified in the setup task with a smoke import before any algorithm task starts.
-- `.python-version` pins `3.14.10+gil`. uv 0.13.8 can select a free-threaded 3.14 interpreter when it appears first on `PATH`; OR-Tools 9.15.6755 publishes the Windows CPython 3.14 wheel for the GIL-enabled ABI. The local free-threaded environment had no compatible Windows wheel, while a fresh GIL-enabled project environment installed and imported all three APIs. Sources: [uv Python variants](https://docs.astral.sh/uv/concepts/python-versions/) and [OR-Tools 9.15.6755 release files](https://pypi.org/project/ortools/9.15.6755/).
+- `.python-version` pins `3.14.10`. The `+gil` form used during setup cannot be downloaded for Linux, so CI failed at its install step; a local GIL interpreter is selected with `UV_PYTHON` instead. uv 0.13.8 can select a free-threaded 3.14 interpreter when it appears first on `PATH`; OR-Tools 9.15.6755 publishes the Windows CPython 3.14 wheel for the GIL-enabled ABI. The local free-threaded environment had no compatible Windows wheel, while a fresh GIL-enabled project environment installed and imported all three APIs. Sources: [uv Python variants](https://docs.astral.sh/uv/concepts/python-versions/) and [OR-Tools 9.15.6755 release files](https://pypi.org/project/ortools/9.15.6755/).
 
 ## R8. Closed algorithm vocabulary
 

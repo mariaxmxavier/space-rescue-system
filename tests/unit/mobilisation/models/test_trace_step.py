@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 
 import pytest
+
 from rescue.mobilisation.models.algorithm_name import AlgorithmName
 from rescue.mobilisation.models.trace_step import TraceStep
 
