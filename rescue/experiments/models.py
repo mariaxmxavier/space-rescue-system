@@ -8,7 +8,7 @@ from enum import Enum
 
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.b3_market import B3Market
-from rescue.mission.models import Mission
+from rescue.mission.models import Mission, RequestOutcome
 from rescue.values import (
     DomainValidationError,
     Instant,
@@ -88,7 +88,11 @@ class ScriptedResponse:
         object.__setattr__(
             self, "request_ordinal", normalize_positive_quantity(self.request_ordinal)
         )
-        if self.outcome not in {"accepted", "partially_accepted", "refused"}:
+        if self.outcome not in {
+            RequestOutcome.ACCEPTED,
+            RequestOutcome.PARTIALLY_ACCEPTED,
+            RequestOutcome.REFUSED,
+        }:
             raise DomainValidationError("scripted response has an unsupported outcome")
         if self.confirmed_seats is not None:
             object.__setattr__(
@@ -96,9 +100,9 @@ class ScriptedResponse:
                 "confirmed_seats",
                 normalize_nonnegative_quantity(self.confirmed_seats),
             )
-        if self.outcome == "refused" and self.confirmed_seats not in (None, 0):
+        if self.outcome == RequestOutcome.REFUSED and self.confirmed_seats not in (None, 0):
             raise DomainValidationError("refused scripted responses cannot confirm seats")
-        if self.outcome == "partially_accepted" and self.confirmed_seats == 0:
+        if self.outcome == RequestOutcome.PARTIALLY_ACCEPTED and self.confirmed_seats == 0:
             raise DomainValidationError("partial scripted responses require confirmed seats")
 
 

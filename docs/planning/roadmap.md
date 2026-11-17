@@ -33,6 +33,8 @@ Worktrees live under `~/worktrees/github.com/mariaxmxavier/space-rescue-system/<
 - Conform in place: fix rule violations inside the package; no cross-package restructure.
 - Each package declares its allowed imports as a contract checked by the 002 tooling.
 - Each package meets its own layer's coverage target and test style (cosmic-python test table).
+- One class or rule per file, in nested folders that mirror the package's UML diagram; every
+  module, class and public function has a What / When called / Why / Diagram docstring (set by 004).
 - Constitution invariants (seat accounting, final outcomes, reliable operations) stay green
   throughout: the full existing test suite passes on every branch.
 
