@@ -17,14 +17,29 @@ from rescue.application.contracts import (
     PublishOffer,
     RecordQuote,
     RecordResponse,
+    RecoverReports,
     RegisterMission,
     RegisterShip,
     RejectQuote,
     RequestQuotes,
     Result,
+    SynchroniseInbound,
 )
 from rescue.application.state import RunState
-from rescue.communication.models import CommunicationMessage, MessageDelivery
+from rescue.communication import rules as communication_rules
+from rescue.communication.models import (
+    CommunicationMessage,
+    CommunicationSession,
+    DecisionReport,
+    DeliveryFacts,
+    FlowDirection,
+    MessageDelivery,
+    RecoveryRejection,
+    RecoveryRequest,
+    SequenceControl,
+    SessionEnvelope,
+)
+from rescue.communication.rules import classify_delivery
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.availability.rules import latest_availability, publish_availability
 from rescue.market.models.fleet import Ship
@@ -85,6 +100,28 @@ def _set_mission(state: RunState, mission: Mission) -> RunState:
         state,
         missions=tuple(
             mission if item.mission_id == mission.mission_id else item for item in state.missions
+        ),
+    )
+
+
+def _session(state: RunState, session_id: str) -> CommunicationSession | None:
+    """What: returns the stored session with this id, or None when the run has none.
+    Why: every session command and the response session step look sessions up the same way.
+    """
+    return next((item for item in state.session_index if item.session_id == session_id), None)
+
+
+def _set_session(state: RunState, session: CommunicationSession) -> RunState:
+    """What: returns the state with the session replaced by id, or appended when it is new.
+    Why: the session index holds one value per id, so a new version replaces the old one.
+    """
+    if _session(state, session.session_id) is None:
+        return replace(state, session_index=(*state.session_index, session))
+    return replace(
+        state,
+        session_index=tuple(
+            session if item.session_id == session.session_id else item
+            for item in state.session_index
         ),
     )
 
@@ -726,6 +763,20 @@ class RescueCentral:
         return self.store.transact(operation)
 
     def record_response(self, command: RecordResponse) -> Result[RequestSnapshot]:
+        """Record one ship response delivery and apply it to the request when the rules allow.
+
+        What: normalises the command, checks receipt against send time, gathers delivery facts,
+          asks classify_delivery for the decision, runs the session step for a received delivery
+          (the command's envelope or the default local session), carries out the decision and
+          issues a decision report for every recorded received delivery.
+        When called: once per inbound ship response attempt, including lost and repeated ones.
+        Why: classification and sequencing live in the communication rules; central only mutates
+          state, and the default session (at the stored version, else 1) changes the session index
+          but never an outcome; the report id derives from the delivery id, so it consumes no
+          shared id.
+        Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Communication/class-diagram.mmd
+        """
+
         def operation(state: RunState):
             try:
                 message_id = normalize_id(command.message_id)
@@ -770,18 +821,71 @@ class RescueCentral:
                     ),
                     None,
                 )
-                if known_delivery is not None:
-                    existing = known_delivery[2]
-                    same_message = existing_message is not None and existing_message[0] == message
-                    if (
-                        known_delivery[1] == message_id
-                        and same_message
-                        and existing.attempt_number == attempt
-                        and existing.received_at == received_at
-                        and existing.communication_rtt_seconds == communication_rtt
-                    ):
-                        return state, _result("ignored")
-                    return state, _result("rejected", reason="identity_conflict")
+                existing_delivery = None if known_delivery is None else known_delivery[2]
+                same_message = existing_message is not None and existing_message[0] == message
+                mission = next(
+                    (
+                        candidate
+                        for candidate in state.missions
+                        if any(item.request_id == request_id for item in candidate.requests)
+                    ),
+                    None,
+                )
+                request = (
+                    None
+                    if mission is None
+                    else next(item for item in mission.requests if item.request_id == request_id)
+                )
+                message_conflicts = existing_message is not None and not same_message
+                decision = classify_delivery(
+                    DeliveryFacts(
+                        delivery_known=known_delivery is not None,
+                        delivery_identical=(
+                            known_delivery is not None
+                            and known_delivery[1] == message_id
+                            and same_message
+                            and existing_delivery.attempt_number == attempt
+                            and existing_delivery.received_at == received_at
+                            and existing_delivery.communication_rtt_seconds == communication_rtt
+                        ),
+                        message_conflicts=message_conflicts,
+                        request_known=request is not None,
+                        request_open=request is not None
+                        and request.outcome == RequestOutcome.PENDING,
+                        request_expired=request is not None
+                        and request.outcome == RequestOutcome.EXPIRED,
+                        submitted_at=None if request is None else request.submitted_at,
+                        deadline=None if request is None else request.response_deadline,
+                        sent_at=sent_at,
+                        received_at=received_at,
+                    )
+                )
+
+                value = None if decision.result_status == "rejected" else request
+                outcome = _result(decision.result_status, value, decision.result_reason)
+                if decision.action == "none":
+                    return state, outcome
+                envelope = None
+                session = None
+                verdict = None
+                if received_at is not None:
+                    envelope = command.envelope
+                    if envelope is None:
+                        default_id = f"local:{'unknown' if request is None else request.ship_id}"
+                        stored = _session(state, default_id)
+                        envelope = SessionEnvelope(
+                            default_id,
+                            1 if stored is None else stored.version,
+                            FlowDirection.INBOUND,
+                            1 if stored is None else stored.next_inbound,
+                        )
+                    if not isinstance(envelope, SessionEnvelope):
+                        raise DomainValidationError("envelope must be a session envelope")
+                    session, _gap, verdict = communication_rules.accept_inbound(
+                        _session(state, envelope.session_id), envelope
+                    )
+                    if verdict == "stale":
+                        return state, _result("rejected", reason="stale_session")
 
                 def publish_delivery(
                     target_state: RunState,
@@ -789,7 +893,16 @@ class RescueCentral:
                     delivery_reason: str,
                     *,
                     keep_message: bool = True,
+                    decided_mission: Mission | None = None,
+                    report: bool = True,
                 ):
+                    """Append one delivery to the indices and, when received, its decision report.
+
+                    What: builds the MessageDelivery with its envelope, records it, and for a received
+                      delivery issues the report on the accepted session and publishes that session.
+                    Why: every recorded outcome shares one write path, so the indices, the session
+                      and its retained reports stay aligned in one returned state.
+                    """
                     delivery = MessageDelivery(
                         delivery_id=delivery_id,
                         attempt_number=attempt,
@@ -799,6 +912,7 @@ class RescueCentral:
                         communication_rtt_seconds=(
                             None if received_at is None else communication_rtt
                         ),
+                        envelope=envelope,
                     )
                     messages = target_state.message_index
                     if keep_message:
@@ -811,7 +925,7 @@ class RescueCentral:
                                 else item
                                 for item in messages
                             )
-                    updated = replace(
+                    recorded = replace(
                         target_state,
                         message_index=messages,
                         delivery_index=(
@@ -819,53 +933,47 @@ class RescueCentral:
                             (delivery_id, message_id, delivery),
                         ),
                     )
-                    return updated
+                    if session is None or not report:
+                        return recorded
+                    history = () if mission is None else mission.history
+                    decided = history if decided_mission is None else decided_mission.history
+                    issued, _report = communication_rules.issue_report(
+                        session,
+                        report_id=f"report-{delivery_id}",
+                        message_id=message_id,
+                        delivery_id=delivery_id,
+                        mission_id=None if mission is None else mission.mission_id,
+                        disposition=disposition,
+                        reason=delivery_reason,
+                        mission_sequence=(
+                            decided[-1].mission_sequence if len(decided) > len(history) else None
+                        ),
+                        after_mission_sequence=history[-1].mission_sequence if history else 0,
+                    )
+                    return _set_session(recorded, issued)
 
-                if existing_message is not None and existing_message[0] != message:
-                    updated = publish_delivery(
-                        state, "rejected", "identity_conflict", keep_message=False
+                if verdict == "duplicate":
+                    return (
+                        publish_delivery(
+                            state,
+                            "ignored",
+                            "duplicate_sequence",
+                            keep_message=not message_conflicts,
+                            report=False,
+                        ),
+                        _result("ignored", request, "duplicate_sequence"),
                     )
-                    return updated, _result("rejected", reason="identity_conflict")
-
-                mission = next(
-                    (
-                        candidate
-                        for candidate in state.missions
-                        if any(item.request_id == request_id for item in candidate.requests)
-                    ),
-                    None,
-                )
-                if mission is None:
-                    if received_at is None:
-                        return publish_delivery(state, "lost", "transport_loss"), _result("applied")
-                    return publish_delivery(state, "ignored", "unknown_request"), _result(
-                        "ignored", reason="unknown_request"
+                if decision.action == "record":
+                    return (
+                        publish_delivery(
+                            state,
+                            decision.disposition,
+                            decision.reason,
+                            keep_message=not message_conflicts,
+                        ),
+                        outcome,
                     )
-                request = next(item for item in mission.requests if item.request_id == request_id)
-                if sent_at < request.submitted_at:
-                    return publish_delivery(state, "rejected", "invalid_input"), _result(
-                        "rejected", reason="invalid_input"
-                    )
-                if received_at is None:
-                    return publish_delivery(state, "lost", "transport_loss"), _result(
-                        "applied", request
-                    )
-                if request.outcome != RequestOutcome.PENDING:
-                    if (
-                        request.outcome == RequestOutcome.EXPIRED
-                        and request.response_deadline is not None
-                        and received_at >= request.response_deadline
-                    ):
-                        return publish_delivery(state, "late", "deadline_expired"), _result(
-                            "ignored", request, "late"
-                        )
-                    return publish_delivery(state, "ignored", "closed_request"), _result(
-                        "ignored", request, "closed_request"
-                    )
-                if (
-                    request.response_deadline is not None
-                    and received_at >= request.response_deadline
-                ):
+                if decision.action == "expire_then_record":
                     expired = mission_rules.apply_outcome(
                         mission,
                         request_id,
@@ -878,12 +986,18 @@ class RescueCentral:
                             message_id,
                         ),
                     )
-                    updated = _set_mission(state, expired)
-                    result_request = next(
+                    expired_request = next(
                         item for item in expired.requests if item.request_id == request_id
                     )
-                    updated = publish_delivery(updated, "late", "deadline_expired")
-                    return updated, _result("ignored", result_request, "late")
+                    updated = publish_delivery(
+                        _set_mission(state, expired),
+                        decision.disposition,
+                        decision.reason,
+                        decided_mission=expired,
+                    )
+                    return updated, _result(
+                        decision.result_status, expired_request, decision.result_reason
+                    )
                 try:
                     updated_mission = mission_rules.apply_outcome(
                         mission,
@@ -902,12 +1016,107 @@ class RescueCentral:
                     return publish_delivery(state, "rejected", reason), _result(
                         "rejected", reason=reason
                     )
-                updated = _set_mission(state, updated_mission)
-                result_request = next(
+                updated = publish_delivery(
+                    _set_mission(state, updated_mission),
+                    decision.disposition,
+                    decision.reason,
+                    decided_mission=updated_mission,
+                )
+                applied_request = next(
                     item for item in updated_mission.requests if item.request_id == request_id
                 )
-                updated = publish_delivery(updated, "applied", "response_applied")
-                return updated, _result("applied", result_request)
+                return updated, _result("applied", applied_request)
+            except (DomainValidationError, TypeError) as error:
+                return state, _result("rejected", reason=_reason(error))
+
+        return self.store.transact(operation)
+
+    def recover_reports(
+        self, command: RecoverReports
+    ) -> Result[tuple[DecisionReport | SequenceControl, ...]]:
+        """Replay a session's retained decision reports, then the control for the live stream.
+
+        What: looks up the session and asks the recover_reports rule for the requested range;
+          a RecoveryRejection becomes the rejected result with the same-named reason.
+        When called: when a ship has missed decision reports and asks for them again.
+        Why: recovery only reads retained reports, so the run state is returned unchanged and a
+          replayed report keeps its original id, number and content.
+        Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Communication/class-diagram.mmd
+        """
+
+        def operation(state: RunState):
+            try:
+                session = _session(state, normalize_id(command.session_id))
+                if session is None:
+                    return state, _result("rejected", reason="unknown_session")
+                below_one = type(command.from_sequence) is int and command.from_sequence < 1
+                replay = communication_rules.recover_reports(
+                    session,
+                    RecoveryRequest(
+                        command.session_id,
+                        command.version,
+                        1 if below_one else command.from_sequence,
+                        command.count,
+                    ),
+                )
+                if below_one and not isinstance(replay, RecoveryRejection):
+                    replay = RecoveryRejection.RECOVERY_OUT_OF_RANGE
+                if isinstance(replay, RecoveryRejection):
+                    return state, _result("rejected", reason=replay.value)
+                return state, _result("applied", replay)
+            except (DomainValidationError, TypeError) as error:
+                return state, _result("rejected", reason=_reason(error))
+
+        return self.store.transact(operation)
+
+    def synchronise_inbound(self, command: SynchroniseInbound) -> Result[CommunicationSession]:
+        """Move a session's expected inbound number forward to the one the ship will send next.
+
+        What: builds the inbound SequenceControl, applies the synchronise_inbound rule and
+          publishes the session with any NotApplied gap; a refusal publishes nothing.
+        When called: when a ship skips inbound numbers and tells central where it resumes.
+        Why: the skipped range becomes a visible gap without consuming a business number.
+        Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Communication/class-diagram.mmd
+        """
+
+        def operation(state: RunState):
+            try:
+                session = _session(state, normalize_id(command.session_id))
+                if session is None:
+                    return state, _result("rejected", reason="unknown_session")
+                synchronised = communication_rules.synchronise_inbound(
+                    session,
+                    SequenceControl(
+                        command.session_id,
+                        command.version,
+                        FlowDirection.INBOUND,
+                        command.next_sequence,
+                    ),
+                )
+                if isinstance(synchronised, RecoveryRejection):
+                    return state, _result("rejected", reason=synchronised.value)
+                advanced, _gap = synchronised
+                return _set_session(state, advanced), _result("applied", advanced)
+            except (DomainValidationError, TypeError) as error:
+                return state, _result("rejected", reason=_reason(error))
+
+        return self.store.transact(operation)
+
+    def get_session(self, session_id: str) -> Result[CommunicationSession]:
+        """Return one session for diagnostics: version, both counters, gaps and reports.
+
+        What: looks the session up by id and returns it unchanged.
+        When called: by tests and operators inspecting a ship's sequenced exchange.
+        Why: an absent session is a named rejection, so a typo is not mistaken for an empty one.
+        Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Communication/class-diagram.mmd
+        """
+
+        def operation(state: RunState):
+            try:
+                session = _session(state, normalize_id(session_id))
+                if session is None:
+                    return state, _result("rejected", reason="unknown_session")
+                return state, _result("applied", session)
             except (DomainValidationError, TypeError) as error:
                 return state, _result("rejected", reason=_reason(error))
 

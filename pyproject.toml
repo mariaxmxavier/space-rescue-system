@@ -154,6 +154,29 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "communication-isolated: Communication imports only rescue.values and the standard library"
+type = "forbidden"
+source_modules = ["rescue.communication"]
+forbidden_modules = [
+    "rescue.mission",
+    "rescue.market",
+    "rescue.mobilisation",
+    "rescue.experiments",
+    "rescue.application",
+    "rescue.adapters",
+    "rescue.bootstrap",
+    "rescue.demo",
+]
+
+[[tool.importlinter.contracts]]
+name = "communication-layers: Communication rules build on models, never the reverse"
+type = "layers"
+layers = [
+    "rescue.communication.rules",
+    "rescue.communication.models",
+]
+
+[[tool.importlinter.contracts]]
 name = "adapters-inward: Adapters import only application.state, values and the standard library"
 type = "forbidden"
 source_modules = ["rescue.adapters"]

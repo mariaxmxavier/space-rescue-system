@@ -137,6 +137,7 @@ def simulate(
                 message_index=baseline.message_index,
                 delivery_index=baseline.delivery_index,
                 decision_index=baseline.decision_index,
+                session_index=baseline.session_index,
             ),
             None,
         )
@@ -359,6 +360,7 @@ def simulate(
         message_index=final_state.message_index,
         delivery_index=final_state.delivery_index,
         decision_index=final_state.decision_index,
+        session_index=final_state.session_index,
     )
     result = summarize(provisional_snapshot)
     finalized_run = replace(provisional_run, result=result)
