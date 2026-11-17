@@ -34,6 +34,7 @@ def _logger_enablement_preserved():
 
 
 DOMAIN_PACKAGES = ("mission", "market", "mobilisation", "communication")
+ADAPTER_IMPORT_ROOTS = ("rescue.adapters", "rescue.values", "rescue.application.state")
 FORBIDDEN_IO_CALLS = {
     "open",
     "read_text",
@@ -116,6 +117,41 @@ def _forbidden_market_imports(source: str, package: str) -> tuple[str, ...]:
         and not module.startswith("rescue.market.")
         and module.split(".")[0] not in sys.stdlib_module_names
     )
+
+
+def _absolute_modules(tree: ast.Module) -> tuple[str, ...]:
+    """List every module a file imports, one entry per imported name.
+
+    What: returns each ``import`` target and each ``from`` module; relative imports keep their dots.
+
+    When: called by the adapter and application import checks.
+
+    Why: a file with ``import a, b`` must have both names checked, not only the first.
+    """
+    modules: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            modules.append("." * node.level + (node.module or ""))
+    return tuple(modules)
+
+
+def _adapter_import_allowed(module: str) -> bool:
+    """Decide whether the adapters layer may import ``module``.
+
+    What: allows the standard library, ``rescue.adapters`` itself, ``rescue.values`` and the
+    temporary ``rescue.application.state``; refuses relative imports and everything else.
+
+    When: called for every import in ``rescue/adapters/`` by the allowlist test.
+
+    Why: an allowlist catches third-party and new outward imports that a denylist does not name.
+    """
+    if module.startswith("."):
+        return False
+    if module.split(".", 1)[0] in sys.stdlib_module_names:
+        return True
+    return any(module == root or module.startswith(f"{root}.") for root in ADAPTER_IMPORT_ROOTS)
 
 
 class ArchitectureBoundaryTests(unittest.TestCase):
@@ -226,16 +262,77 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                                 f"{_relative(path)} reads process environment directly",
                             )
 
-    def test_application_does_not_import_concrete_memory_adapter(self):
-        for path in _python_files("application"):
-            for node, module in _imports(_parse(path)):
-                names = [item.name for item in node.names]
+    def test_application_experiments_and_demo_do_not_import_memory_adapter_modules(self):
+        """Check that no application, experiments or demo module imports the memory adapters.
+
+        What: lists every import in those files and fails if one names ``rescue.adapters.memory``.
+
+        When: run by pytest on every ``make check-all``.
+
+        Why: only the composition root may choose the in-memory implementations.
+        """
+        sources = (
+            *_python_files("application"),
+            *_python_files("experiments"),
+            REPOSITORY_ROOT / "rescue" / "demo.py",
+        )
+        for path in sources:
+            for module in _absolute_modules(_parse(path)):
                 with self.subTest(file=_relative(path), import_name=module):
-                    self.assertNotIn(
-                        "MemoryTransactionStore",
-                        names,
-                        f"{_relative(path)} imports the concrete memory adapter",
+                    self.assertFalse(
+                        module == "rescue.adapters.memory"
+                        or module.startswith("rescue.adapters.memory."),
+                        f"{_relative(path)} imports the memory adapter module {module!r}",
                     )
+
+    def test_adapters_import_only_allowed_modules(self):
+        """Check that every import in ``rescue/adapters`` is on the allowlist.
+
+        What: lists every import in the adapters layer and fails on any module the allowlist refuses.
+
+        When: run by pytest on every ``make check-all``.
+
+        Why: the adapters layer may depend only on the standard library and the inward modules named
+        in FR-005 and FR-010; anything else would reverse the dependency direction.
+        """
+        for path in _python_files("adapters"):
+            for module in _absolute_modules(_parse(path)):
+                with self.subTest(file=_relative(path), import_name=module):
+                    self.assertTrue(
+                        _adapter_import_allowed(module),
+                        f"{_relative(path)} imports {module!r}, which the adapters layer may not import",
+                    )
+
+    def test_adapter_import_allowlist_rejects_outward_and_third_party_imports(self):
+        """Check that the allowlist itself accepts and refuses the right module names.
+
+        What: refuses ``requests``, ``rescue.bootstrap``, ``rescue.application.ports``,
+        ``rescue.application.central`` and a relative import; accepts ``decimal``, ``threading``,
+        ``rescue.values``, ``rescue.application.state`` and ``rescue.adapters.ports.clock``.
+
+        When: run by pytest on every ``make check-all``.
+
+        Why: the allowlist test is only trustworthy if the function it calls is proven to refuse
+        the cases it must refuse.
+        """
+        for module in (
+            "requests",
+            "rescue.bootstrap",
+            "rescue.application.ports",
+            "rescue.application.central",
+            ".ports",
+        ):
+            with self.subTest(import_name=module):
+                self.assertFalse(_adapter_import_allowed(module))
+        for module in (
+            "decimal",
+            "threading",
+            "rescue.values",
+            "rescue.application.state",
+            "rescue.adapters.ports.clock",
+        ):
+            with self.subTest(import_name=module):
+                self.assertTrue(_adapter_import_allowed(module))
 
     def test_declared_import_contracts_are_kept(self):
         output = io.StringIO()
@@ -246,7 +343,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 no_logo=True,
             )
         self.assertEqual(exit_code, 0, output.getvalue())
-        self.assertIn("Contracts: 10 kept, 0 broken.", output.getvalue())
+        self.assertIn("Contracts: 11 kept, 0 broken.", output.getvalue())
 
     def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
@@ -279,7 +376,16 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 {"rescue.*"},
                 False,
             ),
-            "application-no-memory": ({"rescue.application"}, {"rescue.adapters.memory"}, True),
+            "application-no-memory": (
+                {
+                    "rescue.application",
+                    "rescue.adapters.ports",
+                    "rescue.experiments",
+                    "rescue.demo",
+                },
+                {"rescue.adapters.memory"},
+                True,
+            ),
             "mobilisation-peers-one-way": (
                 {"rescue.mission", "rescue.market"},
                 {"rescue.mobilisation"},
@@ -314,6 +420,18 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             "mobilisation-solver-isolated": (
                 {"rescue.mobilisation.models", "rescue.mobilisation.services"},
                 {"ortools"},
+                True,
+            ),
+            "adapters-inward": (
+                {"rescue.adapters"},
+                {
+                    "rescue.bootstrap",
+                    "rescue.demo",
+                    "rescue.experiments",
+                    "rescue.application.central",
+                    "rescue.application.contracts",
+                }
+                | {f"rescue.{package}" for package in DOMAIN_PACKAGES},
                 True,
             ),
         }

@@ -9,6 +9,8 @@
 - [Glossary](reference/glossary.md): shared domain and technical terms.
 - [Constitution](../.specify/memory/constitution.md): project principles and governance.
 - [Mobilisation algorithms research](reference/mobilisation-algorithms-research.md): methods and sources behind ADR 0001.
+- [Working rules](rules/): coding rules for agents and humans, written by the rulebook skill.
+- [ID generation race research](reference/id-generation-race-research.md): verified, cited findings on locks, multiprocessing and free-threaded builds for `SequenceIdSource`.
 
 ## Decisions
 
@@ -27,6 +29,8 @@
 
 - [Rescue domain specification](../specs/001-rescue-domain-model/spec.md): core rules and all six extensions.
 - [Domain model diagrams](architecture/diagrams/rescue-domain-model/README.md): Mermaid sources and rendered views.
+- [SequenceIdSource race](architecture/diagrams/id-source-race.md): ASCII timelines of the lost update without the lock, and the serialised run with it.
+- [Store optimistic commit](architecture/diagrams/store-optimistic-commit.md): ASCII timelines of parallel requests, conflict and retry, and read-only transactions.
 
 ## Market rules
 
