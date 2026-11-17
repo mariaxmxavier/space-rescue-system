@@ -11,7 +11,8 @@ from rescue.application.contracts import (
 from rescue.bootstrap import new_run
 from rescue.experiments.models import RescueScenario, RunBaseline, ScriptedResponse
 from rescue.experiments.runner import simulate
-from rescue.market.models import ShipAvailability, ShipOfferRevision
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.offers import ShipOfferRevision
 from rescue.mobilisation.models import MobilisationPolicy
 
 SESSION_ID = "local:SHIP-1"

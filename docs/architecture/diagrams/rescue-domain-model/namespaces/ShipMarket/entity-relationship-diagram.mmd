@@ -1,5 +1,5 @@
 ---
-title: Mission operations + ShipMarket (ER logical groups; Mission owns request state)
+title: ShipMarket - six categories, stored state and inventory views
 config:
   layout: elk
   theme: base
@@ -28,14 +28,15 @@ config:
 erDiagram
     direction TB
     %% Scoped logical ER view of ShipMarket. Cross-space relationships: MissionOperations issues RFQs and owns requests; this space supplies market availability and offers.
-    B3Market {
+    %% Category labels are visible aliases, not extra entities or persisted keys.
+    B3Market["B3Market (stored aggregate)"] {
         string market_id PK
     }
-    Ship {
+    Ship["Fleet / Ship (stored)"] {
         string ship_id PK
         string name
     }
-    ShipAvailability {
+    ShipAvailability["Availability / ShipAvailability (stored)"] {
         string availability_id PK
         string ship_id
         integer total_seats
@@ -43,12 +44,12 @@ erDiagram
         boolean available
         datetime recorded_at
     }
-    ShipOffer {
+    ShipOffer["Offers / ShipOffer (stored)"] {
         string offer_id PK
         string mission_id
         string ship_id
     }
-    ShipOfferRevision {
+    ShipOfferRevision["Offers / ShipOfferRevision (stored history)"] {
         string revision_id PK
         integer revision_number
         integer capacity
@@ -56,30 +57,64 @@ erDiagram
         boolean available
         datetime recorded_at
     }
-    SeatRFQ {
+    SeatRFQ["Procurement / SeatRFQ (stored)"] {
         string rfq_id PK
         string mission_id
         string ship_id
         string availability_id
         integer requested_seats
-        string status
+        RFQStatus status "pending | quoted | expired; named value"
         datetime sent_at
         datetime response_deadline "optional"
     }
-    RFQOffer {
+    RFQOffer["Quotes / RFQOffer (stored)"] {
         string offer_id PK
         string rfq_id
         integer offered_seats
         number arrival_estimate_seconds
         datetime expires_at
         datetime recorded_at
-        string status
+        QuoteStatus status "held | accepted | rejected | expired; named value"
+        string request_id "optional; set when accepted"
     }
-    B3Market ||..o{ ShipAvailability : "tracks changing capacity"
+    QuoteStatusChange["Quotes / QuoteStatusChange (stored history)"] {
+        string quote_id FK
+        QuoteStatus status "held | accepted | rejected | expired; named value"
+        datetime changed_at
+        string request_id "optional; set when accepted"
+    }
+    %% Inventory boxes are derived/protocol views. They have no persisted identity or keys.
+    ShipUsage["Inventory / ShipUsage (derived, not stored)"] {
+        integer total "latest availability; zero if missing"
+        integer held "HELD quotes"
+        integer pending "pending requested seats"
+        integer confirmed "accepted or partially accepted confirmed seats"
+        integer used "held + pending + confirmed"
+        integer free "max(0, total - used); zero when unavailable"
+        integer shortfall "max(0, used - total)"
+    }
+    CommitmentSource["Inventory / CommitmentSource (read-only protocol)"] {
+        string mission_id "structural property, not a stored key"
+        CommitmentRequest_array requests "structural property"
+    }
+    CommitmentRequest["Inventory / CommitmentRequest (read-only protocol)"] {
+        string ship_id "structural property, not a stored key"
+        integer requested_seats
+        integer confirmed_seats
+        string outcome
+    }
+    B3Market ||..o{ Ship : "fleet"
+    B3Market ||..o{ ShipAvailability : "tracks changing capacity (append-only)"
     Ship ||..o{ ShipAvailability : "reports availability"
     B3Market ||..o{ SeatRFQ : "sends one per available ship"
     ShipAvailability ||..o{ SeatRFQ : "snapshot referenced by"
     Ship ||..o{ SeatRFQ : "addressed ship"
     SeatRFQ ||..o| RFQOffer : "receives at most one response"
+    B3Market ||..o{ RFQOffer : "quotes"
+    B3Market ||..o{ ShipOffer : "offers"
     Ship ||..o{ ShipOffer : "supplies"
     ShipOffer ||..|{ ShipOfferRevision : "versions; highest revision_number is current; recorded_at does not order"
+    RFQOffer ||..|{ QuoteStatusChange : "history; append-only insertion order"
+    B3Market ||..o{ QuoteStatusChange : "quote history (append-only)"
+    CommitmentSource ||..o{ CommitmentRequest : "requests (structural view)"
+    %% Derived inputs are described by attributes, not stored ER foreign-key relationships.

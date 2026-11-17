@@ -7,7 +7,7 @@ from decimal import Decimal
 from enum import Enum
 
 from rescue.communication.models.sessions.communication_session import CommunicationSession
-from rescue.market.models import B3Market
+from rescue.market.models.b3_market import B3Market
 from rescue.mission.models import Mission
 from rescue.values import DomainValidationError, immutable_tuple, normalize_id
 

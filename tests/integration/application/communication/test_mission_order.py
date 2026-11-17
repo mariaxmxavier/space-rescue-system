@@ -13,7 +13,8 @@ from rescue.application.contracts import (
 )
 from rescue.bootstrap import new_run
 from rescue.communication.models import FlowDirection, SessionEnvelope
-from rescue.market.models import ShipAvailability, ShipOfferRevision
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.offers import ShipOfferRevision
 
 
 def _setup(people=10, asks=(("SHIP-1", 6), ("SHIP-2", 4)), deadline=None):

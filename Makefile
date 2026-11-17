@@ -1,16 +1,16 @@
 export UV_LOCKED := 1
 
-.PHONY: install format lint check-architecture test test-unit test-integration test-e2e test-architecture check-all
+.PHONY: install format lint check-architecture test test-unit test-integration test-e2e test-architecture check-all compare compare-trace
 
 install:
 	uv sync --locked
 
 format:
-	uv run ruff format rescue tests
+	uv run ruff format rescue tests benchmarks
 
 lint:
-	uv run ruff format --check rescue tests
-	uv run ruff check rescue tests
+	uv run ruff format --check rescue tests benchmarks
+	uv run ruff check rescue tests benchmarks
 
 check-architecture:
 	uv run lint-imports
@@ -47,3 +47,9 @@ test-architecture:
 	uv run pytest tests/architecture
 
 check-all: lint check-architecture test
+
+compare:
+	uv run python -m benchmarks.mobilisation.compare
+
+compare-trace:
+	uv run python -m benchmarks.mobilisation.compare --trace

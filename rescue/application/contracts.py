@@ -10,7 +10,9 @@ from rescue.values import Id, Instant
 
 if TYPE_CHECKING:
     from rescue.communication.models import SessionEnvelope
-    from rescue.market.models import RFQOffer, ShipAvailability, ShipOfferRevision
+    from rescue.market.models.availability import ShipAvailability
+    from rescue.market.models.offers import ShipOfferRevision
+    from rescue.market.models.quotes import RFQOffer
 
 T = TypeVar("T")
 

@@ -1,0 +1,13 @@
+flowchart LR
+    Q[Held quotes in arrival order] --> QA[Take quote whole when it fits]
+    QA --> R[Residual demand is the supply]
+    R --> S((Source))
+    S -->|capacity allocatable seats cost 0| N1[Open ship node]
+    S -->|capacity allocatable seats cost 0| N2[Open ship node]
+    N1 -->|capacity supply cost arrival times n plus position| T((Sink))
+    N2 -->|capacity supply cost arrival times n plus position| T
+    T --> ST{Solver status usable}
+    ST -->|OPTIMAL or FEASIBLE| OUT[Flow per ship read as seats]
+    ST -->|other status| ZERO[Open ships get zero seats]
+    OUT --> RES[Selected ships first then unselected in arrival order]
+    ZERO --> RES

@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
 
-from rescue.market.models import B3Market, ShipAvailability
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.b3_market import B3Market
 from rescue.mission.models import Mission, RequestOutcome
 from rescue.values import (
     DomainValidationError,

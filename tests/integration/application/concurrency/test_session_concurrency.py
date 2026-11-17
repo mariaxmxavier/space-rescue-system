@@ -12,7 +12,8 @@ from rescue.application.contracts import (
 )
 from rescue.bootstrap import new_run
 from rescue.communication.models import FlowDirection, SessionEnvelope
-from rescue.market.models import ShipAvailability, ShipOfferRevision
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.offers import ShipOfferRevision
 
 SESSIONS = ("SESSION-A", "SESSION-B", "SESSION-C")
 PER_SESSION = 2

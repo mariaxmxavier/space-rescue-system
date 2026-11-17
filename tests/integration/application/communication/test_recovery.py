@@ -19,7 +19,8 @@ from rescue.communication.models import (
     SessionEnvelope,
 )
 from rescue.communication.rules import receive_report
-from rescue.market.models import ShipAvailability, ShipOfferRevision
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.offers import ShipOfferRevision
 
 SESSION = "S1"
 

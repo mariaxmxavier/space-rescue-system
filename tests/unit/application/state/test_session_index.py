@@ -5,7 +5,7 @@ from dataclasses import FrozenInstanceError
 
 from rescue.application.state import RunState
 from rescue.communication.models.sessions.communication_session import CommunicationSession
-from rescue.market.models import B3Market
+from rescue.market.models.b3_market import B3Market
 from rescue.values import DomainValidationError
 
 

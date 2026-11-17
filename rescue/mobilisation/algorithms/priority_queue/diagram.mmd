@@ -1,0 +1,15 @@
+flowchart TD
+    A[Build heap of arrival ship id candidate entries] --> B[heapify the entries]
+    B --> C[Record inputs step]
+    C --> D{Heap not empty}
+    D -->|yes| E[heappop smallest entry]
+    E --> F{Static skip reason}
+    F -->|yes| G[Zero seats and skip with the static reason]
+    F -->|no| H[Take quoted seats whole or min of allocatable and remaining]
+    H --> I{Seats greater than zero}
+    I -->|yes| J[Record pick step]
+    I -->|no| K[Record skip as not chosen]
+    G --> D
+    J --> D
+    K --> D
+    D -->|no| L[Record result with seats and remaining demand]

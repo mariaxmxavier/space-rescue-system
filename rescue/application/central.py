@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, TypeVar
 
+from rescue.adapters.ports import Clock, IdSource, TransactionStore
 from rescue.application.contracts import (
     AcceptQuote,
     CancelRequest,
@@ -24,7 +25,6 @@ from rescue.application.contracts import (
     Result,
     SynchroniseInbound,
 )
-from rescue.application.ports import Clock, IdSource, TransactionStore
 from rescue.application.state import RunState
 from rescue.communication import rules as communication_rules
 from rescue.communication.models import (
@@ -40,15 +40,15 @@ from rescue.communication.models import (
     SessionEnvelope,
 )
 from rescue.communication.rules import classify_delivery
-from rescue.market import rules as market_rules
-from rescue.market.models import (
-    RFQOffer,
-    SeatRFQ,
-    Ship,
-    ShipAvailability,
-    ShipOffer,
-    ShipOfferRevision,
-)
+from rescue.market.models.availability import ShipAvailability
+from rescue.market.models.availability.rules import latest_availability, publish_availability
+from rescue.market.models.fleet import Ship
+from rescue.market.models.inventory.rules import usage
+from rescue.market.models.offers import ShipOffer, ShipOfferRevision
+from rescue.market.models.offers.rules import publish_offer_revision
+from rescue.market.models.procurement import SeatRFQ
+from rescue.market.models.quotes import RFQOffer
+from rescue.market.models.quotes.rules import close_quote, hold_quote, transfer_quote
 from rescue.mission import rules as mission_rules
 from rescue.mission.models import (
     Mission,
@@ -64,7 +64,7 @@ from rescue.mobilisation.models import (
     MobilisationDecision,
     MobilisationPolicy,
 )
-from rescue.mobilisation.policies import select_offers
+from rescue.mobilisation.services.decide import select_offers
 from rescue.values import (
     DomainValidationError,
     TransitionContext,
@@ -178,13 +178,13 @@ def _request_capacity_reason(
     if not revision.available:
         return "unavailable"
     try:
-        latest = market_rules.latest_availability(state.market, ship_id)
+        latest = latest_availability(state.market, ship_id)
     except DomainValidationError:
         return "unknown_ship"
     if latest is None or not latest.available:
         return "unavailable"
     try:
-        inventory = market_rules.usage(state.market, state.missions, ship_id)
+        inventory = usage(state.market, state.missions, ship_id)
     except DomainValidationError:
         return "invalid_input"
     if inventory.shortfall or quantity > inventory.free:
@@ -385,7 +385,7 @@ def _create_request(
         updated_mission = mission_rules.add_request(mission, request, context)
         updated_state = _set_mission(state, updated_mission)
         if quote is not None:
-            updated_market = market_rules.transfer_quote(
+            updated_market = transfer_quote(
                 updated_state.market, quote.offer_id, request.request_id, instant
             )
             updated_state = replace(updated_state, market=updated_market)
@@ -444,7 +444,7 @@ class RescueCentral:
             try:
                 if not isinstance(command.availability, ShipAvailability):
                     raise DomainValidationError("availability must be a ShipAvailability value")
-                market = market_rules.publish_availability(state.market, command.availability)
+                market = publish_availability(state.market, command.availability)
                 if market == state.market:
                     status = "replayed"
                 else:
@@ -482,7 +482,7 @@ class RescueCentral:
                             if offer.offer_id == offer_id and existing == revision:
                                 return state, _result("replayed", offer)
                             return state, _result("rejected", reason="revision_conflict")
-                market = market_rules.publish_offer_revision(
+                market = publish_offer_revision(
                     state.market,
                     offer_id,
                     revision,
@@ -516,10 +516,10 @@ class RescueCentral:
                 market = state.market
                 created: list[SeatRFQ] = []
                 for ship in sorted(market.ships, key=lambda item: item.ship_id):
-                    latest = market_rules.latest_availability(market, ship.ship_id)
+                    latest = latest_availability(market, ship.ship_id)
                     if latest is None or not latest.available:
                         continue
-                    inventory = market_rules.usage(market, state.missions, ship.ship_id)
+                    inventory = usage(market, state.missions, ship.ship_id)
                     if inventory.shortfall or inventory.free == 0:
                         continue
                     requested_seats = min(outstanding, inventory.free)
@@ -555,7 +555,7 @@ class RescueCentral:
                 if rfq is None:
                     return state, _result("rejected", reason="invalid_input")
                 now = normalize_instant(command.now)
-                market = market_rules.hold_quote(state.market, state.missions, quote, now)
+                market = hold_quote(state.market, state.missions, quote, now)
                 return replace(state, market=market), _result("applied", quote)
             except (DomainValidationError, TypeError) as error:
                 return state, _result("rejected", reason=_reason(error))
@@ -590,9 +590,7 @@ class RescueCentral:
                 if rfq is None or rfq.mission_id != mission_id:
                     return state, _result("rejected", reason="identity_conflict")
                 if quote.expires_at <= normalize_instant(command.now):
-                    expired_market = market_rules.close_quote(
-                        state.market, quote_id, "expired", command.now
-                    )
+                    expired_market = close_quote(state.market, quote_id, "expired", command.now)
                     return replace(state, market=expired_market), _result(
                         "rejected", reason="expired_quote"
                     )
@@ -650,7 +648,7 @@ class RescueCentral:
                     return state, _result("rejected", reason="expired_quote")
                 if quote.status != "held":
                     return state, _result("rejected", reason="closed_request")
-                market = market_rules.close_quote(state.market, quote_id, "rejected", command.now)
+                market = close_quote(state.market, quote_id, "rejected", command.now)
                 closed = _find_quote(replace(state, market=market), quote_id)
                 return replace(state, market=market), _result("applied", closed)
             except (DomainValidationError, TypeError) as error:
@@ -666,9 +664,7 @@ class RescueCentral:
                 expired_ids: list[str] = []
                 for quote in tuple(market.quotes):
                     if quote.status == "held" and quote.expires_at <= instant:
-                        market = market_rules.close_quote(
-                            market, quote.offer_id, "expired", instant
-                        )
+                        market = close_quote(market, quote.offer_id, "expired", instant)
                         expired_ids.append(quote.offer_id)
                 updated_rfqs = []
                 for rfq in market.rfqs:
@@ -1280,7 +1276,7 @@ class RescueCentral:
                 candidates: list[Candidate] = []
                 for offer in sorted(offers, key=lambda item: item.ship_id):
                     revision = offer.current_revision
-                    inventory = market_rules.usage(state.market, state.missions, offer.ship_id)
+                    inventory = usage(state.market, state.missions, offer.ship_id)
                     revision_used = sum(
                         request.requested_seats
                         if request.outcome == RequestOutcome.PENDING

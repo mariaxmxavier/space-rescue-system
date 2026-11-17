@@ -1,1 +1,1 @@
-"""Application use cases and their inward-facing ports."""
+"""Application use cases; the ports they depend on live in ``rescue.adapters.ports``."""

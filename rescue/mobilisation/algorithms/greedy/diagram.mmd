@@ -1,0 +1,14 @@
+flowchart TD
+    A[Sort candidates by strategy key] --> B[Record inputs and order steps]
+    B --> C{Any candidate left}
+    C -->|yes| D{Static skip reason}
+    D -->|yes| E[Zero seats and skip with the static reason]
+    D -->|no| F{Held quote}
+    F -->|yes and fits demand and allocatable| G[Take quoted seats whole]
+    F -->|yes but does not fit| H[Zero seats and skip as not chosen]
+    F -->|no| I[Take the smaller of allocatable and remaining demand]
+    E --> C
+    G --> C
+    H --> C
+    I --> C
+    C -->|no| J[Record result with seats and remaining demand]
