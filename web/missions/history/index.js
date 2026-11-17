@@ -17,7 +17,7 @@ export function registerMissionHistory({ root, workspace, forms, outcomes }) {
     title: "Mission progress",
     fields: [
       { name: "mission_id", label: "Mission ID", required: true },
-      { name: "now", label: "Current time", type: "number", required: true },
+      { name: "now", label: "Current time", required: true },
     ],
     onSubmit: (payload) => workspace.invoke("get_progress", payload),
   });

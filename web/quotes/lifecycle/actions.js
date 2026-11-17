@@ -17,7 +17,7 @@ export function renderQuoteActions({ content, workspace, outcomes }) {
     title: "Record a quote",
     operation: "record_quote",
     button: "Record quote",
-    fields: [field("Offer ID", "offer_id"), field("RFQ ID", "rfq_id"), field("Offered seats", "offered_seats", "number"), field("Arrival estimate", "arrival_estimate_seconds", "number"), field("Expires at", "expires_at", "number"), field("Recorded at", "recorded_at", "number"), field("Current time", "now", "number")],
+    fields: [field("Offer ID", "offer_id"), field("RFQ ID", "rfq_id"), field("Offered seats", "offered_seats", "integer"), field("Arrival estimate", "arrival_estimate_seconds", "number"), field("Expires at", "expires_at", "number"), field("Recorded at", "recorded_at", "number"), field("Current time", "now", "number")],
     workspace,
     outcomes,
     nested: "offer",
@@ -52,7 +52,7 @@ function appendCommandForm(parent, { title, operation, button, fields, workspace
     const data = Object.fromEntries(new FormData(form));
     for (const item of fields) {
       if (item.optional && data[item.name] === "") delete data[item.name];
-      if (item.type === "number" && data[item.name] !== undefined) data[item.name] = data[item.name];
+      if (item.type === "integer" && data[item.name] !== undefined) data[item.name] = Number(data[item.name]);
     }
     const payload = nested ? { command: { [nested]: Object.fromEntries(Object.entries(data).filter(([key]) => key !== "now")), now: data.now } } : { command: data };
     await submit(form, workspace, outcomes, operation, payload);
@@ -81,7 +81,8 @@ function makeForm(title, fields) {
     label.textContent = item.optional ? `${item.label} (optional)` : item.label;
     const input = document.createElement("input");
     input.name = item.name;
-    input.type = item.type;
+    input.type = item.type === "integer" || item.type === "number" ? "number" : item.type;
+    if (item.type === "integer") input.step = "1";
     input.required = !item.optional;
     label.append(input);
     form.append(label);
