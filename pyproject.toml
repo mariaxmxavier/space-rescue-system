@@ -89,9 +89,9 @@ forbidden_modules = ["rescue.*"]
 ignore_imports = ["rescue.market.** -> rescue.values"]
 
 [[tool.importlinter.contracts]]
-name = "application-no-memory: Application does not import the memory adapter"
+name = "application-no-memory: Only bootstrap imports the memory adapters"
 type = "forbidden"
-source_modules = ["rescue.application"]
+source_modules = ["rescue.application", "rescue.adapters.ports", "rescue.experiments", "rescue.demo"]
 forbidden_modules = ["rescue.adapters.memory"]
 allow_indirect_imports = true
 
@@ -117,3 +117,20 @@ layers = [
     "rescue.mission.rules",
     "rescue.mission.models",
 ]
+
+[[tool.importlinter.contracts]]
+name = "adapters-inward: Adapters import only application.state, values and the standard library"
+type = "forbidden"
+source_modules = ["rescue.adapters"]
+forbidden_modules = [
+    "rescue.bootstrap",
+    "rescue.demo",
+    "rescue.experiments",
+    "rescue.application.central",
+    "rescue.application.contracts",
+    "rescue.mission",
+    "rescue.market",
+    "rescue.mobilisation",
+    "rescue.communication",
+]
+allow_indirect_imports = true

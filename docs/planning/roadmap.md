@@ -11,7 +11,7 @@ domain-first layout stays as it is (decision recorded 2026-11-16).
 | Spec | Scope | Depends on | Branch / worktree | Status |
 |------|-------|------------|-------------------|--------|
 | 002 | Project foundation: pinned toolchain, one check command, declared import contracts, tests at `tests/<type>/<package>/<topic>/`, docs grouped by kind, CI, agent instructions | 001 | `002-project-foundation` | Implemented |
-| 003 | `rescue/adapters/` | 002 | `003-adapters-conformance` | Specified |
+| 003 | `rescue/adapters/` | 002 | `003-adapters-conformance` | Implemented |
 | 004 | `rescue/mission/`: invariant table tests, named outcomes | 002 | `004-mission-conformance` | Specified |
 | 005 | `rescue/market/`: six categories, one file per entity, named statuses, quote history, generated capacity tests | 002 | `005-market-conformance` | Implemented; final review pending |
 | 006 | `rescue/mobilisation/`: strategy tests, declared one-way peers | 002 | `006-mobilisation-conformance` | Specified |
@@ -48,3 +48,7 @@ merge in either order. Each branch rebases onto `main` before
 Known cross-cutting issue: `application.central` → `experiments.runner` (a function-local
 import) → `bootstrap` → `application.central` is an import cycle. It is broken by 008 and 009
 together.
+
+Spec 003 adds a temporary package cycle, `application` → `adapters.ports` → `application.state`
+(FR-010). Spec 008 moves `RunState` inward and must add `rescue.application` to the
+`adapters-inward` forbidden list, so the exception cannot outlive it.

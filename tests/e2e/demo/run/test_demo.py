@@ -87,6 +87,15 @@ class RescueDemoTests(unittest.TestCase):
         self.assertIn("status=complete", output)
         self.assertIn("comparisons=3 scenarios x 2 policies", output)
 
+    def test_step_log_shows_partial_acceptance_refusal_and_the_follow_up_request(self):
+        output = render(run_demo())
+
+        self.assertIn("step log: mission MISSION-DEMO, demand 10", output)
+        self.assertIn("partially_accepted", output)
+        self.assertIn("refused", output)
+        self.assertIn("request_created", output)
+        self.assertGreaterEqual(output.count("  request "), 4)
+
 
 if __name__ == "__main__":
     unittest.main()
