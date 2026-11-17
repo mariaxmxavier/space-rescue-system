@@ -75,6 +75,10 @@ Inventory counts held unaccepted quotes, pending requests, and confirmed commitm
 
 `make compare-trace` prints the same table after a JSON-lines trace of every algorithm step, with the fields `algorithm`, `step`, `ship_id` and `detail`. The equivalent direct command is `uv run python -m benchmarks.mobilisation.compare [--trace]`. The runtime column is the only machine-dependent value; the other columns are deterministic.
 
+### Local HTTP API
+
+Run `uv run uvicorn rescue.api.app:create_app --factory --host 127.0.0.1 --port 8000` and open `http://127.0.0.1:8000/docs`. The API keeps runs and complete call histories in memory until the process exits. Set `SPACE_RESCUE_ALLOWED_ORIGINS` to a comma-separated list of exact loopback browser origins when the web app uses a different port, for example `http://localhost:3000`. Requests without an Origin header remain available to local command-line clients. Repeated history reads store their full prior responses and can use substantial memory. See [HTTP API quickstart](specs/011-http-api/quickstart.md).
+
 The measured runtimes and the thresholds they were checked against are in the US3 section of [`specs/006-mobilisation-conformance/quickstart.md`](specs/006-mobilisation-conformance/quickstart.md).
 
 ## Market

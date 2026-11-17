@@ -55,3 +55,26 @@ def test_invalid_operation_input_is_reported_without_changing_run_state():
     assert rejected.status_code == 400
     assert "detail" in rejected.json()
     assert after == before
+
+
+def test_create_run_decodes_policy_for_mobilisation_operations():
+    client = TestClient(create_app())
+    created = client.post(
+        "/runs",
+        json={
+            "application_run_id": "RUN-POLICY",
+            "central_id": "CENTRAL-POLICY",
+            "policies": [
+                {
+                    "policy_id": "POLICY-EARLY",
+                    "revision": 1,
+                    "name": "Earliest arrival",
+                    "selection_criteria": "earliest_arrival",
+                }
+            ],
+        },
+    )
+
+    assert created.status_code == 201
+    state = client.get("/runs/RUN-POLICY/state").json()
+    assert state["policies"][0]["policy_id"] == "POLICY-EARLY"

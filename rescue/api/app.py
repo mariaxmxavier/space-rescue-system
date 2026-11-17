@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -11,10 +13,18 @@ from rescue.api.operations import OPERATIONS
 from rescue.api.origins import origin_is_allowed
 from rescue.api.runtime import RunRegistry
 from rescue.api.state import read_run_state
+from rescue.experiments.models import RescueScenario
+from rescue.mobilisation.models import MobilisationPolicy
 
 
-def create_app(allowed_origins: tuple[str, ...] = ()) -> FastAPI:
+def create_app(allowed_origins: tuple[str, ...] | None = None) -> FastAPI:
     """Build an isolated API app and its in-memory run registry."""
+    if allowed_origins is None:
+        allowed_origins = tuple(
+            origin.strip()
+            for origin in os.environ.get("SPACE_RESCUE_ALLOWED_ORIGINS", "").split(",")
+            if origin.strip()
+        )
     app = FastAPI(title="Space Rescue API")
     registry = RunRegistry()
     app.state.run_registry = registry
@@ -36,12 +46,28 @@ def create_app(allowed_origins: tuple[str, ...] = ()) -> FastAPI:
     @app.post("/runs", status_code=201)
     async def create_run(request: Request):
         try:
-            payload = await request.json()
+            try:
+                payload = await request.json()
+            except ValueError:
+                return JSONResponse({"detail": "malformed JSON"}, status_code=400)
+            if not isinstance(payload, dict) or set(payload) - {
+                "application_run_id",
+                "central_id",
+                "policies",
+                "scenarios",
+            }:
+                raise PayloadError("run fields do not match the contract")
+            policies = tuple(
+                from_json_value(item, MobilisationPolicy) for item in payload.get("policies", ())
+            )
+            scenarios = tuple(
+                from_json_value(item, RescueScenario) for item in payload.get("scenarios", ())
+            )
             record = registry.create(
                 payload["application_run_id"],
                 payload["central_id"],
-                policies=payload.get("policies", ()),
-                scenarios=payload.get("scenarios", ()),
+                policies=policies,
+                scenarios=scenarios,
             )
             return {
                 "application_run_id": record.context.application_run_id,
@@ -49,8 +75,13 @@ def create_app(allowed_origins: tuple[str, ...] = ()) -> FastAPI:
             }
         except KeyError as error:
             return JSONResponse({"detail": f"missing field: {error.args[0]}"}, status_code=400)
-        except (ValueError, TypeError) as error:
-            return JSONResponse({"detail": str(error)}, status_code=409)
+        except PayloadError as error:
+            return JSONResponse({"detail": str(error)}, status_code=400)
+        except ValueError as error:
+            status = 409 if "already exists" in str(error) else 400
+            return JSONResponse({"detail": str(error)}, status_code=status)
+        except (TypeError, KeyError) as error:
+            return JSONResponse({"detail": str(error)}, status_code=400)
 
     @app.post("/runs/{run_id}/operations/{operation}")
     async def invoke(run_id: str, operation: str, request: Request):
@@ -123,4 +154,7 @@ def _arguments(payload: object, descriptor) -> tuple[object, ...]:
         return (from_json_value(payload["command"], descriptor.command),)
     if set(payload) != set(descriptor.scalar_arguments):
         raise PayloadError("operation arguments do not match the contract")
-    return tuple(payload[key] for key in descriptor.scalar_arguments)
+    return tuple(
+        from_json_value(payload[key], expected)
+        for key, expected in zip(descriptor.scalar_arguments, descriptor.scalar_types, strict=True)
+    )

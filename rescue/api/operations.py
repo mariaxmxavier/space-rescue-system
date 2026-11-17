@@ -8,6 +8,7 @@ Why: only reviewed application operations are reachable over HTTP.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 from types import MappingProxyType
 
 from rescue.application.contracts import (
@@ -37,6 +38,7 @@ class Operation:
     method: str
     command: type | None = None
     scalar_arguments: tuple[str, ...] = ()
+    scalar_types: tuple[type, ...] = ()
 
 
 OPERATIONS = MappingProxyType(
@@ -50,17 +52,29 @@ OPERATIONS = MappingProxyType(
         "accept_quote": Operation("accept_quote", AcceptQuote),
         "create_request": Operation("create_request", CreateRequest),
         "reject_quote": Operation("reject_quote", RejectQuote),
-        "expire_quotes": Operation("expire_quotes", scalar_arguments=("now",)),
+        "expire_quotes": Operation(
+            "expire_quotes", scalar_arguments=("now",), scalar_types=(Decimal,)
+        ),
         "cancel_request": Operation("cancel_request", CancelRequest),
         "expire_request": Operation("expire_request", ExpireRequest),
         "record_response": Operation("record_response", RecordResponse),
         "recover_reports": Operation("recover_reports", RecoverReports),
         "synchronise_inbound": Operation("synchronise_inbound", SynchroniseInbound),
-        "get_session": Operation("get_session", scalar_arguments=("session_id",)),
-        "get_progress": Operation("get_progress", scalar_arguments=("mission_id", "now")),
-        "get_history": Operation("get_history", scalar_arguments=("mission_id",)),
-        "get_decision": Operation("get_decision", scalar_arguments=("decision_id",)),
-        "get_deliveries": Operation("get_deliveries", scalar_arguments=("message_id",)),
+        "get_session": Operation(
+            "get_session", scalar_arguments=("session_id",), scalar_types=(str,)
+        ),
+        "get_progress": Operation(
+            "get_progress", scalar_arguments=("mission_id", "now"), scalar_types=(str, Decimal)
+        ),
+        "get_history": Operation(
+            "get_history", scalar_arguments=("mission_id",), scalar_types=(str,)
+        ),
+        "get_decision": Operation(
+            "get_decision", scalar_arguments=("decision_id",), scalar_types=(str,)
+        ),
+        "get_deliveries": Operation(
+            "get_deliveries", scalar_arguments=("message_id",), scalar_types=(str,)
+        ),
         "compare": Operation("compare", ComparePolicies),
         "mobilise": Operation("mobilise", Mobilise),
     }

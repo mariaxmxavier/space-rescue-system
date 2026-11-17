@@ -1,7 +1,7 @@
 # Validation
 
 - `uv run pytest tests/integration/api/http -q --no-cov`: 4 passed.
-- `make check-all`: passed, including formatting, Ruff, 16 import contracts, 1,499 tests and package coverage gates.
+- `make check-all`: passed, including formatting, Ruff, 16 import contracts, 1,501 tests and package coverage gates.
 - `uv run python -m rescue.demo`: passed; 10 confirmed seats, 0 pending, complete.
 - Quickstart commands use the documented loopback Uvicorn entrypoint and generated `/docs` page.
 

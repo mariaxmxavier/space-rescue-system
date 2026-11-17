@@ -10,8 +10,11 @@ make check-all
 Start the API in another terminal:
 
 ```powershell
+$env:SPACE_RESCUE_ALLOWED_ORIGINS = 'http://localhost:3000'
 uv run uvicorn rescue.api.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
+
+Set the origin variable to the exact local origin of the browser app; omit it when using the API docs or a command-line client.
 
 Open `http://127.0.0.1:8000/docs`. Create a run and register a mission:
 
