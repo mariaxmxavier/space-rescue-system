@@ -1,0 +1,16 @@
+flowchart TD
+    A[Build integer model per usable ship] --> B[x_i in 0 to cap, use_i boolean, latest, sum of x at most demand]
+    B --> C[Record model step with time scale]
+    C --> D[Stage 1 maximise covered seats]
+    D --> E{Status OPTIMAL or FEASIBLE}
+    E -->|no| Z[Zero seats for every ship]
+    E -->|yes| F[Fix coverage optimum]
+    F --> G[Stage 2 minimise latest times n plus 1 plus sum of use]
+    G --> H{Status OPTIMAL or FEASIBLE}
+    H -->|no| Z
+    H -->|yes| I[Fix arrival and ship count optimum]
+    I --> J[Stage 3 per ship in ascending ship id maximise then fix x_i]
+    J --> K{All tie stages usable}
+    K -->|no| Z
+    K -->|yes| L[Read x_i as seats for each ship]
+    L --> M[Record pick skip and result steps]

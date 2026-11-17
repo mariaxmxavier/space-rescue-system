@@ -53,7 +53,7 @@ Put every test at `tests/<type>/<package>/<topic>/test_<name>.py`. Never add a t
 
 - `docs/context/`: problem statement (`original-problem.md`).
 - `docs/reference/`: glossary (`glossary.md`).
-- `docs/architecture/`: diagrams (`diagrams/`).
+- `docs/architecture/`: diagrams (`diagrams/`) and decision records (`decisions/`).
 - `docs/planning/`: roadmap (`roadmap.md`).
 
 The index is `docs/readme.md`. Link every new document from it.

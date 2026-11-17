@@ -4,7 +4,7 @@ A callable Python model for coordinating rescue seats, preventing shared ship ov
 
 ## Run it
 
-Install uv 0.13.8 (pinned; the project refuses any other version) and make. The interpreter is CPython **3.14.10**, pinned in `.python-version` and fetched by uv. The project has no runtime dependencies. From the repository root:
+Install uv 0.13.8 (pinned; the project refuses any other version) and make. The interpreter is CPython **3.14.10**, pinned in `.python-version` and fetched by uv. The project's one runtime dependency is `ortools==9.15.6755`, used only by the mobilisation solver families; `uv.lock` pins everything it pulls in. From the repository root:
 
 ```bash
 make install
@@ -14,6 +14,8 @@ make test-integration
 make test-e2e
 make test-architecture
 uv run python -m rescue.demo
+make compare
+make compare-trace
 ```
 
 `make check-all` runs the format check, lint, the import contracts, and the full test suite with coverage, and reports one pass or fail. The per-type targets run one test type alone.
@@ -41,9 +43,25 @@ Mission demand is fixed. A mission is complete only when confirmed seats equal d
 
 ## Selection and capacity
 
-Two strategies are available: `earliest_arrival` orders by absolute estimated arrival and ship ID; `largest_capacity` orders by remaining allocatable seats, then absolute arrival and ship ID. Selection records every candidate and reason without reserving seats. Request creation checks current inventory again.
+A policy names one of six strategies from a closed set; any other name fails when the policy is built. `earliest_arrival` is the default: it orders ships by absolute estimated arrival, then ship ID. `largest_capacity` is the legacy ordering: it orders by remaining allocatable seats, then arrival, then ship ID. `priority_queue`, `min_cost_flow`, `cp_sat` and `knapsack` are the comparison families. Each has a README with a worked example and its limits under [`rescue/mobilisation/algorithms/`](rescue/mobilisation/algorithms/), and [ADR 0001](docs/architecture/decisions/0001-mobilisation-algorithms.md) records why these are the default and the comparison set. Selection records every candidate and reason without reserving seats. Request creation checks current inventory again.
+
+### Strategy assumptions and availability snapshots
+
+- A decision is taken for one mission from one availability snapshot: one candidate per ship, with its offer revision, its free seats and its optional held quote.
+- A ship's arrival is its offer revision's record time plus its arrival estimate. The decision time is the instant the decision is taken.
+- A decision proposes seats and reserves nothing. A later availability change is seen by the next decision. It does not alter a recorded decision, which is an immutable value, or any settled request.
+- Decisions are per mission. The algorithms do not optimise across missions; fleet-wide allocation is out of scope.
+- Held quotes are all or nothing. The knapsack family never splits an offer, so it can cover less demand than the others. Min-cost flow fixes held quotes greedily by arrival before the flow runs. The knapsack shortfall appears as remaining demand in its result step, and min-cost flow's quote choices appear as its quote steps.
 
 Inventory counts held unaccepted quotes, pending requests, and confirmed commitments once across missions. The latest availability snapshot supplies the current total. A capacity reduction preserves existing holds, requests, and confirmations; it exposes a shortfall and blocks new allocations until sufficient capacity is available.
+
+## Comparing the mobilisation algorithms
+
+`make compare` runs the five comparison families (`earliest_arrival`, `priority_queue`, `min_cost_flow`, `cp_sat` and `knapsack`) on five fixed scenarios: splittable demand, tied arrivals, held quotes, insufficient supply and knapsack under-coverage. It prints one table with 25 rows, one per scenario and algorithm, and the columns `scenario`, `algorithm`, `seats_covered`, `last_seat_arrival_s`, `ships_used`, `unused_seats` and `runtime_ms`. An empty last-arrival value means no ship was chosen and prints as `-`.
+
+`make compare-trace` prints the same table after a JSON-lines trace of every algorithm step, with the fields `algorithm`, `step`, `ship_id` and `detail`. The equivalent direct command is `uv run python -m benchmarks.mobilisation.compare [--trace]`. The runtime column is the only machine-dependent value; the other columns are deterministic.
+
+The measured runtimes and the thresholds they were checked against are in the US3 section of [`specs/006-mobilisation-conformance/quickstart.md`](specs/006-mobilisation-conformance/quickstart.md).
 
 ## Simulation timing
 

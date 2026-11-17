@@ -3,6 +3,7 @@
 import ast
 import contextlib
 import io
+import logging
 import tomllib
 import unittest
 from pathlib import Path
@@ -10,6 +11,23 @@ from pathlib import Path
 from importlinter.cli import lint_imports
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+
+
+@contextlib.contextmanager
+def _logger_enablement_preserved():
+    loggers = [
+        logger
+        for logger in logging.root.manager.loggerDict.values()
+        if isinstance(logger, logging.Logger)
+    ]
+    states = [(logger, logger.disabled) for logger in loggers]
+    try:
+        yield
+    finally:
+        for logger, disabled in states:
+            logger.disabled = disabled
+
+
 DOMAIN_PACKAGES = ("mission", "market", "mobilisation", "communication")
 FORBIDDEN_IO_CALLS = {
     "open",
@@ -121,14 +139,14 @@ class ArchitectureBoundaryTests(unittest.TestCase):
 
     def test_declared_import_contracts_are_kept(self):
         output = io.StringIO()
-        with contextlib.redirect_stdout(output):
+        with _logger_enablement_preserved(), contextlib.redirect_stdout(output):
             exit_code = lint_imports(
                 config_filename=str(REPOSITORY_ROOT / "pyproject.toml"),
                 no_cache=True,
                 no_logo=True,
             )
         self.assertEqual(exit_code, 0, output.getvalue())
-        self.assertIn("Contracts: 3 kept, 0 broken.", output.getvalue())
+        self.assertIn("Contracts: 7 kept, 0 broken.", output.getvalue())
 
     def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
@@ -157,11 +175,44 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             ),
             "domain-io": (domain_sources, io_modules, False),
             "application-no-memory": ({"rescue.application"}, {"rescue.adapters.memory"}, True),
+            "mobilisation-peers-one-way": (
+                {"rescue.mission", "rescue.market"},
+                {"rescue.mobilisation"},
+                False,
+            ),
+            "mobilisation-allowed-imports": (
+                {"rescue.mobilisation"},
+                {
+                    "rescue.communication",
+                    "rescue.experiments",
+                    "rescue.application",
+                    "rescue.adapters",
+                    "rescue.bootstrap",
+                    "rescue.demo",
+                },
+                False,
+            ),
+            "mobilisation-solver-isolated": (
+                {"rescue.mobilisation.models", "rescue.mobilisation.services"},
+                {"ortools"},
+                True,
+            ),
+        }
+        expected_layers = {
+            "mobilisation-layers": [
+                "rescue.mobilisation.services",
+                "rescue.mobilisation.algorithms",
+                "rescue.mobilisation.models",
+            ]
         }
         declared = {}
+        declared_layers = {}
         for contract in contracts:
             contract_id = contract["name"].split(":", 1)[0]
             self.assertNotIn("ignore_imports", contract, contract_id)
+            if contract["type"] == "layers":
+                declared_layers[contract_id] = contract["layers"]
+                continue
             self.assertEqual(contract["type"], "forbidden", contract_id)
             declared[contract_id] = (
                 set(contract["source_modules"]),
@@ -169,6 +220,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 contract.get("allow_indirect_imports", False),
             )
         self.assertEqual(declared, expected)
+        self.assertEqual(declared_layers, expected_layers)
 
 
 if __name__ == "__main__":

@@ -48,7 +48,7 @@ from rescue.mobilisation.models import (
     MobilisationDecision,
     MobilisationPolicy,
 )
-from rescue.mobilisation.policies import select_offers
+from rescue.mobilisation.services.decide import select_offers
 from rescue.values import (
     DomainValidationError,
     TransitionContext,

@@ -1,0 +1,13 @@
+flowchart TD
+    A[Sort ships by arrival then ship id] --> B[Offer per ship: quote seats or allocatable seats or zero]
+    B --> C[Record item steps and model step]
+    C --> D{Demand positive and some offer positive}
+    D -->|no| E[Status empty and nothing chosen]
+    D -->|yes| F[Branch and bound over whole offers with capacity equal to demand]
+    F --> G{Solver proved optimal}
+    G -->|yes| H[Status optimal]
+    G -->|no| I[Status feasible and set kept]
+    H --> J[Chosen ships ranked first then the rest]
+    I --> J
+    E --> J
+    J --> K[Record solver pick skip and result steps]

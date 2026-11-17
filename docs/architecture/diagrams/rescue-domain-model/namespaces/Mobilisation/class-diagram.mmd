@@ -34,6 +34,15 @@ classDiagram
         -string name
         -data selection_criteria
     }
+    class AlgorithmName {
+        <<enumeration>>
+        earliest_arrival
+        largest_capacity
+        priority_queue
+        min_cost_flow
+        cp_sat
+        knapsack
+    }
     class MobilisationDecision {
         -string decision_id
         -datetime recorded_at
@@ -48,4 +57,6 @@ classDiagram
     }
     MobilisationDecision "0..*" --> "1" MobilisationPolicy : applies revision
     MobilisationDecision "1" *-- "0..*" OfferEvaluation : explains candidates
+    MobilisationPolicy "1" --> "1" AlgorithmName : selection_criteria resolves to
+    note for AlgorithmName "Selection resolution: a policy's selection_criteria resolve to exactly one AlgorithmName; an unknown name fails at construction."
     note for MobilisationPolicy "External interactions: MissionOperations owns decisions; ShipMarket provides the offer revisions evaluated."
