@@ -98,3 +98,7 @@
 
 {"timestamp":"2026-11-17T06:46:19.7112540Z","action":"guard","status":"allow","feature_directory":"specs/007-communication-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:executing-plans"}
 
+{"timestamp":"2026-11-17T10:47:37.9618418Z","action":"handoff","status":"complete","feature_directory":"specs/007-communication-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T1047378776180Z-complete"}
+
+{"event":"artifact_drift_detected","timestamp":"2026-11-17T10:47:37.9794743Z","actor":"claude","feature_directory":"specs/007-communication-conformance","drifted_artifacts":[{"path":"tasks.md","old_sha256":"467c5fbf46dc927ff63cba247946fe0f9015575365553d7362c7f9f79392e945","new_sha256":"c3fcbb3001147a9e457662d0146a05bd413f44396ce3826b6d565363d406e786"}]}
+
