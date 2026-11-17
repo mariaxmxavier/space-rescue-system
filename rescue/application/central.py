@@ -25,6 +25,8 @@ from rescue.application.contracts import (
 )
 from rescue.application.state import RunState
 from rescue.communication.models import CommunicationMessage, MessageDelivery
+from rescue.experiments.simulation import simulate
+from rescue.experiments.simulation.ports import StartRun
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.availability.rules import latest_availability, publish_availability
 from rescue.market.models.fleet import Ship
@@ -367,6 +369,7 @@ class RescueCentral:
     store: TransactionStore
     clock: Clock
     id_source: IdSource
+    start_run: StartRun
 
     def register_mission(self, command: RegisterMission) -> Result[MissionSnapshot]:
         def operation(state: RunState):
@@ -1027,11 +1030,14 @@ class RescueCentral:
         except DomainValidationError, TypeError:
             return _result("rejected", reason="invalid_input")
 
-        from rescue.experiments.runner import simulate
-
         try:
             snapshots = tuple(
-                simulate(scenario, policy, self.id_source.next_id("simulation"))
+                simulate(
+                    scenario,
+                    policy,
+                    self.id_source.next_id("simulation"),
+                    start_run=self.start_run,
+                )
                 for policy in policies
             )
         except DomainValidationError, TypeError:

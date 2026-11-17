@@ -1,11 +1,19 @@
 """Run isolation, determinism, and horizon semantics for scenarios."""
 
 import unittest
+from dataclasses import replace
 from decimal import Decimal
+from pathlib import Path
 
+from rescue.bootstrap import new_run
 from rescue.communication.models import CommunicationMessage, MessageDelivery
-from rescue.experiments.models import RescueScenario, RunBaseline
-from rescue.experiments.runner import simulate
+from rescue.demo import _baseline, _scenarios
+from rescue.experiments.models import (
+    RescueScenario,
+    RunBaseline,
+    ScriptedResponse,
+)
+from rescue.experiments.simulation import simulate
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.b3_market import B3Market
 from rescue.market.models.fleet import Ship
@@ -15,7 +23,7 @@ from rescue.market.models.quotes import RFQOffer
 from rescue.mission.models import MissionData, SeatRequest
 from rescue.mission.rules import add_request, register
 from rescue.mobilisation.models import MobilisationPolicy
-from rescue.values import TransitionContext
+from rescue.values import DomainValidationError, TransitionContext
 
 
 def baseline_state():
@@ -192,14 +200,32 @@ def normalized_run(snapshot):
     )
 
 
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+
+
+def rng_scenario(seed):
+    _, partial_refusal, _ = _scenarios(_baseline())
+    return replace(
+        partial_refusal,
+        response_rules=(
+            ScriptedResponse(ship_id="SHIP-EARLY", request_ordinal=1, outcome="partially_accepted"),
+        ),
+        seed=seed,
+    )
+
+
+def fixture_text(name):
+    return (FIXTURES / name).read_text(encoding="utf-8")
+
+
 class ExperimentRunnerTests(unittest.TestCase):
     def test_each_run_copies_pending_requests_holds_history_and_identity_indexes(self):
         scenario = scenario_value()
         policy = policy_value()
         baseline_before = scenario.baseline
 
-        first = simulate(scenario, policy, run_id="RUN-A")
-        second = simulate(scenario, policy, run_id="RUN-B")
+        first = simulate(scenario, policy, run_id="RUN-A", start_run=new_run)
+        second = simulate(scenario, policy, run_id="RUN-B", start_run=new_run)
 
         for snapshot in (first, second):
             self.assertEqual(snapshot.missions[0].requests, scenario.baseline.missions[0].requests)
@@ -219,7 +245,10 @@ class ExperimentRunnerTests(unittest.TestCase):
         scenario = scenario_value(seed=7)
         policy = policy_value()
 
-        runs = tuple(simulate(scenario, policy, run_id=f"REPEAT-{index}") for index in range(3))
+        runs = tuple(
+            simulate(scenario, policy, run_id=f"REPEAT-{index}", start_run=new_run)
+            for index in range(3)
+        )
 
         self.assertEqual(normalized_run(runs[0]), normalized_run(runs[1]))
         self.assertEqual(normalized_run(runs[1]), normalized_run(runs[2]))
@@ -227,7 +256,7 @@ class ExperimentRunnerTests(unittest.TestCase):
     def test_horizon_time_availability_change_is_applied_before_incomplete_stop(self):
         scenario = scenario_value(horizon=Decimal("10"))
 
-        snapshot = simulate(scenario, policy_value(), run_id="RUN-HORIZON")
+        snapshot = simulate(scenario, policy_value(), run_id="RUN-HORIZON", start_run=new_run)
 
         self.assertEqual(snapshot.run.status, "horizon_reached")
         self.assertEqual(snapshot.run.finished_at, Decimal("10"))
@@ -236,6 +265,34 @@ class ExperimentRunnerTests(unittest.TestCase):
         self.assertEqual(snapshot.missions[0].requests[0].outcome, "pending")
         self.assertEqual(snapshot.run.result.completed, False)
         self.assertIsNone(snapshot.run.result.confirmation_elapsed_seconds)
+
+    def test_seeded_runs_match_the_main_fixture(self):
+        runs = {
+            "seeded_snapshot.txt": scenario_value(),
+            "seeded_snapshot_seed7.txt": scenario_value(horizon=10, seed=7),
+            "seeded_rng_scenario.txt": rng_scenario(41),
+        }
+
+        for name, scenario in runs.items():
+            with self.subTest(name=name):
+                snapshot = simulate(scenario, policy_value(), run_id="FIXTURE", start_run=new_run)
+                self.assertEqual(repr(snapshot) + "\n", fixture_text(name))
+
+    def test_rng_scenario_output_depends_on_its_seed(self):
+        outputs = {
+            repr(simulate(rng_scenario(seed), policy_value(), run_id="FIXTURE", start_run=new_run))
+            for seed in range(1, 9)
+        }
+
+        self.assertGreater(len(outputs), 1)
+
+    def test_start_run_is_required(self):
+        with self.assertRaises(TypeError):
+            simulate(scenario_value(), policy_value(), run_id="RUN-NO-START")
+
+    def test_non_callable_start_run_is_rejected(self):
+        with self.assertRaises(DomainValidationError):
+            simulate(scenario_value(), policy_value(), run_id="RUN-NONE", start_run=None)
 
 
 if __name__ == "__main__":

@@ -49,6 +49,7 @@ source_modules = [
     "rescue.mobilisation",
     "rescue.communication",
     "rescue.experiments.models",
+    "rescue.experiments.timeline",
     "rescue.experiments.results",
 ]
 forbidden_modules = [
@@ -66,6 +67,7 @@ source_modules = [
     "rescue.mobilisation",
     "rescue.communication",
     "rescue.experiments.models",
+    "rescue.experiments.timeline",
     "rescue.experiments.results",
 ]
 forbidden_modules = [
@@ -169,3 +171,19 @@ forbidden_modules = [
     "rescue.communication",
 ]
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "experiments-pure-core: Experiment models, timeline and results do not import the simulation"
+type = "forbidden"
+source_modules = [
+    "rescue.experiments.models",
+    "rescue.experiments.timeline",
+    "rescue.experiments.results",
+]
+forbidden_modules = ["rescue.experiments.simulation"]
+
+[[tool.importlinter.contracts]]
+name = "experiments-no-bootstrap: Experiments receive their run, never import the composition root"
+type = "forbidden"
+source_modules = ["rescue.experiments"]
+forbidden_modules = ["rescue.bootstrap", "rescue.demo"]

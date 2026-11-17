@@ -1,15 +1,17 @@
-"""Simulation result metrics derived from immutable run snapshots."""
+"""summarize turns a stopped run snapshot into simulation result metrics."""
 
 import unittest
+from dataclasses import replace
 from decimal import Decimal
 
 from rescue.experiments.models import RunSnapshot, SimulationRun
-from rescue.experiments.results import summarize
+from rescue.experiments.results.summarize_run import summarize
 from rescue.market.models.b3_market import B3Market
 from rescue.market.models.offers import ShipOffer, ShipOfferRevision
+from rescue.market.models.quotes import RFQOffer
 from rescue.mission.models import MissionData, SeatRequest
 from rescue.mission.rules import add_request, apply_outcome, register
-from rescue.values import TransitionContext
+from rescue.values import DomainValidationError, TransitionContext
 
 
 def mission_with_requests(mission_id, demand, request_specs):
@@ -82,7 +84,7 @@ def mission_with_requests(mission_id, demand, request_specs):
     return mission, offers
 
 
-def run_snapshot(*, started_at, finished_at, status, missions, offers):
+def run_snapshot(*, started_at, finished_at, status, missions, offers, quotes=()):
     run = SimulationRun(
         run_id=f"run-{status}-{started_at}",
         scenario_id="scenario-1",
@@ -97,7 +99,7 @@ def run_snapshot(*, started_at, finished_at, status, missions, offers):
     return RunSnapshot(
         run=run,
         missions=tuple(missions),
-        market=B3Market(market_id="market-run", offers=tuple(offers)),
+        market=B3Market(market_id="market-run", offers=tuple(offers), quotes=tuple(quotes)),
     )
 
 
@@ -247,6 +249,112 @@ class SimulationResultTests(unittest.TestCase):
         self.assertEqual(result.unmet_demand, 3)
         self.assertIsNone(result.confirmation_elapsed_seconds)
         self.assertIsNone(result.latest_arrival_estimate_seconds)
+
+
+def accepted_spec(**overrides):
+    spec = {
+        "ship_id": "ship-1",
+        "revision_id": "revision-1",
+        "requested_seats": 4,
+        "confirmed_seats": 4,
+        "outcome": "accepted",
+        "submitted_at": 11,
+        "closed_at": 15,
+        "revision_recorded_at": 12,
+        "arrival_estimate_seconds": 5,
+    }
+    return {**spec, **overrides}
+
+
+def with_request_fields(mission, **fields):
+    return replace(mission, requests=tuple(replace(item, **fields) for item in mission.requests))
+
+
+class SummarizeArrivalAndGuardTests(unittest.TestCase):
+    def test_quote_arrival_supersedes_the_revision_arrival(self):
+        mission, offers = mission_with_requests("mission-1", 4, (accepted_spec(),))
+        mission = with_request_fields(mission, quote_id="quote-1")
+        quote = RFQOffer(
+            offer_id="quote-1",
+            rfq_id="rfq-1",
+            offered_seats=4,
+            arrival_estimate_seconds=7,
+            expires_at=100,
+            recorded_at=14,
+        )
+        snapshot = run_snapshot(
+            started_at=10,
+            finished_at=25,
+            status="completed",
+            missions=(mission,),
+            offers=offers,
+            quotes=(quote,),
+        )
+
+        self.assertEqual(summarize(snapshot).latest_arrival_estimate_seconds, Decimal("11"))
+
+    def test_unknown_quote_falls_back_to_the_revision_arrival(self):
+        mission, offers = mission_with_requests("mission-1", 4, (accepted_spec(),))
+        mission = with_request_fields(mission, quote_id="missing-quote")
+        snapshot = run_snapshot(
+            started_at=10,
+            finished_at=25,
+            status="completed",
+            missions=(mission,),
+            offers=offers,
+        )
+
+        self.assertEqual(summarize(snapshot).latest_arrival_estimate_seconds, Decimal("7"))
+
+    def test_request_without_revision_or_quote_has_unknown_arrival(self):
+        mission, offers = mission_with_requests("mission-1", 4, (accepted_spec(),))
+        mission = with_request_fields(mission, revision_id=None)
+        snapshot = run_snapshot(
+            started_at=10,
+            finished_at=25,
+            status="completed",
+            missions=(mission,),
+            offers=offers,
+        )
+
+        self.assertIsNone(summarize(snapshot).latest_arrival_estimate_seconds)
+
+    def test_arrival_before_run_start_is_clamped_to_zero(self):
+        mission, offers = mission_with_requests(
+            "mission-1",
+            4,
+            (accepted_spec(revision_recorded_at=0, arrival_estimate_seconds=1),),
+        )
+        snapshot = run_snapshot(
+            started_at=10,
+            finished_at=25,
+            status="completed",
+            missions=(mission,),
+            offers=offers,
+        )
+
+        self.assertEqual(summarize(snapshot).latest_arrival_estimate_seconds, 0)
+
+    def test_non_snapshot_is_rejected(self):
+        with self.assertRaises(DomainValidationError):
+            summarize("not a snapshot")
+
+    def test_run_without_missions_is_rejected(self):
+        snapshot = run_snapshot(
+            started_at=10, finished_at=25, status="completed", missions=(), offers=()
+        )
+
+        with self.assertRaises(DomainValidationError):
+            summarize(snapshot)
+
+    def test_running_run_is_rejected(self):
+        mission, offers = mission_with_requests("mission-1", 4, (accepted_spec(),))
+        snapshot = run_snapshot(
+            started_at=10, finished_at=None, status="running", missions=(mission,), offers=offers
+        )
+
+        with self.assertRaises(DomainValidationError):
+            summarize(snapshot)
 
 
 if __name__ == "__main__":

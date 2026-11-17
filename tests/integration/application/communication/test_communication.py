@@ -19,7 +19,7 @@ from rescue.experiments.models import (
     RunBaseline,
     ScriptedResponse,
 )
-from rescue.experiments.runner import simulate
+from rescue.experiments.simulation import simulate
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.b3_market import B3Market
 from rescue.market.models.fleet import Ship
@@ -432,8 +432,8 @@ class CommunicationSimulationTests(unittest.TestCase):
             ),
         )
 
-        first = simulate(scenario, _policy(), run_id="RUN-COLLISION")
-        repeated = simulate(scenario, _policy(), run_id="RUN-COLLISION")
+        first = simulate(scenario, _policy(), run_id="RUN-COLLISION", start_run=new_run)
+        repeated = simulate(scenario, _policy(), run_id="RUN-COLLISION", start_run=new_run)
 
         self.assertEqual(first.run.status, "completed")
         self.assertEqual(first.run.result.confirmed_seats, 1)
@@ -485,7 +485,7 @@ class CommunicationSimulationTests(unittest.TestCase):
             communication_profiles=(_profile(reorder=(1,)),),
         )
 
-        snapshot = simulate(scenario, _policy(), run_id="RUN-REORDER")
+        snapshot = simulate(scenario, _policy(), run_id="RUN-REORDER", start_run=new_run)
 
         self.assertEqual(len(snapshot.message_index), 2)
         request_missions = {
@@ -505,7 +505,7 @@ class CommunicationSimulationTests(unittest.TestCase):
             profile=profile,
         )
 
-        snapshot = simulate(scenario, _policy(), run_id="RUN-DELAY")
+        snapshot = simulate(scenario, _policy(), run_id="RUN-DELAY", start_run=new_run)
 
         request = snapshot.missions[0].requests[0]
         self.assertEqual(snapshot.run.result.confirmation_elapsed_seconds, Decimal("10"))
@@ -521,7 +521,7 @@ class CommunicationSimulationTests(unittest.TestCase):
             profile=_profile(),
         )
 
-        snapshot = simulate(scenario, _policy(), run_id="RUN-ZERO-DELAY")
+        snapshot = simulate(scenario, _policy(), run_id="RUN-ZERO-DELAY", start_run=new_run)
 
         self.assertEqual(snapshot.run.status, "completed")
         self.assertEqual(snapshot.run.finished_at, Decimal("0"))
@@ -535,7 +535,7 @@ class CommunicationSimulationTests(unittest.TestCase):
             profile=_profile(loss=(1,)),
         )
 
-        snapshot = simulate(scenario, _policy(), run_id="RUN-LOST")
+        snapshot = simulate(scenario, _policy(), run_id="RUN-LOST", start_run=new_run)
 
         self.assertEqual(snapshot.run.status, "horizon_reached")
         self.assertEqual(snapshot.run.result.completed, False)
@@ -552,7 +552,7 @@ class CommunicationSimulationTests(unittest.TestCase):
             profile=_profile(duplicate=(1,)),
         )
 
-        snapshot = simulate(scenario, _policy(), run_id="RUN-DUPLICATE")
+        snapshot = simulate(scenario, _policy(), run_id="RUN-DUPLICATE", start_run=new_run)
 
         self.assertEqual(snapshot.run.result.confirmed_seats, 1)
         self.assertEqual(len(snapshot.message_index), 1)
@@ -660,7 +660,7 @@ class CommunicationSimulationTests(unittest.TestCase):
             profile=_profile(outbound=2, decision=5, returning=3),
         )
 
-        snapshot = simulate(scenario, _policy(), run_id="RUN-DEADLINE-TIE")
+        snapshot = simulate(scenario, _policy(), run_id="RUN-DEADLINE-TIE", start_run=new_run)
 
         first_request = snapshot.missions[0].requests[0]
         self.assertEqual(first_request.outcome, "expired")

@@ -1,14 +1,14 @@
-"""Validation of immutable experiment and comparison inputs."""
+"""Validation of the rescue scenario value."""
 
 import unittest
 from decimal import Decimal
 
 from rescue.experiments.models import (
     CommunicationProfile,
-    RescueScenario,
     RunBaseline,
     ScriptedResponse,
 )
+from rescue.experiments.models.scenario.rescue_scenario import RescueScenario
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.b3_market import B3Market
 from rescue.market.models.fleet import Ship
@@ -64,29 +64,46 @@ class RescueScenarioTests(unittest.TestCase):
                 communication_profiles=(CommunicationProfile("PROFILE-1", "MISSING", 0, 0, 0),)
             )
 
-    def test_negative_communication_delay_and_unbounded_profile_rule_are_rejected(self):
-        with self.assertRaises(ValueError):
-            CommunicationProfile("PROFILE-1", "SHIP-1", -1, 0, 0)
-        with self.assertRaises(ValueError):
-            CommunicationProfile(
-                "PROFILE-1",
-                "SHIP-1",
-                0,
-                0,
-                0,
-                loss_rule=(1, 1),
-            )
-        with self.assertRaisesRegex(ValueError, "cannot also be duplicated"):
-            CommunicationProfile(
-                "PROFILE-1", "SHIP-1", 0, 0, 0, loss_rule=(1,), duplication_rule=(1,)
-            )
-        with self.assertRaisesRegex(ValueError, "cannot also be duplicated"):
-            CommunicationProfile(
-                "PROFILE-1", "SHIP-1", 0, 0, 0, loss_rule=(1,), reordering_rule=(1,)
-            )
-        for rule in ((True,), (Decimal("1"),), (0,), (-1,)):
-            with self.subTest(rule=rule), self.assertRaises(ValueError):
-                CommunicationProfile("PROFILE-1", "SHIP-1", 0, 0, 0, reordering_rule=rule)
+    def test_name_and_baseline_are_required(self):
+        with self.assertRaisesRegex(ValueError, "name must be nonblank"):
+            scenario(name=" ")
+        with self.assertRaisesRegex(ValueError, "requires a RunBaseline"):
+            scenario(baseline="baseline")
+
+    def test_collections_must_hold_typed_values(self):
+        with self.assertRaisesRegex(ValueError, "must contain ScriptedResponse"):
+            scenario(response_rules=("rule",))
+        with self.assertRaisesRegex(ValueError, "must be ShipAvailability"):
+            scenario(availability_changes=("change",))
+        with self.assertRaisesRegex(ValueError, "must contain CommunicationProfile"):
+            scenario(communication_profiles=("profile",))
+
+    def test_duplicate_response_rules_are_rejected(self):
+        rule = ScriptedResponse("SHIP-1", 1, "refused")
+        with self.assertRaisesRegex(ValueError, "only one response rule"):
+            scenario(response_rules=(rule, rule))
+
+    def test_duplicate_profile_ids_or_ships_are_rejected(self):
+        first = CommunicationProfile("PROFILE-1", "SHIP-1", 0, 0, 0)
+        same_id = CommunicationProfile("PROFILE-1", "SHIP-1", 0, 0, 0)
+        with self.assertRaisesRegex(ValueError, "unique IDs and ships"):
+            scenario(communication_profiles=(first, same_id))
+
+    def test_duplicate_availability_times_are_rejected(self):
+        first = ShipAvailability("CHANGE-1", "SHIP-1", 0, 0, True, 1)
+        second = ShipAvailability("CHANGE-2", "SHIP-1", 0, 0, True, 1)
+        with self.assertRaisesRegex(ValueError, "duplicate scenario availability"):
+            scenario(availability_changes=(first, second))
+
+    def test_valid_collections_are_kept_as_tuples(self):
+        value = scenario(
+            response_rules=[ScriptedResponse("SHIP-1", 1, "refused")],
+            availability_changes=[ShipAvailability("CHANGE-1", "SHIP-1", 0, 0, True, 1)],
+            communication_profiles=[CommunicationProfile("PROFILE-1", "SHIP-1", 0, 0, 0)],
+        )
+        self.assertIsInstance(value.response_rules, tuple)
+        self.assertIsInstance(value.availability_changes, tuple)
+        self.assertIsInstance(value.communication_profiles, tuple)
 
 
 if __name__ == "__main__":
