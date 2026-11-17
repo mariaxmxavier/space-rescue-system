@@ -58,3 +58,7 @@ Each rule of `rescue/market/` has its own file and a document beside it ([spec 0
 - [Roadmap](planning/roadmap.md): per-package conformance order, specs 002 to 013.
 - Market conformance: [spec](../specs/005-market-conformance/spec.md), [plan](../specs/005-market-conformance/plan.md), [research](../specs/005-market-conformance/research.md), [data model](../specs/005-market-conformance/data-model.md), [contracts](../specs/005-market-conformance/contracts/market.md), [validation guide](../specs/005-market-conformance/quickstart.md), [subagent execution preparation](../specs/005-market-conformance/execution-handoff.md), [validation record](../specs/005-market-conformance/validation.md).
 - [Market implementation tasks](../specs/005-market-conformance/tasks.md): story milestones, dependencies and parallel ownership.
+# Design drafts
+
+- [Rescue HTTP API design](superpowers/specs/2026-11-17-rescue-http-api-design.md)
+

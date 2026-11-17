@@ -91,3 +91,25 @@
 {"timestamp":"2026-11-17T06:46:19.7112540Z","action":"guard","status":"allow","feature_directory":"specs/007-communication-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:executing-plans"}
 {"timestamp":"2026-11-17T10:47:37.9618418Z","action":"handoff","status":"complete","feature_directory":"specs/007-communication-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T1047378776180Z-complete"}
 {"event":"artifact_drift_detected","timestamp":"2026-11-17T10:47:37.9794743Z","actor":"claude","feature_directory":"specs/007-communication-conformance","drifted_artifacts":[{"path":"tasks.md","old_sha256":"467c5fbf46dc927ff63cba247946fe0f9015575365553d7362c7f9f79392e945","new_sha256":"c3fcbb3001147a9e457662d0146a05bd413f44396ce3826b6d565363d406e786"}]}
+{"timestamp":"2026-11-17T11:43:59.7620303Z","action":"guard","status":"allow","feature_directory":"specs/008-application-conformance","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
+
+{"timestamp":"2026-11-17T11:51:58.8268891Z","action":"guard","status":"allow","feature_directory":"specs/008-application-conformance","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.plan"}
+
+{"timestamp":"2026-11-17T11:55:14.8099157Z","action":"guard","status":"allow","feature_directory":"specs/008-application-conformance","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
+
+{"timestamp":"2026-11-17T11:58:24.3832295Z","action":"handoff","status":"ready","feature_directory":"specs/011-http-api","decision":"updated","reason":"actor change claude → codex","actor":"codex","prior_actor":"claude","snapshot_id":"20261117T1158243384394Z-ready"}
+
+{"timestamp":"2026-11-17T11:59:11.4003703Z","action":"guard","status":"allow","feature_directory":"specs/011-http-api","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:executing-plans"}
+
+{"timestamp":"2026-11-17T11:59:16.7887088Z","action":"handoff","status":"executing","feature_directory":"specs/011-http-api","decision":"updated","reason":"","actor":"codex","prior_actor":"codex","snapshot_id":"20261117T1159167300519Z-executing"}
+
+{"timestamp":"2026-11-17T12:00:31.7537748Z","action":"guard","status":"allow","feature_directory":"specs/011-http-api","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.plan"}
+
+{"timestamp":"2026-11-17T12:00:52.2596430Z","action":"guard","status":"allow","feature_directory":"specs/011-http-api","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
+
+{"timestamp":"2026-11-17T12:01:36.2582432Z","action":"guard","status":"allow","feature_directory":"specs/011-http-api","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:executing-plans"}
+
+{"timestamp":"2026-11-17T12:30:41.8799282Z","action":"handoff","status":"complete","feature_directory":"specs/011-http-api","decision":"updated","reason":"","actor":"codex","prior_actor":"codex","snapshot_id":"20261117T1230418034062Z-complete"}
+
+{"event":"artifact_drift_detected","timestamp":"2026-11-17T12:30:41.8902930Z","actor":"codex","feature_directory":"specs/011-http-api","drifted_artifacts":[{"path":"tasks.md","old_sha256":"4c738aabec10097e06157337dcae3dcea9f2e4603bdf17932d4f3ab3721e5bac","new_sha256":"a6d15cd02a65d3ae2b58ff54082f97926ea5836473fd8701f6306d35763e8f92"}]}
+
