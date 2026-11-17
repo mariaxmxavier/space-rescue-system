@@ -28,7 +28,9 @@ test:
 	@echo == rescue/experiments
 	uv run coverage report --include="rescue/experiments/*"
 	@echo == rescue/application
-	uv run coverage report --include="rescue/application/*"
+	uv run coverage report --include="rescue/application/*" --fail-under=95
+	@echo == rescue/state
+	uv run coverage report --include="rescue/state/*" --fail-under=100
 	@echo == rescue/adapters
 	uv run coverage report --include="rescue/adapters/*"
 	@echo == root modules

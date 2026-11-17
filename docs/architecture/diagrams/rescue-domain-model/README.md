@@ -257,6 +257,7 @@ its cross-space links without creating duplicate entities.
 | Experiments | [SVG](namespaces/Experiments/class-diagram.svg) · [source](namespaces/Experiments/class-diagram.mmd) | [SVG](namespaces/Experiments/entity-relationship-diagram.svg) · [source](namespaces/Experiments/entity-relationship-diagram.mmd) |
 | Communication | [SVG](namespaces/Communication/class-diagram.svg) · [source](namespaces/Communication/class-diagram.mmd) | [SVG](namespaces/Communication/entity-relationship-diagram.svg) · [source](namespaces/Communication/entity-relationship-diagram.mmd) |
 | CoreReferences | [SVG](namespaces/CoreReferences/class-diagram.svg) · [source](namespaces/CoreReferences/class-diagram.mmd) | [SVG](namespaces/CoreReferences/entity-relationship-diagram.svg) · [source](namespaces/CoreReferences/entity-relationship-diagram.mmd) |
+| Application | [SVG](namespaces/Application/class-diagram.svg) · [source](namespaces/Application/class-diagram.mmd) | [SVG](namespaces/Application/entity-relationship-diagram.svg) · [source](namespaces/Application/entity-relationship-diagram.mmd) |
 
 Render all namespace sources with the repository's Mermaid CLI 11.17.0 installation:
 

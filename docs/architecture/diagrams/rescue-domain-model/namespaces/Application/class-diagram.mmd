@@ -1,0 +1,241 @@
+---
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+    hideEmptyMembersBox: true
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+classDiagram
+    direction LR
+    class RescueCentral {
+        <<facade>>
+        +register_mission()
+        +register_ship()
+        +publish_availability()
+        +publish_offer()
+        +request_quotes()
+        +record_quote()
+        +accept_quote()
+        +create_request()
+        +reject_quote()
+        +expire_quotes()
+        +cancel_request()
+        +expire_request()
+        +record_response()
+        +recover_reports()
+        +synchronise_inbound()
+        +get_session()
+        +get_progress()
+        +get_history()
+        +get_decision()
+        +get_deliveries()
+        +compare()
+        +mobilise()
+    }
+    namespace missions {
+        class register_mission {
+            <<use case>>
+        }
+        class get_progress {
+            <<use case>>
+        }
+        class get_history {
+            <<use case>>
+        }
+    }
+    namespace fleet {
+        class register_ship {
+            <<use case>>
+        }
+        class publish_availability {
+            <<use case>>
+        }
+        class publish_offer {
+            <<use case>>
+        }
+    }
+    namespace quotes {
+        class request_quotes {
+            <<use case>>
+        }
+        class record_quote {
+            <<use case>>
+        }
+        class accept_quote {
+            <<use case>>
+        }
+        class reject_quote {
+            <<use case>>
+        }
+        class expire_quotes {
+            <<use case>>
+        }
+    }
+    namespace requests {
+        class create_request {
+            <<use case>>
+        }
+        class cancel_request {
+            <<use case>>
+        }
+        class expire_request {
+            <<use case>>
+        }
+    }
+    namespace communication {
+        class record_response {
+            <<use case>>
+        }
+        class recover_reports {
+            <<use case>>
+        }
+        class synchronise_inbound {
+            <<use case>>
+        }
+        class get_session {
+            <<use case>>
+        }
+        class get_deliveries {
+            <<use case>>
+        }
+    }
+    namespace mobilisation {
+        class mobilise {
+            <<use case>>
+        }
+        class get_decision {
+            <<use case>>
+        }
+    }
+    namespace comparison {
+        class compare_policies {
+            <<use case>>
+        }
+    }
+    namespace shared {
+        class find_mission
+        class replace_mission
+        class find_session
+        class replace_session
+        class make_result
+        class error_reason_for
+        class find_offer_revision
+        class find_quote
+        class find_rfq
+        class request_capacity_reason
+        class command_entry
+        class decision_link_reason
+        class append_command
+        class open_request
+        class close_pending_request
+        class DeliveryContext
+        class NormalisedResponse
+        class normalise_response
+        class classify_response
+        class resolve_session
+        class publish_delivery
+    }
+    namespace contracts {
+        class Result
+        class ResultStatus {
+            <<enumeration>>
+        }
+        class ErrorReason {
+            <<enumeration>>
+        }
+    }
+    namespace Commands {
+        class RegisterMission
+        class RegisterShip
+        class PublishAvailability
+        class PublishOffer
+        class RequestQuotes
+        class RecordQuote
+        class AcceptQuote
+        class RejectQuote
+        class CreateRequest
+        class CancelRequest
+        class ExpireRequest
+        class RecordResponse
+        class RecoverReports
+        class SynchroniseInbound
+        class ComparePolicies
+        class Mobilise
+    }
+    namespace ports {
+        class Simulator {
+            <<interface>>
+        }
+        class TransactionStore {
+            <<interface>>
+        }
+        class Clock {
+            <<interface>>
+        }
+        class IdSource {
+            <<interface>>
+        }
+    }
+    class RunState
+    RescueCentral ..> register_mission
+    RescueCentral ..> get_progress
+    RescueCentral ..> get_history
+    RescueCentral ..> register_ship
+    RescueCentral ..> publish_availability
+    RescueCentral ..> publish_offer
+    RescueCentral ..> request_quotes
+    RescueCentral ..> record_quote
+    RescueCentral ..> accept_quote
+    RescueCentral ..> reject_quote
+    RescueCentral ..> expire_quotes
+    RescueCentral ..> create_request
+    RescueCentral ..> cancel_request
+    RescueCentral ..> expire_request
+    RescueCentral ..> record_response
+    RescueCentral ..> recover_reports
+    RescueCentral ..> synchronise_inbound
+    RescueCentral ..> get_session
+    RescueCentral ..> get_deliveries
+    RescueCentral ..> mobilise
+    RescueCentral ..> get_decision
+    RescueCentral ..> compare_policies
+    RescueCentral ..> Simulator
+    RescueCentral ..> TransactionStore
+    RescueCentral ..> Clock
+    RescueCentral ..> IdSource
+    RescueCentral ..> Result
+    TransactionStore ..> RunState
+    Result ..> ResultStatus
+    Result ..> ErrorReason
+    make_result ..> Result
+    record_response ..> normalise_response
+    record_response ..> resolve_session
+    record_response ..> classify_response
+    record_response ..> publish_delivery
+    normalise_response ..> NormalisedResponse
+    resolve_session ..> DeliveryContext
+    compare_policies ..> Simulator
+    RegisterMission ..> register_mission
+    RecordResponse ..> record_response
+    ComparePolicies ..> compare_policies
+    Mobilise ..> mobilise

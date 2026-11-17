@@ -11,7 +11,7 @@ that publishes on failure.
 from dataclasses import replace
 
 from rescue.adapters.ports import TransactionStore
-from rescue.application.state import RunState
+from rescue.state import RunState
 
 
 class PublishesOnException(TransactionStore):

@@ -16,9 +16,9 @@ from threading import Barrier, Lock
 
 from rescue.adapters.memory import MemoryTransactionStore
 from rescue.application.contracts import RegisterMission
-from rescue.application.state import RunState
 from rescue.bootstrap import new_run
 from rescue.market.models.b3_market import B3Market
+from rescue.state import RunState
 
 REQUESTS = 40
 MISSIONS = 20

@@ -34,7 +34,25 @@ def _logger_enablement_preserved():
 
 
 DOMAIN_PACKAGES = ("mission", "market", "mobilisation", "communication")
-ADAPTER_IMPORT_ROOTS = ("rescue.adapters", "rescue.values", "rescue.application.state")
+ADAPTER_IMPORT_ROOTS = (
+    "rescue.adapters",
+    "rescue.values",
+    "rescue.state",
+    "rescue.experiments.models",
+    "rescue.mobilisation.models",
+)
+APPLICATION_IMPORT_ROOTS = (
+    "rescue.values",
+    "rescue.state",
+    "rescue.adapters.ports",
+    "rescue.mission",
+    "rescue.market",
+    "rescue.mobilisation",
+    "rescue.communication",
+    "rescue.experiments.models",
+    "rescue.experiments.results",
+    "rescue.application",
+)
 FORBIDDEN_IO_CALLS = {
     "open",
     "read_text",
@@ -140,8 +158,9 @@ def _absolute_modules(tree: ast.Module) -> tuple[str, ...]:
 def _adapter_import_allowed(module: str) -> bool:
     """Decide whether the adapters layer may import ``module``.
 
-    What: allows the standard library, ``rescue.adapters`` itself, ``rescue.values`` and the
-    temporary ``rescue.application.state``; refuses relative imports and everything else.
+    What: allows the standard library, ``rescue.adapters`` itself, ``rescue.values``,
+    ``rescue.state`` and the experiments and mobilisation models; refuses relative imports and
+    everything else. The old ``rescue.application.state`` exception is gone.
 
     When: called for every import in ``rescue/adapters/`` by the allowlist test.
 
@@ -152,6 +171,23 @@ def _adapter_import_allowed(module: str) -> bool:
     if module.split(".", 1)[0] in sys.stdlib_module_names:
         return True
     return any(module == root or module.startswith(f"{root}.") for root in ADAPTER_IMPORT_ROOTS)
+
+
+def _application_import_allowed(module: str) -> bool:
+    """Decide whether the application layer may import ``module``.
+
+    What: allows the standard library and the inward roots in contracts/application-boundary.md;
+    refuses relative imports, ``rescue.experiments.simulator`` and everything else.
+
+    When: called for every import in ``rescue/application/`` by the allowlist test.
+
+    Why: an allowlist catches third-party and new outward imports that a denylist does not name.
+    """
+    if module.startswith("."):
+        return False
+    if module.split(".", 1)[0] in sys.stdlib_module_names:
+        return True
+    return any(module == root or module.startswith(f"{root}.") for root in APPLICATION_IMPORT_ROOTS)
 
 
 class ArchitectureBoundaryTests(unittest.TestCase):
@@ -307,8 +343,9 @@ class ArchitectureBoundaryTests(unittest.TestCase):
         """Check that the allowlist itself accepts and refuses the right module names.
 
         What: refuses ``requests``, ``rescue.bootstrap``, ``rescue.application.ports``,
-        ``rescue.application.central`` and a relative import; accepts ``decimal``, ``threading``,
-        ``rescue.values``, ``rescue.application.state`` and ``rescue.adapters.ports.clock``.
+        ``rescue.application.central``, ``rescue.application.state``, ``rescue.experiments.runner`` and a
+        relative import; accepts ``decimal``, ``threading``, ``rescue.values``, ``rescue.state``,
+        ``rescue.experiments.models``, ``rescue.mobilisation.models`` and ``rescue.adapters.ports.clock``.
 
         When: run by pytest on every ``make check-all``.
 
@@ -320,6 +357,8 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             "rescue.bootstrap",
             "rescue.application.ports",
             "rescue.application.central",
+            "rescue.application.state",
+            "rescue.experiments.runner",
             ".ports",
         ):
             with self.subTest(import_name=module):
@@ -328,11 +367,67 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             "decimal",
             "threading",
             "rescue.values",
-            "rescue.application.state",
+            "rescue.state",
+            "rescue.experiments.models",
+            "rescue.mobilisation.models",
             "rescue.adapters.ports.clock",
         ):
             with self.subTest(import_name=module):
                 self.assertTrue(_adapter_import_allowed(module))
+
+    def test_application_imports_only_allowed_modules(self):
+        """Check that every import in ``rescue/application`` is on the allowlist.
+
+        What: lists every import node in the application layer, function bodies included, and fails
+        on any module the allowlist refuses.
+
+        When: run by pytest on every ``make check-all``.
+
+        Why: the application layer may depend only on the standard library and the inward modules
+        named in contracts/application-boundary.md; a function-local import must not slip past.
+        """
+        for path in _python_files("application"):
+            for module in _absolute_modules(_parse(path)):
+                with self.subTest(file=_relative(path), import_name=module):
+                    self.assertTrue(
+                        _application_import_allowed(module),
+                        f"{_relative(path)} imports {module!r}, which the application layer may not import",
+                    )
+
+    def test_application_import_allowlist_rejects_outward_and_third_party_imports(self):
+        """Check that the allowlist itself accepts and refuses the right module names.
+
+        What: refuses ``requests``, ``rescue.bootstrap``, ``rescue.demo``, ``rescue.adapters.memory``,
+        ``rescue.experiments.simulator``, ``rescue.experiments.runner`` and a relative import;
+        accepts ``decimal``, ``rescue.values``, ``rescue.state``, ``rescue.adapters.ports.clock``,
+        ``rescue.experiments.models`` and ``rescue.application.shared``.
+
+        When: run by pytest on every ``make check-all``.
+
+        Why: the allowlist test is only trustworthy if the function it calls is proven to refuse
+        the cases it must refuse.
+        """
+        for module in (
+            "requests",
+            "rescue.bootstrap",
+            "rescue.demo",
+            "rescue.adapters.memory",
+            "rescue.experiments.simulator",
+            "rescue.experiments.runner",
+            ".shared",
+        ):
+            with self.subTest(import_name=module):
+                self.assertFalse(_application_import_allowed(module))
+        for module in (
+            "decimal",
+            "rescue.values",
+            "rescue.state",
+            "rescue.adapters.ports.clock",
+            "rescue.experiments.models",
+            "rescue.application.shared",
+        ):
+            with self.subTest(import_name=module):
+                self.assertTrue(_application_import_allowed(module))
 
     def test_declared_import_contracts_are_kept(self):
         output = io.StringIO()
@@ -343,7 +438,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 no_logo=True,
             )
         self.assertEqual(exit_code, 0, output.getvalue())
-        self.assertIn("Contracts: 13 kept, 0 broken.", output.getvalue())
+        self.assertIn("Contracts: 14 kept, 0 broken.", output.getvalue())
 
     def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
@@ -352,6 +447,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             "rescue.experiments.models",
             "rescue.experiments.results",
         }
+        io_sources = domain_sources | {"rescue.state"}
         io_modules = {
             "os",
             "time",
@@ -370,21 +466,35 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 {"rescue.application", "rescue.adapters", "rescue.bootstrap"},
                 False,
             ),
-            "domain-io": (domain_sources, io_modules, False),
+            "domain-io": (io_sources, io_modules, False),
             "market-standalone": (
                 {"rescue.market"},
                 {"rescue.*"},
                 False,
             ),
-            "application-no-memory": (
+            "application-inward": (
+                {"rescue.application"},
+                {
+                    "rescue.adapters.memory",
+                    "rescue.bootstrap",
+                    "rescue.demo",
+                    "rescue.experiments.runner",
+                    "rescue.experiments.simulator",
+                    "rescue.experiments.timeline",
+                },
+                False,
+            ),
+            "state-inward": (
+                {"rescue.state"},
                 {
                     "rescue.application",
-                    "rescue.adapters.ports",
-                    "rescue.experiments",
+                    "rescue.adapters",
+                    "rescue.bootstrap",
                     "rescue.demo",
+                    "rescue.experiments",
+                    "rescue.mobilisation",
                 },
-                {"rescue.adapters.memory"},
-                True,
+                False,
             ),
             "mobilisation-peers-one-way": (
                 {"rescue.mission", "rescue.market"},
@@ -441,11 +551,16 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 {
                     "rescue.bootstrap",
                     "rescue.demo",
-                    "rescue.experiments",
-                    "rescue.application.central",
-                    "rescue.application.contracts",
-                }
-                | {f"rescue.{package}" for package in DOMAIN_PACKAGES},
+                    "rescue.application",
+                    "rescue.experiments.results",
+                    "rescue.experiments.runner",
+                    "rescue.experiments.timeline",
+                    "rescue.mobilisation.algorithms",
+                    "rescue.mobilisation.services",
+                    "rescue.mission",
+                    "rescue.market",
+                    "rescue.communication",
+                },
                 True,
             ),
         }

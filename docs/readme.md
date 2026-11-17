@@ -28,6 +28,7 @@
 ## Specifications and Models
 
 - [Rescue domain specification](../specs/001-rescue-domain-model/spec.md): core rules and all six extensions.
+- [Application specification](../specs/008-application-conformance/spec.md): focused use cases, nested files, explanations, and diagram links.
 - [Domain model diagrams](architecture/diagrams/rescue-domain-model/README.md): Mermaid sources and rendered views.
 - [Communication specification](../specs/007-communication-conformance/spec.md): safe delivery decisions, explicit order and maintainability requirements.
 - [Communication research](../specs/007-communication-conformance/research.md): B3, exchange protocols, matching algorithms and ordering alternatives.

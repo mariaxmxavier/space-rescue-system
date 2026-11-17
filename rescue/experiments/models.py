@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
-from enum import Enum
 
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.b3_market import B3Market
@@ -12,26 +10,12 @@ from rescue.mission.models import Mission, RequestOutcome
 from rescue.values import (
     DomainValidationError,
     Instant,
+    is_deeply_immutable,
     normalize_id,
     normalize_instant,
     normalize_nonnegative_quantity,
     normalize_positive_quantity,
 )
-
-
-def _frozen_tree(value: object) -> bool:
-    if value is None or type(value) in (str, int, bool, bytes) or isinstance(value, Decimal | Enum):
-        return True
-    if isinstance(value, tuple):
-        return all(_frozen_tree(item) for item in value)
-    from dataclasses import fields, is_dataclass
-
-    if is_dataclass(value):
-        params = getattr(type(value), "__dataclass_params__", None)
-        return bool(params and params.frozen) and all(
-            _frozen_tree(getattr(value, field.name)) for field in fields(value)
-        )
-    return False
 
 
 def _finite_tuple(value: object, field_name: str) -> tuple:
@@ -69,10 +53,10 @@ class RunBaseline:
             "session_index",
         ):
             value = _finite_tuple(getattr(self, name), f"baseline {name}")
-            if not _frozen_tree(value):
+            if not is_deeply_immutable(value):
                 raise DomainValidationError(f"baseline {name} must contain immutable values")
             object.__setattr__(self, name, value)
-        if not _frozen_tree((missions, self.market)):
+        if not is_deeply_immutable((missions, self.market)):
             raise DomainValidationError("baseline values must be deeply immutable")
 
 
@@ -304,8 +288,8 @@ class RunSnapshot:
             "session_index",
         ):
             value = _finite_tuple(getattr(self, name), f"snapshot {name}")
-            if not _frozen_tree(value):
+            if not is_deeply_immutable(value):
                 raise DomainValidationError(f"snapshot {name} must be deeply immutable")
             object.__setattr__(self, name, value)
-        if not _frozen_tree((missions, self.market)):
+        if not is_deeply_immutable((missions, self.market)):
             raise DomainValidationError("snapshot requires deeply immutable state")

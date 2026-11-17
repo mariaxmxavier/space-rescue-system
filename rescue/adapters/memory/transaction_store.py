@@ -16,7 +16,7 @@ from collections.abc import Callable
 from threading import Lock
 
 from rescue.adapters.ports.transaction_store import TransactionStore
-from rescue.application.state import RunState
+from rescue.state import RunState
 
 
 class MemoryTransactionStore(TransactionStore):

@@ -67,6 +67,7 @@ source_modules = [
     "rescue.communication",
     "rescue.experiments.models",
     "rescue.experiments.results",
+    "rescue.state",
 ]
 forbidden_modules = [
     "os",
@@ -89,11 +90,30 @@ forbidden_modules = ["rescue.*"]
 ignore_imports = ["rescue.market.** -> rescue.values"]
 
 [[tool.importlinter.contracts]]
-name = "application-no-memory: Only bootstrap imports the memory adapters"
+name = "application-inward: Application imports no memory adapter, composition root, demo or outer experiment module"
 type = "forbidden"
-source_modules = ["rescue.application", "rescue.adapters.ports", "rescue.experiments", "rescue.demo"]
-forbidden_modules = ["rescue.adapters.memory"]
-allow_indirect_imports = true
+source_modules = ["rescue.application"]
+forbidden_modules = [
+    "rescue.adapters.memory",
+    "rescue.bootstrap",
+    "rescue.demo",
+    "rescue.experiments.runner",
+    "rescue.experiments.simulator",
+    "rescue.experiments.timeline",
+]
+
+[[tool.importlinter.contracts]]
+name = "state-inward: State imports no application, adapters, composition root, demo, experiments or mobilisation"
+type = "forbidden"
+source_modules = ["rescue.state"]
+forbidden_modules = [
+    "rescue.application",
+    "rescue.adapters",
+    "rescue.bootstrap",
+    "rescue.demo",
+    "rescue.experiments",
+    "rescue.mobilisation",
+]
 
 [[tool.importlinter.contracts]]
 name = "mobilisation-peers-one-way: Mission and market do not import mobilisation"
@@ -177,18 +197,20 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "adapters-inward: Adapters import only application.state, values and the standard library"
+name = "adapters-inward: Adapters import only state, values, the two domain models and the standard library"
 type = "forbidden"
 source_modules = ["rescue.adapters"]
 forbidden_modules = [
     "rescue.bootstrap",
     "rescue.demo",
-    "rescue.experiments",
-    "rescue.application.central",
-    "rescue.application.contracts",
+    "rescue.application",
+    "rescue.experiments.results",
+    "rescue.experiments.runner",
+    "rescue.experiments.timeline",
+    "rescue.mobilisation.algorithms",
+    "rescue.mobilisation.services",
     "rescue.mission",
     "rescue.market",
-    "rescue.mobilisation",
     "rescue.communication",
 ]
 allow_indirect_imports = true

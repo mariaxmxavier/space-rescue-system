@@ -13,7 +13,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
-from rescue.application.state import RunState
+from rescue.state import RunState
 
 
 class TransactionStore(ABC):
