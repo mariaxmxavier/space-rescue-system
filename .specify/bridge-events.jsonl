@@ -127,3 +127,4 @@
 
 {"timestamp":"2026-11-17T13:01:29.3946560Z","action":"guard","status":"allow","feature_directory":"specs/013-web-app","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
 
+{"timestamp":"2026-11-17T15:30:02Z","action":"guard","status":"allow","feature_directory":"specs/013-web-app","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:executing-plans"}

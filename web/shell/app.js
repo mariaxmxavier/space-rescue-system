@@ -11,6 +11,7 @@ import { registerExperiments } from "../experiments/index.js";
 import { registerRunInspection } from "../exploration/run/index.js";
 import { registerMissionHistory } from "../missions/history/index.js";
 import { registerDecisionInspection } from "../mobilisation/decisions/index.js";
+import { registerSimulationViewer } from "../simulations/index.js";
 
 /**
  * What: composes the browser app, its shared run state and capability registration points.
@@ -19,6 +20,15 @@ import { registerDecisionInspection } from "../mobilisation/decisions/index.js";
  */
 export function startApp(documentRef = document) {
   const api = createApiClient();
+  const manualMode = typeof location !== "undefined" && new URL(location.href).searchParams.get("workspace") === "manual";
+  const viewerRoot = documentRef.querySelector("#simulation-viewer");
+  const advancedWorkspace = documentRef.querySelector("#advanced-workspace");
+  if (manualMode) {
+    viewerRoot.hidden = true;
+    advancedWorkspace.open = true;
+  } else {
+    registerSimulationViewer({ root: viewerRoot, api });
+  }
   const workspace = createWorkspace(api);
   const outcomes = createOutcomes();
   const capabilityRoot = documentRef.querySelector("#capabilities");
@@ -42,6 +52,7 @@ export function startApp(documentRef = document) {
   capabilityButtons.setAttribute("aria-label", "Rescue capabilities");
   const capabilityViews = new Map();
   const capabilityHandles = new Map();
+  const selectedCapabilities = { operations: "Missions", exploration: "Communication" };
   const definitions = [
     ["Missions", "operations", registerMissions], ["Fleet", "operations", registerFleet],
     ["Quotes", "operations", registerQuotes], ["Requests", "operations", registerRequests],
@@ -50,7 +61,7 @@ export function startApp(documentRef = document) {
     ["Mission history", "exploration", registerMissionHistory], ["Decisions", "exploration", registerDecisionInspection],
   ];
   capabilityRoot.replaceChildren();
-  documentRef.querySelector("#main").insertBefore(capabilityButtons, documentRef.querySelector("#operations-panel"));
+  documentRef.querySelector("#manual-workspace").insertBefore(capabilityButtons, documentRef.querySelector("#operations-panel"));
   function mountCapability(name) {
     const definition = definitions.find(([label]) => label === name);
     if (!definition) return null;
@@ -71,7 +82,8 @@ export function startApp(documentRef = document) {
     const definition = definitions.find(([label]) => label === name);
     if (!definition) return;
     const [, tab] = definition;
-    selectTab(tab);
+    selectTab(tab, false);
+    selectedCapabilities[tab] = name;
     const view = mountCapability(name);
     for (const existing of capabilityViews.values()) existing.hidden = existing !== view;
     if (!view.isConnected) (tab === "operations" ? capabilityRoot : explorationRoot).append(view);
@@ -96,7 +108,7 @@ export function startApp(documentRef = document) {
     error.hidden = false;
   }
 
-  function selectTab(name) {
+  function selectTab(name, restoreCapability = true) {
     error.hidden = true;
     const operations = name === "operations";
     const operationsTab = documentRef.querySelector("#operations-tab");
@@ -107,10 +119,16 @@ export function startApp(documentRef = document) {
     explorationTab.tabIndex = operations ? -1 : 0;
     documentRef.querySelector("#operations-panel").hidden = !operations;
     documentRef.querySelector("#exploration-panel").hidden = operations;
+    if (restoreCapability) showCapability(selectedCapabilities[name]);
   }
 
   async function openRun() {
     error.hidden = true;
+    if (!runIdField.value.trim()) {
+      showError("Enter a run ID to open an existing run.");
+      runIdField.focus();
+      return;
+    }
     try {
       await workspace.selectRun(runIdField.value);
     } catch (cause) {
@@ -120,6 +138,11 @@ export function startApp(documentRef = document) {
 
   documentRef.querySelector("#run-form").addEventListener("submit", async (event) => {
     event.preventDefault();
+    const submit = event.currentTarget.querySelector('button[type="submit"]');
+    if (submit.disabled) return;
+    submit.disabled = true;
+    submit.textContent = "Creating run…";
+    const selectionVersion = workspace.getSnapshot().selectionVersion;
     error.hidden = true;
     try {
       const experiment = capabilityHandles.get("Experiments");
@@ -130,7 +153,12 @@ export function startApp(documentRef = document) {
         ...runConfiguration,
       });
     } catch (cause) {
-      showError(`Could not create run: ${cause.message}`);
+      if (selectionVersion === workspace.getSnapshot().selectionVersion) {
+        showError(`Could not create run: ${cause.message}`);
+      }
+    } finally {
+      submit.disabled = false;
+      submit.textContent = "Create run";
     }
   });
   documentRef.querySelector("#open-run").addEventListener("click", openRun);

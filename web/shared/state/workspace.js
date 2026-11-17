@@ -10,13 +10,14 @@ export function createWorkspace(api, storage = globalThis.localStorage) {
   let stale = false;
   let history = null;
   let generation = 0;
+  let selectionVersion = 0;
   const listeners = new Set();
 
   const publish = () => {
     const value = getSnapshot();
     for (const listener of listeners) listener(value);
   };
-  const getSnapshot = () => Object.freeze({ runId, snapshot, refreshedAt, stale, history });
+  const getSnapshot = () => Object.freeze({ runId, snapshot, refreshedAt, stale, history, selectionVersion });
 
   async function selectRun(nextRunId) {
     runId = String(nextRunId).trim();
@@ -25,14 +26,16 @@ export function createWorkspace(api, storage = globalThis.localStorage) {
     stale = false;
     history = null;
     generation += 1;
+    selectionVersion += 1;
     storage?.setItem("space-rescue-run-id", runId);
     publish();
     await refreshState();
   }
 
   async function createRun(input) {
+    const submittedSelection = selectionVersion;
     const created = await api.createRun(input);
-    await selectRun(created.application_run_id);
+    if (selectionVersion === submittedSelection) await selectRun(created.application_run_id);
     return created;
   }
 

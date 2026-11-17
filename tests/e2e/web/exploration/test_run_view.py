@@ -1,59 +1,71 @@
-"""Browser checks for live run explanation and activity inspection.
+"""Inspect real mission records, decisions and explicit call history in the browser.
 
-What: verifies exploration displays authoritative progress, decisions and histories.
-When called: pytest runs this module against the local web app and rescue API.
-Why: operators need to explain current state and the sequence of decisions behind it.
+When: independent prepared runs contain request and allocation outcomes.
+Why: complete explanations remain inspectable separately from mission accounting.
 """
-
-from __future__ import annotations
 
 from playwright.sync_api import Page, expect
 
-from tests.e2e.web.foundation.test_workspace import API_ORIGIN
+from tests.e2e.web.support import choose, prepare_run, submit
 
 
-def test_decision_exposes_trace_and_allocation_details(workspace_page: Page):
-    page = workspace_page
-    page.route(
-        f"{API_ORIGIN}/runs/RUN-DECISION/operations/get_decision",
-        lambda r: r.fulfill(
-            status=200,
-            json={"status": "accepted", "value": {"decision_id": "DEC-1", "trace": [{"reason": "earliest arrival"}]}}
-        ),
+def test_decision_progress_and_histories_match_committed_records(live_workspace_page: Page):
+    """Read an allocation trace, mission history, and complete HTTP activity."""
+    page = live_workspace_page
+    invoke = prepare_run(page, "inspection")
+    decision = invoke(
+        "mobilise",
+        {"mission_id": "mission", "policy_id": "early", "policy_revision": 1, "now": "0"},
     )
-    page.get_by_label("Application run ID").fill("RUN-DECISION")
-    page.get_by_role("button", name="Open run").click()
-    page.get_by_role("tab", name="Exploration").click()
-    page.get_by_role("button", name="Decisions").click()
-    page.get_by_label("Decision ID").fill("DEC-1")
-    page.get_by_role("button", name="Inspect decision").click()
-    expect(page.get_by_text("earliest arrival")).to_be_visible()
-
-
-def test_mission_history_is_distinct_from_call_history(workspace_page: Page):
-    page = workspace_page
-    page.route(
-        f"{API_ORIGIN}/runs/RUN-HISTORY/operations/get_history",
-        lambda r: r.fulfill(status=200, json={"status": "accepted", "value": [{"action": "PARTIAL_ACCEPTANCE"}]}),
+    decision_id = decision["value"]["decision_id"]
+    invoke(
+        "create_request",
+        {
+            "command_id": "request",
+            "mission_id": "mission",
+            "ship_id": "A",
+            "requested_seats": 2,
+            "revision_id": "revision",
+            "now": "0",
+        },
     )
-    page.get_by_label("Application run ID").fill("RUN-HISTORY")
-    page.get_by_role("button", name="Open run").click()
-    page.get_by_role("tab", name="Exploration").click()
-    page.get_by_role("button", name="Missions").click()
-    page.get_by_label("Mission ID").fill("AURORA")
-    page.get_by_role("button", name="Mission history").click()
-    expect(page.get_by_text("PARTIAL_ACCEPTANCE")).to_be_visible()
-    expect(page.get_by_role("button", name="Load call history")).to_be_visible()
+    choose(page, "Decisions")
+    result = submit(page, "get_decision", {"decision_id": decision_id})
+    result.get_by_text("Complete result", exact=True).click()
+    expect(result.locator("pre")).to_contain_text('"evaluations"')
+    expect(result.locator("pre")).to_contain_text('"proposed_seats"')
+    choose(page, "Mission history")
+    progress = submit(page, "get_progress", {"mission_id": "mission", "now": "1"})
+    expect(progress).to_contain_text("Confirmed seats")
+    expect(progress).to_contain_text("Pending seats")
+    history = submit(page, "get_history", {"mission_id": "mission"})
+    history.get_by_text("Complete result", exact=True).click()
+    expect(history.locator("pre")).to_contain_text("request")
+    page.get_by_role("button", name="Load call history", exact=True).click()
+    expect(page.locator("#history-content pre")).to_contain_text('"input"')
+    expect(page.locator("#history-content pre")).to_contain_text('"response"')
+    expect(page.locator("#history-content pre")).to_contain_text("get_history")
 
 
-def test_refresh_displays_last_committed_progress(workspace_page: Page):
+def test_all_22_operations_remain_discoverable(workspace_page: Page):
+    """Audit mounted browser actions against the API's public operation registry."""
+    from rescue.api.operations import OPERATIONS
+
     page = workspace_page
-    page.route(
-        f"{API_ORIGIN}/runs/RUN-LIVE/state",
-        lambda r: r.fulfill(status=200, json={"missions": [{"mission_id": "AURORA", "people_count": 10}]}),
+    for capability in [
+        "Missions",
+        "Fleet",
+        "Quotes",
+        "Requests",
+        "Mobilisation",
+        "Communication",
+        "Experiments",
+        "Run inspection",
+        "Mission history",
+        "Decisions",
+    ]:
+        choose(page, capability)
+    actual = page.locator("form[data-operation]").evaluate_all(
+        "forms => forms.map(form => form.dataset.operation)"
     )
-    page.get_by_label("Application run ID").fill("RUN-LIVE")
-    page.get_by_role("button", name="Open run").click()
-    page.get_by_role("tab", name="Exploration").click()
-    expect(page.get_by_text("AURORA", exact=True)).to_be_visible()
-    expect(page.get_by_text("10", exact=True)).to_be_visible()
+    assert set(actual) == set(OPERATIONS)

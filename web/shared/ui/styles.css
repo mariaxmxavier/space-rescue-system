@@ -1,0 +1,16 @@
+/* Nested public-value editors share the mission console's semantic tokens. */
+.value-editor{min-width:0;border:1px solid var(--border);border-radius:.6rem;padding:1rem;margin:1rem 0;background:var(--surface)}
+.value-editor>legend{font-weight:700;padding-inline:.35rem;color:var(--muted)}
+.value-editor .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:1rem}
+.value-editor label,.operation-form label,.capability-card>section>form>label{display:grid;gap:.3rem;font-weight:600;min-width:0}
+.value-editor input:not([type=checkbox]),.value-editor select,.operation-form input,.capability-card label input:not([type=checkbox]){font:inherit;min-height:44px;max-width:100%;width:100%;padding:.5rem .65rem;border:1px solid var(--border);border-radius:.35rem;background:var(--surface);color:inherit}
+.value-editor input[type=checkbox]{width:24px;height:24px;accent-color:var(--primary)}
+.value-editor .repeatable-editor{grid-column:1/-1;border-block-start:1px solid var(--border);padding-block:.5rem}
+.repeatable-editor h4{font-size:1rem;margin:.5rem 0}
+.value-editor button{margin-block:.5rem}
+.operation-form{display:grid;gap:1rem;padding:1rem;border-block-start:1px solid var(--border)}
+.operation-form h3{margin:0}
+.capability-card dl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.3rem 1rem;font-variant-numeric:tabular-nums}
+.capability-card dt{color:var(--muted)}
+.capability-card dd{margin:0;overflow-wrap:anywhere;font-weight:600}
+@media(max-width:600px){.value-editor{padding:.75rem}.value-editor .field-grid{grid-template-columns:1fr}}

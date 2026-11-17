@@ -27,7 +27,7 @@
 
 ## Specifications and Models
 
-- [Web app specification](../specs/013-web-app/spec.md): complete browser operation and inspection scope; [quickstart](../specs/013-web-app/quickstart.md), [design inputs](../specs/013-web-app/design-inputs.md) and [quality checklist](../specs/013-web-app/checklists/requirements.md).
+- [Web app specification](../specs/013-web-app/spec.md): complete browser operation and inspection scope; [quickstart](../specs/013-web-app/quickstart.md), [validation](../specs/013-web-app/validation.md), [design inputs](../specs/013-web-app/design-inputs.md) and [quality checklist](../specs/013-web-app/checklists/requirements.md).
 
 - [Rescue domain specification](../specs/001-rescue-domain-model/spec.md): core rules and all six extensions.
 - [Application specification](../specs/008-application-conformance/spec.md): focused use cases, nested files, explanations, and diagram links.
@@ -58,6 +58,7 @@ Each rule of `rescue/market/` has its own file and a document beside it ([spec 0
 
 ## Planning
 
+- [Simulation viewer design](planning/simulation-viewer-design.md): case selection, real execution, paused playback and synchronized timeline seeking.
 - [Roadmap](planning/roadmap.md): per-package conformance order, specs 002 to 013.
 - Market conformance: [spec](../specs/005-market-conformance/spec.md), [plan](../specs/005-market-conformance/plan.md), [research](../specs/005-market-conformance/research.md), [data model](../specs/005-market-conformance/data-model.md), [contracts](../specs/005-market-conformance/contracts/market.md), [validation guide](../specs/005-market-conformance/quickstart.md), [subagent execution preparation](../specs/005-market-conformance/execution-handoff.md), [validation record](../specs/005-market-conformance/validation.md).
 - [Market implementation tasks](../specs/005-market-conformance/tasks.md): story milestones, dependencies and parallel ownership.

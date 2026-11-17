@@ -29,5 +29,5 @@ def duplicate_response_recipe(
             replay_of=original_message_label,
             sequence=original_sequence,
         ),
-        evidence=EvidencePredicate(check_name="delivery_reason", expected="duplicate_message"),
+        evidence=EvidencePredicate(check_name="message_replay", expected=True),
     )

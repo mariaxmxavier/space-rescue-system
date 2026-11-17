@@ -27,21 +27,25 @@ export function registerRunInspection({ root, workspace, outcomes }) {
   section.append(heading, status, refresh, historyButton, state, activity);
 
   refresh.addEventListener("click", async () => {
+    const version = workspace.getSnapshot().selectionVersion;
     refresh.disabled = true;
     try {
       await workspace.refreshState();
     } catch {
+      if (version !== workspace.getSnapshot().selectionVersion) return;
       status.textContent = "Refresh failed. Showing the last successful state as stale.";
     } finally {
       refresh.disabled = false;
     }
   });
   historyButton.addEventListener("click", async () => {
+    const version = workspace.getSnapshot().selectionVersion;
     historyButton.disabled = true;
     try {
       const historyResult = await workspace.loadHistory();
-      renderCallHistory(activity, historyResult, outcomes);
+      if (version === workspace.getSnapshot().selectionVersion) renderCallHistory(activity, historyResult, outcomes);
     } catch (error) {
+      if (version !== workspace.getSnapshot().selectionVersion) return;
       activity.replaceChildren();
       const message = document.createElement("p");
       message.setAttribute("role", "alert");
@@ -52,7 +56,7 @@ export function registerRunInspection({ root, workspace, outcomes }) {
     }
   });
 
-  const unsubscribe = workspace.subscribe((current) => {
+  const render = (current) => {
     status.textContent = current.stale
       ? "State is stale; the last successful snapshot is shown."
       : current.refreshedAt
@@ -60,7 +64,10 @@ export function registerRunInspection({ root, workspace, outcomes }) {
         : "State has not been refreshed yet.";
     stateValue.textContent = JSON.stringify(current.snapshot, null, 2);
     if (current.history !== null) renderCallHistory(activity, current.history, outcomes);
-  });
+    else activity.replaceChildren();
+  };
+  const unsubscribe = workspace.subscribe(render);
+  render(workspace.getSnapshot());
   root.append(section);
   return unsubscribe;
 }
@@ -80,7 +87,7 @@ function renderCallHistory(target, result, outcomes) {
   entries.forEach((entry, index) => {
     const item = document.createElement("details");
     const summary = document.createElement("summary");
-    summary.textContent = `Call ${index + 1}: ${entry.operation ?? entry.path ?? "Recorded call"} (${entry.status ?? "unknown status"})`;
+    summary.textContent = `Call ${index + 1}: ${entry.operation ?? entry.path ?? "Recorded call"} (HTTP ${entry.status_code ?? entry.status ?? "unknown"}${entry.response?.status ? ` · ${entry.response.status}` : ""}${entry.response?.reason ? ` · ${entry.response.reason}` : ""})`;
     item.append(summary);
     const body = document.createElement("pre");
     body.textContent = JSON.stringify(entry, null, 2);

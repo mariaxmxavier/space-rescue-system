@@ -6,6 +6,7 @@ from pydantic import Field
 
 from simulations.models.base import StrictModel
 from simulations.models.mission_progress import MissionProgress
+from simulations.models.observation import Observation
 from simulations.models.situation_id import SituationId
 
 
@@ -20,3 +21,5 @@ class ScenarioResult(StrictModel):
     missing_situations: tuple[SituationId, ...]
     last_progress: MissionProgress | None = None
     failure_detail: Annotated[str, Field(min_length=1)] | None = None
+
+    observations: tuple[Observation, ...] = ()

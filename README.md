@@ -101,6 +101,8 @@ Tests: `tests/unit/market/` covers rules, statuses, history, refusals and genera
 
 ## Simulation timing
 
+The [browser console](specs/013-web-app/quickstart.md) includes a connected simulation viewer. Select baseline, all10, all11 or all12 to prepare a fresh real execution; it starts paused at the beginning. Play or seek to any logical time to inspect synchronized mission, fleet, request, decision and communication records. The timeline reuses retained committed snapshots, so seeking never repeats mutations. Expand **Advanced workspace** for all public rescue operations, quotes, communication recovery and scenario/policy comparisons.
+
 All times are finite Decimal seconds. Requests, responses, availability changes, and expirations use one deterministic timeline. Expiration precedes response delivery at the same instant; horizon-time events are processed before an incomplete run stops. Communication RTT is outbound plus return delay; response elapsed time also includes ship decision delay. Arrival estimates remain separate. Lost responses have no receipt time, and duplicated attempts share their message identity.
 
 For the planned stories and verification record, see [`specs/001-rescue-domain-model/quickstart.md`](specs/001-rescue-domain-model/quickstart.md) and [`specs/001-rescue-domain-model/validation.md`](specs/001-rescue-domain-model/validation.md).

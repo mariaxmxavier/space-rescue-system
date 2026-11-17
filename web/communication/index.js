@@ -3,6 +3,8 @@
  * When called: the exploration tab mounts the Communication capability.
  * Why: operators need to inspect delivery decisions and recover session reports.
  */
+import { createForms } from "../shared/ui/controls.js";
+import { registerResponses } from "./responses/index.js";
 import { registerCommunicationInspection } from "./inspection/deliveries.js";
 import { registerCommunicationRecovery } from "./recovery/actions.js";
 
@@ -12,6 +14,9 @@ export function registerCommunication({ root, workspace, outcomes }) {
   const heading = document.createElement("h2");
   heading.textContent = "Communication";
   section.append(heading);
+  const response = document.createElement("div");
+  section.append(response);
+  registerResponses({forms:createForms({root:response, workspace, outcomes})});
   const inspection = document.createElement("section");
   const inspectionHeading = document.createElement("h3");
   inspectionHeading.textContent = "Delivery inspection";

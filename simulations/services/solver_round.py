@@ -1,59 +1,59 @@
-"""Run one real mobilisation proposal and optionally create its selected requests."""
+"""Run real solver proposals and submit only their selected ranked allocations."""
 
-from decimal import Decimal
-
-from simulations.adapters.ports.mission_api import MissionApiABC
 from simulations.models.operation_command import OperationCommand
 from simulations.models.operation_name import OperationName
-from simulations.models.operation_outcome import OperationOutcome
-from simulations.models.policy_setup import PolicySetup
+
+
+def request_command(allocation, mission_id, now, deadline, command_id):
+    """Bind a real selected evaluation to a fresh request command at submission time."""
+    return OperationCommand(
+        operation=OperationName.CREATE_REQUEST,
+        command_id=command_id,
+        mission_id=mission_id,
+        ship_id=allocation.ship_id,
+        requested_seats=allocation.proposed_seats,
+        revision_id=allocation.revision_id,
+        decision_id=allocation.decision_id,
+        allocation=allocation,
+        at=now,
+        response_deadline=deadline,
+    )
 
 
 def solver_round(
-    api: MissionApiABC,
-    run_id: str,
-    mission_id: str,
-    policy: PolicySetup,
-    now: Decimal,
-    response_deadline: Decimal,
-    command_prefix: str,
-    *,
-    submit: bool = True,
-) -> tuple[OperationOutcome, ...]:
-    """Mobilise through the API and submit selected allocations in rank order.
+    api, run_id, mission_id, policy, now, response_deadline, command_prefix, *, submit=True
+):
+    """Mobilise through the API, optionally submitting each returned selected allocation.
 
-    A proposal does not reserve seats. When ``submit`` is false, the returned
-    tuple contains only the mobilisation outcome so callers can explicitly
-    defer request creation while another timeline event is pending.
+    A deferred proposal reserves no capacity. Called by timeline solver actions, this
+    function keeps all allocation policy on the server and binds only observed IDs.
     """
     proposal = api.invoke(
         run_id,
         OperationCommand(
             operation=OperationName.MOBILISE,
-            command_id=f"{command_prefix}-mobilise",
             mission_id=mission_id,
-            policy=policy,
+            policy_id=policy.policy_id,
+            policy_revision=policy.revision,
             at=now,
         ),
     )
     outcomes = [proposal]
-    if not submit or not 200 <= proposal.http_status < 300 or proposal.value is None:
-        return tuple(outcomes)
-
-    allocations = getattr(proposal.value, "allocations", ())
-    for allocation in sorted(allocations, key=lambda item: item.rank):
-        outcomes.append(
-            api.invoke(
+    if not 200 <= proposal.http_status < 300 or proposal.application_status == "rejected":
+        raise ValueError(f"Solver unavailable: {proposal.reason}")
+    if submit and proposal.value is not None:
+        for allocation in sorted(proposal.value.allocations, key=lambda item: item.rank):
+            outcome = api.invoke(
                 run_id,
-                OperationCommand(
-                    operation=OperationName.CREATE_REQUEST,
-                    command_id=f"{command_prefix}-request-{allocation.rank}",
-                    mission_id=mission_id,
-                    allocation=allocation,
-                    requested_seats=allocation.proposed_seats,
-                    response_deadline=response_deadline,
-                    at=now,
+                request_command(
+                    allocation,
+                    mission_id,
+                    now,
+                    response_deadline,
+                    f"{command_prefix}-{allocation.rank}",
                 ),
             )
-        )
+            if outcome.application_status != "applied":
+                raise ValueError(f"Selected request did not apply: {outcome.reason}")
+            outcomes.append(outcome)
     return tuple(outcomes)

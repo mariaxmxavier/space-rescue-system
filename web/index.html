@@ -6,14 +6,20 @@
     <meta name="theme-color" content="#f8fafc">
     <title>Space Rescue Operations</title>
     <link rel="stylesheet" href="/shell/styles.css">
+    <link rel="stylesheet" href="/simulations/styles.css">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
     <header class="app-header">
       <div><p class="eyebrow">AURORA RESCUE NETWORK</p><h1>Mission control</h1></div>
-      <div class="run-summary" aria-live="polite"><span>Selected run</span><strong id="selected-run">No run selected</strong><span id="refresh-status" role="status">Waiting for a run</span><span>API origin</span><strong id="api-origin">http://127.0.0.1:8000</strong></div>
+      <p class="console-caption">Rescue coordination, explained.<br><span>Real decisions. One shared timeline.</span></p>
     </header>
     <main id="main">
+      <section id="simulation-viewer" aria-label="Rescue simulation viewer"></section>
+      <details id="advanced-workspace" class="advanced-workspace">
+        <summary>Advanced workspace <span>All rescue operations, inspection and experiments</span></summary>
+        <div id="manual-workspace">
+        <div class="run-summary" aria-live="polite"><span>Selected live workspace run</span><strong id="selected-run">No run selected</strong><span id="refresh-status" role="status">Waiting for a run</span><span>API origin</span><strong id="api-origin">http://127.0.0.1:8000</strong></div>
       <section class="workspace-card" aria-labelledby="workspace-title">
         <div><p class="eyebrow">WORKSPACE</p><h2 id="workspace-title">Open or start a rescue run</h2></div>
         <form id="run-form" class="run-form">
@@ -42,6 +48,8 @@
         <div id="exploration-state" class="data-panel"></div>
         <section class="data-panel history-panel"><div class="section-heading"><div><p class="eyebrow">RECORDED ACTIVITY</p><h3>Call history</h3></div></div><div id="history-content"></div></section>
       </section>
+        </div>
+      </details>
     </main>
     <script type="module" src="/shell/app.js"></script>
   </body>

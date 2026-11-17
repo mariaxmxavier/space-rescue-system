@@ -25,11 +25,7 @@ export function registerMissionHistory({ root, workspace, forms, outcomes }) {
     operation: "get_history",
     title: "Mission history",
     fields: [{ name: "mission_id", label: "Mission ID", required: true }],
-    onSubmit: async (payload) => {
-      const answer = await workspace.invoke("get_history", payload);
-      outcomes.render(answer, { operation: "get_history", label: "Mission history", target: result });
-      return answer;
-    },
+    onSubmit: (payload) => workspace.invoke("get_history", payload),
   });
   section.append(result);
   root.append(section);

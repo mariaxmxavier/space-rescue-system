@@ -241,6 +241,11 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                     root / "rescue",
                     ignore=shutil.ignore_patterns("__pycache__"),
                 )
+                shutil.copytree(
+                    REPOSITORY_ROOT / "simulations",
+                    root / "simulations",
+                    ignore=shutil.ignore_patterns("__pycache__"),
+                )
                 shutil.copyfile(REPOSITORY_ROOT / "pyproject.toml", root / "pyproject.toml")
                 (root / "rescue" / "future_capability.py").write_text("", encoding="utf-8")
                 (root / "rescue" / "market" / "boundary_probe.py").write_text(

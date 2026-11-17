@@ -1,178 +1,63 @@
-/**
- * What: lets users compose scenario and policy configuration for a run.
- * When called: the Experiments capability mounts.
- * Why: comparisons need configured, reproducible baselines and policy revisions.
+import { createValueEditor } from '../../shared/ui/value-editor.js';
+import { scenarioSchema } from './schemas.js';
+
+/** Configure immutable policies and complete nested scenarios before run creation.
+ * When Experiments mounts, repeatable controls expose every baseline and fault
+ * setting without forcing the operator to author JSON.
  */
 export function registerScenarioConfiguration({ root }) {
   const policies = [];
   const scenarios = [];
-  const policyList = document.createElement("div");
-  const scenarioList = document.createElement("div");
-  const addPolicy = document.createElement("button");
-  addPolicy.type = "button";
-  addPolicy.textContent = "Add mobilisation policy";
-  addPolicy.addEventListener("click", () => {
-    const policy = makePolicyForm();
-    policies.push(policy);
-    policyList.append(policy.form);
+  if (!document.querySelector('link[data-shared-ui]')) {
+    const styles = document.createElement('link'); styles.rel='stylesheet'; styles.href='/shared/ui/styles.css'; styles.dataset.sharedUi='true'; document.head.append(styles);
+  }
+  const notice = document.createElement('p');
+  notice.textContent = 'Configure policies and scenario baselines before creating a run. Changes here apply to the next new run.';
+  root.append(notice);
+  collection(root, 'Add mobilisation policy', policies, makePolicyForm);
+  collection(root, 'Add scenario', scenarios, () => {
+    const editor = createValueEditor(scenarioSchema, 'Scenario');
+    return {form:editor.element, value:editor.value};
   });
-  const addScenario = document.createElement("button");
-  addScenario.type = "button";
-  addScenario.textContent = "Add scenario";
-  addScenario.addEventListener("click", () => {
-    const scenario = makeScenarioForm();
-    scenarios.push(scenario);
-    scenarioList.append(scenario.form);
+  return Object.freeze({ values: () => ({policies:policies.map((item) => item.value()), scenarios:scenarios.map((item) => item.value())}) });
+}
+
+function collection(root, title, values, create) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = title;
+  const list = document.createElement('div');
+  button.addEventListener('click', () => {
+    const editor = create();
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = title.includes('policy') ? 'Remove policy' : 'Remove scenario';
+    remove.addEventListener('click', () => { values.splice(values.indexOf(editor),1); editor.form.remove(); button.focus(); });
+    editor.form.append(remove);
+    values.push(editor);
+    list.append(editor.form);
   });
-  const config = document.createElement("p");
-  config.textContent = "Configure scenario baselines and policies when creating a run.";
-  root.append(config, addPolicy, policyList, addScenario, scenarioList);
-  return Object.freeze({
-    values() {
-      return {
-        policies: policies.map((item) => item.value()),
-        scenarios: scenarios.map((item) => item.value()),
-      };
-    },
-  });
+  root.append(button, list);
+  return list;
 }
 
 function makePolicyForm() {
-  const form = document.createElement("fieldset");
-  const legend = document.createElement("legend");
-  legend.textContent = "Mobilisation policy";
-  form.append(legend);
-  const policyId = input(form, "Policy ID");
-  const revision = number(form, "Policy revision", "1", 1);
-  const name = input(form, "Policy name");
-  const strategy = document.createElement("select");
-  strategy.setAttribute("aria-label", "Selection strategy");
-  for (const value of ["earliest_arrival", "largest_capacity", "priority_queue", "min_cost_flow", "cp_sat", "knapsack"]) {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = value;
-    strategy.append(option);
-  }
-  form.append(strategy);
-  return {
-    form,
-    value: () => {
-      requireValid(form, "Complete the required mobilisation policy fields before creating the run.");
-      return {
-        policy_id: policyId.value,
-        revision: Number(revision.value),
-        name: name.value,
-        selection_criteria: strategy.value,
-      };
-    },
-  };
-}
-
-function makeScenarioForm() {
-  const form = document.createElement("fieldset");
-  const legend = document.createElement("legend");
-  legend.textContent = "Scenario";
-  form.append(legend);
-  const scenarioId = input(form, "Scenario ID");
-  const revision = number(form, "Scenario revision", "1", 1);
-  const name = input(form, "Scenario name");
-  const horizon = number(form, "Time horizon seconds", "3600");
-  const seed = number(form, "Seed", "1");
-  const budget = number(form, "Event budget", "100", 1);
-  const baselineHeading = document.createElement("h4");
-  baselineHeading.textContent = "Baseline mission and fleet";
-  const missionId = input(form, "Baseline mission ID");
-  const station = input(form, "Baseline station name");
-  const people = number(form, "Baseline people to rescue", "1", 1);
-  const createdAt = number(form, "Baseline mission created at", "0");
-  const marketId = input(form, "Baseline market ID");
-  const shipId = input(form, "Baseline ship ID");
-  const shipName = input(form, "Baseline ship name");
-  const seats = number(form, "Baseline ship total seats", "1", 1);
-  const arrival = number(form, "Baseline arrival estimate seconds", "0");
-  const available = document.createElement("input");
-  available.type = "checkbox";
-  available.checked = true;
-  available.setAttribute("aria-label", "Baseline ship available");
-  const availabilityId = input(form, "Baseline availability ID");
-  const recordedAt = number(form, "Baseline availability recorded at", "0");
-  form.append(baselineHeading);
-  const availableLabel = document.createElement("label");
-  availableLabel.append(available, document.createTextNode("Baseline ship available"));
-  form.append(availableLabel);
-  return {
-    form,
-    value: () => {
-      requireValid(form, "Complete the required scenario and baseline fields before creating the run.");
-      return {
-      scenario_id: scenarioId.value,
-      revision: Number(revision.value),
-      name: name.value,
-      time_horizon_seconds: horizon.value,
-      seed: Number(seed.value),
-      event_budget: Number(budget.value),
-      baseline: {
-        missions: [{
-          mission_id: missionId.value,
-          station_name: station.value,
-          people_count: Number(people.value),
-          created_at: createdAt.value,
-          requests: [],
-          history: [],
-        }],
-        market: {
-          market_id: marketId.value,
-          ships: [{ ship_id: shipId.value, name: shipName.value }],
-          availabilities: [{
-            availability_id: availabilityId.value,
-            ship_id: shipId.value,
-            total_seats: Number(seats.value),
-            arrival_estimate_seconds: arrival.value,
-            available: available.checked,
-            recorded_at: recordedAt.value,
-          }],
-          rfqs: [],
-          quotes: [],
-          offers: [],
-          quote_history: [],
-        },
-        command_index: [],
-        message_index: [],
-        delivery_index: [],
-        decision_index: [],
-        session_index: [],
-      },
-      response_rules: [],
-      availability_changes: [],
-      communication_profiles: [],
-      };
-    },
-  };
-}
-
-function input(parent, labelText) {
-  const label = document.createElement("label");
-  label.textContent = labelText;
-  const control = document.createElement("input");
-  control.setAttribute("aria-label", labelText);
-  control.required = true;
-  label.append(control);
-  parent.append(label);
-  return control;
-}
-
-function number(parent, label, value, minimum = 0) {
-  const control = input(parent, label);
-  control.type = "number";
-  control.min = String(minimum);
-  control.value = value;
-  return control;
-}
-
-/** What: validates one policy or scenario editor before collecting its payload. When: a run is created. Why: users receive a local field error instead of an opaque API rejection. */
-function requireValid(form, message) {
-  const invalid = [...form.querySelectorAll("input, select")].find((control) => !control.checkValidity());
-  if (!invalid) return;
-  invalid.reportValidity();
-  throw new Error(message);
+  const policySchema = {type:'object',fields:[
+    {name:'policy_id',schema:{type:'string'}},
+    {name:'revision',schema:{type:'integer'},default:1},
+    {name:'name',schema:{type:'string'}},
+    {name:'selection_criteria',schema:{type:'enum',values:['earliest_arrival','largest_capacity','priority_queue','min_cost_flow','cp_sat','knapsack']}},
+  ]};
+  const editor = createValueEditor(policySchema, 'Mobilisation policy');
+  const criteria = createValueEditor({type:'array',item:{type:'tuple',items:[{type:'string'},{type:'string'}]}},'Additional selection criteria');
+  const enabled = document.createElement('input'); enabled.type='checkbox';
+  const label = document.createElement('label'); label.append(enabled,document.createTextNode(' Use named criteria pairs'));
+  editor.element.append(label,criteria.element);
+  criteria.element.hidden=true;
+  enabled.addEventListener('change',() => {criteria.element.hidden=!enabled.checked;});
+  return {form:editor.element, value:() => {
+    const value=editor.value();
+    if (enabled.checked) value.selection_criteria=[['strategy',value.selection_criteria],...criteria.value()];
+    return value;
+  }};
 }

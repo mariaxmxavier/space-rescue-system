@@ -95,6 +95,10 @@ A user supplies policies and scenarios at run creation, executes supported compa
 - Long histories and deeply nested outcomes remain inspectable through expandable details without automatically expanding every record.
 - Long identifiers and narrow screens do not hide actions or essential quantities.
 
+### User amendment: connected simulation viewer
+
+The user additionally requires a case-first viewer of the actual composed simulations in spec 012, while retaining everything in this specification. Selecting a case prepares real execution automatically and starts paused at the beginning (explicit user preference). Playback, arbitrary logical-time selection and individual same-time event selection synchronize all displayed records. Case switching invalidates old replies. Failed execution, missing evidence and unexercised capabilities remain explicit. See the approved [simulation viewer design](../../docs/planning/simulation-viewer-design.md).
+
 ## Requirements
 
 ### Functional Requirements

@@ -34,6 +34,8 @@ export function createApiClient(origin = configuredOrigin()) {
 
   return Object.freeze({
     origin: base,
+    listSimulationCases: () => request("/simulations/cases"),
+    runSimulationCase: (caseId) => post(`/simulations/cases/${encodeURIComponent(caseId)}/runs`, {}),
     createRun: (input) => post("/runs", input),
     invoke: (runId, operation, payload) => post(
       `/runs/${encodeURIComponent(runId)}/operations/${encodeURIComponent(operation)}`,

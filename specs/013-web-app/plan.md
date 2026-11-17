@@ -6,6 +6,10 @@
 
 Build a local browser app with Operations and Exploration tabs sharing one selected run. Provide guided access to all 22 existing operations and complete outcomes. Label comparison results as simulations of configured scenario baselines. Group modules by capability and use case; business decisions remain in the existing API and services.
 
+User-approved extension: implement the [connected simulation viewer](../../docs/planning/simulation-viewer-design.md) as the default entry point, preserving all capabilities above under the advanced workspace. Complete missing spec 012 execution prerequisites, expose catalogue/execution over HTTP and retain authoritative state frames. Keep the existing vanilla browser/Python stack. Selecting a case starts paused; a single cursor synchronizes all records with arbitrary forward/backward seeking. Work in the existing checkout so the user's uncommitted approved design and all parallel changes remain reviewable together; no commits, pushes or PRs.
+
+Parallel implementation ownership: simulation worker owns `simulations/**` and its tests; viewer worker owns `web/simulations/**` and browser simulation tests; capability worker owns other feature/shared browser modules and their tests; parent owns API transport/endpoints, shell composition, shared browser fixtures, configuration, documentation and final integration. The execution adapter is disposable under `/tmp`, derived from canonical task IDs.
+
 ## Technical Context
 
 - Browser HTML, CSS and JavaScript ES modules; existing Python 3.14.10, FastAPI 0.163.1 and uvicorn 0.38.0. No frontend framework.

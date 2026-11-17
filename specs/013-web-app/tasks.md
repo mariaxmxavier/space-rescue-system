@@ -79,6 +79,18 @@
 
 ## Dependencies and Parallel Execution
 
+## User-approved connected simulation extension
+
+- [x] T040 Complete spec 012's missing HTTP adapter, profile catalogue and bounded runner for baseline/all10/all11/all12. Preserve the strict model/port interfaces, real solver-selected requests and all declared evidence. Retain an initial state and ordered per-event complete raw JSON state/outcome/progress/evidence frames. Own `simulations/**` and its tests; verify all four profiles through actual API JSON.
+- [x] T041 Add GET `/simulations/cases` returning `{cases:[{id,name,description,situations,situation_count}]}` and POST `/simulations/cases/{case_id}/runs` returning `{case_id,run_id,mission_id,initial:{logical_time,state,progress},frames:[{ordinal,logical_time,event_id,label,action,outcomes,progress,state,evidence}],result}`. Inject the existing public operation API through in-process HTTP transport; isolate execution namespaces, preserve origin policy and reject unknown profiles. Own `rescue/api/` transport and endpoint tests. Depends T040 interface.
+- [x] T042 Implement `registerSimulationViewer({root,api})` under `web/simulations/` with catalogue loading, case preparation, initial paused state, play/pause/replay/speed, numeric/range logical-time input and individual event navigation. Synchronize mission/fleet/requests/decisions/communication and complete record inspection; explicit empty/unexercised data, errors/retry and stale-response protection. Add browser tests in `tests/e2e/web/simulations/`. Depends T041 interface.
+- [x] T043 Audit and finish all existing spec 013 browser capabilities and shared primitives against the actual codec, including response envelope fields, guided nested experiment configuration, operation reachability and complete outcome/state inspection. Verify all 22 operations and all five journeys, preserving workflow identity and errors. Own feature/shared modules and tests outside simulations.
+- [x] T044 Integrate default viewer and advanced Operations/Exploration workspace in the shell, configure real API/static browser fixtures, and verify actual HTTP-to-browser case selection and forward/backward seeking at 360/1440px with keyboard and reduced motion. Own shell/index and shared browser fixtures. Depends T040–T043.
+- [x] T045 Document single-case viewing and full advanced workflows, exact launch/test commands, operation coverage and verification evidence. Update quickstarts, docs index and roadmap only to reflect observed status. Depends T044.
+- [x] T046 Run full checks, demo, four real simulation cases, browser journeys and independent code review; fix introduced regressions without weakening gates. Mark tasks complete only with fresh evidence. No commits/push/PR. Depends T045.
+
+## Original dependencies
+
 Foundation T001–T010 blocks all feature implementation. T002 and T003 are independent of T001. T005–T008 have distinct paths and run after their listed prerequisites. For each story write the corresponding test first and demonstrate failure before implementing its related behaviour; parallel writers coordinate test readiness without editing one another's files. Tests and production code have separate owners.
 
 After T010, independent implementation paths T012–T016, T019–T021, T024–T026, T029–T030 and T033–T034 may run concurrently when their story tests are red. The shell registration tasks T017, T022, T027, T031 and T035 are serial because they all edit `web/shell/app.js`. US5 configuration integrates with run creation only at T035. T036 and T037 may run in parallel after integration; T038 is read-only with its own evidence file, followed by T039 as the final writer of that file.

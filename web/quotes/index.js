@@ -16,13 +16,14 @@ export function registerQuotes({ root, workspace, outcomes }) {
   heading.textContent = "Quotes";
   content.append(heading);
 
-  const holds = renderQuoteHoldSummary(workspace.getSnapshot()?.snapshot);
+  let holds = renderQuoteHoldSummary(workspace.getSnapshot()?.snapshot);
   content.append(holds);
   renderQuoteActions({ content, workspace, outcomes });
   root.replaceChildren(content);
   const unsubscribe = workspace.subscribe(() => {
     const current = renderQuoteHoldSummary(workspace.getSnapshot()?.snapshot);
     holds.replaceWith(current);
+    holds = current;
   });
   return unsubscribe;
 }

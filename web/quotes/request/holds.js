@@ -12,7 +12,7 @@ export function renderQuoteHoldSummary(snapshot) {
   heading.textContent = "Held capacity";
   section.append(heading);
   const quotes = snapshot?.market?.quotes ?? [];
-  const held = quotes.filter((quote) => (quote.status ?? "HELD") === "HELD");
+  const held = quotes.filter((quote) => quote.status === "held");
   const list = document.createElement("ul");
   if (held.length === 0) {
     const empty = document.createElement("li");

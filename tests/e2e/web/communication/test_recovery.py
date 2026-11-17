@@ -1,70 +1,78 @@
-"""Browser journeys for inspecting deliveries and recovering session reports.
+"""Exercise communication ordering and recovery through real browser controls.
 
-What: verifies duplicate delivery inspection, sequence synchronisation and recovery controls.
-When called: pytest runs this module against the local web app and rescue API.
-Why: operators need to inspect communication faults without applying seat effects twice.
+When: an independent prepared mission has a sequenced request to answer.
+Why: recovery, gaps and duplicates must not create repeated seat effects.
 """
-
-from __future__ import annotations
 
 from playwright.sync_api import Page, expect
 
-from tests.e2e.web.foundation.test_workspace import API_ORIGIN
+from tests.e2e.web.support import choose, prepare_run, submit
 
 
-def test_duplicate_delivery_is_visible_with_server_classification(workspace_page: Page):
-    page = workspace_page
-    page.route(f"{API_ORIGIN}/runs/RUN-COMMS/state", lambda r: r.fulfill(json={"missions": []}))
-    page.route(
-        f"{API_ORIGIN}/runs/RUN-COMMS/operations/record_response",
-        lambda r: r.fulfill(
-            status=200,
-            json={"status": "rejected", "value": {"classification": "DUPLICATE"}, "reason": "duplicate"},
-        ),
+def test_sequence_gaps_duplicates_and_recovery(live_workspace_page: Page):
+    """Observe a genuine gap, repeated response, session synchronisation and report replay."""
+    page = live_workspace_page
+    invoke = prepare_run(page, "communication")
+    response = invoke(
+        "create_request",
+        {
+            "command_id": "request",
+            "mission_id": "mission",
+            "ship_id": "A",
+            "requested_seats": 2,
+            "revision_id": "revision",
+            "now": "0",
+            "response_deadline": "10",
+        },
     )
-    page.get_by_label("Application run ID").fill("RUN-COMMS")
-    page.get_by_role("button", name="Open run").click()
-    page.get_by_role("tab", name="Exploration").click()
-    page.get_by_role("button", name="Communication").click()
-    expect(page.get_by_text("Delivery inspection")).to_be_visible()
-
-
-def test_session_can_be_synchronised_and_reports_recovered(workspace_page: Page):
-    page = workspace_page
-    page.route(
-        f"{API_ORIGIN}/runs/RUN-RECOVERY/operations/synchronise_inbound",
-        lambda r: r.fulfill(status=200, json={"status": "accepted", "value": {"next_sequence": 5}}),
+    request_id = response["value"]["request_id"]
+    session = {"session_id": "ship-A"}
+    choose(page, "Communication")
+    response = submit(
+        page,
+        "record_response",
+        {
+            "message_id": "answer",
+            "delivery_id": "delivery",
+            "attempt_number": 1,
+            "request_id": request_id,
+            "outcome": "accepted",
+            "confirmed_seats": 2,
+            "sent_at": "1",
+            "received_at": "1",
+            "include_envelope": True,
+            "session_id": session["session_id"],
+            "version": 1,
+            "direction": "inbound",
+            "sequence": 3,
+        },
     )
-    page.route(
-        f"{API_ORIGIN}/runs/RUN-RECOVERY/operations/recover_reports",
-        lambda r: r.fulfill(status=200, json={"status": "accepted", "value": [{"sequence": 5}]}),
+    expect(response.locator(".result-summary")).to_contain_text("applied")
+    duplicate = submit(
+        page,
+        "record_response",
+        {"message_id": "answer", "delivery_id": "duplicate", "attempt_number": 2},
     )
-    page.get_by_label("Application run ID").fill("RUN-RECOVERY")
-    page.get_by_role("button", name="Open run").click()
-    page.get_by_role("tab", name="Exploration").click()
-    page.get_by_role("button", name="Communication").click()
-    page.get_by_label("Session ID").fill("SESSION-1")
-    page.get_by_role("button", name="Synchronise inbound").click()
-    expect(page.get_by_text("5", exact=True)).to_be_visible()
-    page.get_by_label("From sequence").fill("5")
-    page.get_by_role("button", name="Recover reports").click()
-    expect(page.get_by_text("sequence", exact=False)).to_be_visible()
-
-
-def test_delivery_inspection_uses_existing_message_identifier(workspace_page: Page):
-    page = workspace_page
-    deliveries: list[str] = []
-
-    def read_deliveries(route):
-        deliveries.append(route.request.post_data or "")
-        route.fulfill(status=200, json={"status": "accepted", "value": []})
-
-    page.route(f"{API_ORIGIN}/runs/RUN-DELIVERY/operations/get_deliveries", read_deliveries)
-    page.get_by_label("Application run ID").fill("RUN-DELIVERY")
-    page.get_by_role("button", name="Open run").click()
-    page.get_by_role("tab", name="Exploration").click()
-    page.get_by_role("button", name="Communication").click()
-    page.get_by_label("Message ID").fill("MESSAGE-1")
-    page.get_by_role("button", name="Inspect deliveries").click()
-    expect(page.get_by_text("Deliveries")).to_be_visible()
-    assert deliveries
+    expect(duplicate.locator(".result-summary")).to_contain_text("ignored")
+    inspection = submit(page, "get_session", {"session_id": session["session_id"]})
+    inspection.get_by_text("Complete result", exact=True).click()
+    expect(inspection.locator("pre")).to_contain_text('"gaps": [')
+    expect(inspection.locator("pre")).to_contain_text('"next_inbound": 4')
+    synchronised = submit(
+        page,
+        "synchronise_inbound",
+        {"session_id": session["session_id"], "version": 1, "next_sequence": 5},
+    )
+    expect(synchronised.locator(".result-summary")).to_contain_text("applied")
+    recovered = submit(
+        page,
+        "recover_reports",
+        {"session_id": session["session_id"], "version": 1, "from_sequence": 1, "count": 1},
+    )
+    expect(recovered.locator(".result-summary")).to_contain_text("applied")
+    deliveries = submit(page, "get_deliveries", {"message_id": "answer"})
+    deliveries.get_by_text("Complete result", exact=True).click()
+    expect(deliveries.locator("pre")).to_contain_text("duplicate")
+    choose(page, "Missions")
+    progress = submit(page, "get_progress", {"mission_id": "mission", "now": "2"})
+    assert progress.locator("dd").all_text_contents() == ["2", "2", "0", "0", "0", "complete"]

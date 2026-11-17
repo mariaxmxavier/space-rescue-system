@@ -22,9 +22,11 @@ export function registerDecisionInspection({ root, workspace, forms }) {
   const body = document.createElement("pre");
   latest.append(summary, body);
   section.append(latest);
-  const unsubscribe = workspace.subscribe(({ snapshot }) => {
+  const render = ({snapshot}) => {
     body.textContent = JSON.stringify(snapshot?.decision_index ?? [], null, 2);
-  });
+  };
+  const unsubscribe = workspace.subscribe(render);
+  render(workspace.getSnapshot());
   root.append(section);
   return () => {
     unsubscribe();

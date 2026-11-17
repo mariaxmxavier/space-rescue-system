@@ -1,3 +1,4 @@
+import { renderFleetInspection } from "./inspection/market.js";
 import { registerShips } from "./ships/register.js";
 import { registerAvailability } from "./availability/publish.js";
 import { registerOffers } from "./offers/publish.js";
@@ -7,4 +8,9 @@ export function registerFleet(context) {
   registerShips(context);
   registerAvailability(context);
   registerOffers(context);
+  let inspection = renderFleetInspection(context.workspace.getSnapshot().snapshot);
+  context.root.append(inspection);
+  return context.workspace.subscribe(({snapshot}) => {
+    const next = renderFleetInspection(snapshot); inspection.replaceWith(next); inspection = next;
+  });
 }

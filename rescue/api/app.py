@@ -12,6 +12,7 @@ from rescue.api.codec import PayloadError, from_json_value, to_json_value
 from rescue.api.operations import OPERATIONS
 from rescue.api.origins import origin_is_allowed
 from rescue.api.runtime import RunRegistry
+from rescue.api.simulations import register_simulations
 from rescue.api.state import read_run_state
 from rescue.experiments.models import RescueScenario
 from rescue.mobilisation.models import MobilisationPolicy
@@ -129,6 +130,7 @@ def create_app(allowed_origins: tuple[str, ...] | None = None) -> FastAPI:
             record.append("GET", request.url.path, None, 200, response)
             return JSONResponse(response)
 
+    register_simulations(app)
     return app
 
 

@@ -14,4 +14,5 @@ jobs:
           version: "0.13.8"
       - run: uv python install
       - run: make install
+      - run: uv run playwright install --with-deps chromium
       - run: make check-all
