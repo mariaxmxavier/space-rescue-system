@@ -92,8 +92,8 @@ def baseline_state():
         delivery_id="DELIVERY-1",
         attempt_number=1,
         received_at=1,
-        disposition="sent",
-        reason="baseline_copy",
+        disposition="applied",
+        reason="response_applied",
     )
     revision = ShipOfferRevision(
         revision_id="REVISION-1",

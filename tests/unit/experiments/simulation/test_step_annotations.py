@@ -3,10 +3,10 @@
 import unittest
 from typing import get_type_hints
 
-from rescue.mission.models import Mission, RequestOutcome, SeatRequest
 from rescue.experiments.simulation.schedule_request_events import schedule_request_events
 from rescue.experiments.simulation.schedule_response import schedule_response
 from rescue.experiments.simulation.scripted_outcome import scripted_outcome
+from rescue.mission.models import Mission, RequestOutcome, SeatRequest
 
 
 class StepAnnotationTests(unittest.TestCase):

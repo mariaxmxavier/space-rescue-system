@@ -1,35 +1,19 @@
 {"timestamp":"2026-11-16T09:28:33.3259045Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
-
 {"timestamp":"2026-11-16T10:16:24.6530915Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
-
 {"timestamp":"2026-11-16T10:38:28.7327596Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
-
 {"timestamp":"2026-11-16T11:06:49.1323614Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
-
 {"timestamp":"2026-11-16T11:10:43.1304104Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
-
 {"timestamp":"2026-11-16T11:37:56.9621436Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
-
 {"timestamp":"2026-11-16T11:56:29.8579073Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.clarify"}
-
 {"timestamp":"2026-11-16T14:19:04.6385335Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.plan"}
-
 {"timestamp":"2026-11-16T14:20:05.9610349Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:writing-plans"}
-
 {"timestamp":"2026-11-16T14:31:23.1989381Z","action":"guard","status":"allow","feature_directory":"","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
-
 {"timestamp":"2026-11-16T14:34:39.6571872Z","action":"handoff","status":"ready","feature_directory":"specs/001-rescue-domain-model","decision":"updated","reason":"","actor":"codex","prior_actor":"","snapshot_id":"20261116T1434395911654Z-ready"}
-
 {"timestamp":"2026-11-16T14:51:18.0941964Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
-
 {"timestamp":"2026-11-16T14:55:22.5072356Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
-
 {"timestamp":"2026-11-16T16:24:32.2377303Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
-
 {"timestamp":"2026-11-16T17:14:20.3486056Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
-
 {"timestamp":"2026-11-16T17:15:13.7818099Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.implement"}
-
 {"timestamp":"2026-11-17T00:33:16Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.plan"}
 {"timestamp":"2026-11-17T00:39:12Z","action":"guard","status":"allow","feature_directory":"specs/001-rescue-domain-model","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.tasks"}
 {"timestamp":"2026-11-17T00:40:17Z","action":"handoff","status":"ready","feature_directory":"specs/001-rescue-domain-model","decision":"updated","reason":"actor change codex → claude","actor":"claude","prior_actor":"codex","snapshot_id":""}
@@ -43,25 +27,16 @@
 {"event":"artifact_drift_detected","timestamp":"2026-11-17T01:35:10Z","actor":"claude","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","drifted_artifacts":[{"path":"plan.md","old_sha256":"9ee4104ce89feaf93e89b66513a785a553502123e370a57169e3fedbd1c55f76","new_sha256":"71c5f26b7b377861809f354467c8f60e68eb36d966b289311ad97a1aa7eb40f0"},{"path":"tasks.md","old_sha256":"381a11b8cee7ea3bb6a3305360e5e02ccbe7a5b76073bd5ac5c5b530733a81be","new_sha256":"b3216df642f2087ed7b970164d2bb1eb80c8344d12e98275e6ddcd14e38ca2c2"}]}
 {"timestamp":"2026-11-17T03:28:58Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.plan"}
 {"timestamp":"2026-11-17T04:01:55.0987962Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
-
 {"timestamp":"2026-11-17T04:05:39.4962085Z","action":"handoff","status":"ready","feature_directory":"specs/006-mobilisation-conformance","decision":"updated","reason":"actor change claude → codex","actor":"codex","prior_actor":"claude","snapshot_id":"20261117T0405394278952Z-ready"}
-
 {"timestamp":"2026-11-17T04:09:52.1873186Z","action":"handoff","status":"executing","feature_directory":"specs/006-mobilisation-conformance","decision":"updated","reason":"","actor":"codex","prior_actor":"codex","snapshot_id":"20261117T0409521223997Z-executing"}
-
 {"timestamp":"2026-11-17T04:09:52.3193423Z","action":"guard","status":"allow","feature_directory":"specs/006-mobilisation-conformance","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:executing-plans"}
-
 {"timestamp":"2026-11-17T04:39:50.8396346Z","action":"guard","status":"allow","feature_directory":"specs/006-mobilisation-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:executing-plans"}
 {"timestamp":"2026-11-17T03:12:07Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.clarify"}
 {"timestamp":"2026-11-17T03:41:27.3528929Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.plan"}
-
 {"timestamp":"2026-11-17T03:59:53.8425628Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"codex","checked_action":"speckit.tasks"}
-
 {"timestamp":"2026-11-17T04:01:54.8692622Z","action":"handoff","status":"ready","feature_directory":"specs/005-market-conformance","decision":"updated","reason":"actor change claude → codex","actor":"codex","prior_actor":"claude","snapshot_id":"20261117T0401548179908Z-ready"}
-
 {"timestamp":"2026-11-17T04:06:44.8047288Z","action":"handoff","status":"executing","feature_directory":"specs/005-market-conformance","decision":"updated","reason":"","actor":"codex","prior_actor":"codex","snapshot_id":"20261117T0406447242282Z-executing"}
-
 {"timestamp":"2026-11-17T04:06:44.9283553Z","action":"guard","status":"allow","feature_directory":"specs/005-market-conformance","decision":"allow","reason":"","actor":"codex","checked_action":"superpowers:executing-plans"}
-
 {"timestamp":"2026-11-17T02:05:58Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.clarify"}
 {"timestamp":"2026-11-17T02:05:59Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:brainstorming"}
 {"timestamp":"2026-11-17T02:21:22Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.plan"}
@@ -80,13 +55,28 @@
 {"timestamp":"2026-11-17T06:51:52Z","action":"guard","status":"allow","feature_directory":"specs/006-mobilisation-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.plan"}
 {"timestamp":"2026-11-17T06:58:51Z","action":"guard","status":"allow","feature_directory":"specs/006-mobilisation-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.tasks"}
 {"timestamp":"2026-11-17T07:00:56.5822931Z","action":"handoff","status":"ready","feature_directory":"specs/006-mobilisation-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T0700565409360Z-ready"}
-
 {"timestamp":"2026-11-17T07:01:14.4426179Z","action":"handoff","status":"ready","feature_directory":"specs/009-experiments-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T0701144085150Z-ready"}
-
 {"timestamp":"2026-11-17T07:10:13Z","action":"guard","status":"allow","feature_directory":"specs/009-experiments-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:executing-plans"}
 {"timestamp":"2026-11-17T07:10:30.2096334Z","action":"handoff","status":"executing","feature_directory":"specs/009-experiments-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T0710301548678Z-executing"}
-
 {"timestamp":"2026-11-17T11:04:59.9057659Z","action":"handoff","status":"complete","feature_directory":"specs/009-experiments-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T1104598469231Z-complete"}
-
 {"event":"artifact_drift_detected","timestamp":"2026-11-17T11:04:59.9202000Z","actor":"claude","feature_directory":"specs/009-experiments-conformance","drifted_artifacts":[{"path":"tasks.md","old_sha256":"b21095c3e2c465b63cfbf7a98d1cbeac6724df7d2dc93f8474d8b0e6faf8345d","new_sha256":"7366732f226572beace03b260bc0c1f260f71227cc63caf1f515d0140fd050b5"}]}
-
+{"timestamp":"2026-11-17T02:14:42Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.clarify"}
+{"timestamp":"2026-11-17T02:23:37Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.plan"}
+{"timestamp":"2026-11-17T02:30:23Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.tasks"}
+{"timestamp":"2026-11-17T02:32:56Z","action":"handoff","status":"ready","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/002-project-foundation/specs/002-project-foundation","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":""}
+{"timestamp":"2026-11-17T02:33:11Z","action":"handoff","status":"ready","feature_directory":"specs/004-mission-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":""}
+{"timestamp":"2026-11-17T02:34:29Z","action":"guard","status":"allow","feature_directory":"specs/004-mission-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:executing-plans"}
+{"timestamp":"2026-11-17T02:34:38Z","action":"handoff","status":"blocked","feature_directory":"specs/004-mission-conformance","decision":"updated","reason":"Missing required Spec Kit artifacts: specs/004-mission-conformance/spec.md,specs/004-mission-conformance/plan.md,specs/004-mission-conformance/tasks.md","actor":"claude","prior_actor":"claude","snapshot_id":""}
+{"timestamp":"2026-11-17T02:35:04Z","action":"handoff","status":"blocked","feature_directory":"specs/004-mission-conformance","decision":"updated","reason":"Missing required Spec Kit artifacts: specs/004-mission-conformance/spec.md,specs/004-mission-conformance/plan.md,specs/004-mission-conformance/tasks.md","actor":"claude","prior_actor":"claude","snapshot_id":""}
+{"timestamp":"2026-11-17T02:35:14Z","action":"handoff","status":"blocked","feature_directory":"specs/004-mission-conformance","decision":"updated","reason":"Missing required Spec Kit artifacts: specs/004-mission-conformance/spec.md,specs/004-mission-conformance/plan.md,specs/004-mission-conformance/tasks.md","actor":"claude","prior_actor":"claude","snapshot_id":""}
+{"timestamp":"2026-11-17T02:35:23Z","action":"handoff","status":"executing","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T023523526Z-executing"}
+{"timestamp":"2026-11-17T03:28:32Z","action":"handoff","status":"complete","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T032831638Z-complete"}
+{"event":"artifact_drift_detected","timestamp":"2026-11-17T03:28:32Z","actor":"claude","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance","drifted_artifacts":[{"path":"spec.md","old_sha256":"1c80572ab15aec355de9e48bb08d354d6c7748eb4cbd75f9f4f7650f90d5c5ad","new_sha256":"c874d6420c6024e896ee41f748c10621caa95c8445c627f781f29df0b28cbe09"},{"path":"tasks.md","old_sha256":"a9b7f8c692e10defd6f0605a516dd36c5b4778513d0886e2b55940cbaa7ab2eb","new_sha256":"b024517cbaabc7abc3da7446385957ea669c98fb44cad834068379a1070b8ebb"}]}
+{"timestamp":"2026-11-17T05:12:16Z","action":"guard","status":"allow","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"speckit.tasks"}
+{"timestamp":"2026-11-17T05:16:17Z","action":"handoff","status":"ready","feature_directory":"C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/004-mission-conformance/specs/004-mission-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":""}
+{"timestamp":"2026-11-17T05:16:29Z","action":"handoff","status":"ready","feature_directory":"specs/007-communication-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":""}
+{"timestamp":"2026-11-17T06:30:15.3873538Z","action":"handoff","status":"executing","feature_directory":"specs/007-communication-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T0630152571698Z-executing"}
+{"timestamp":"2026-11-17T06:30:22.9027383Z","action":"guard","status":"allow","feature_directory":"specs/007-communication-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:executing-plans"}
+{"timestamp":"2026-11-17T06:46:19.7112540Z","action":"guard","status":"allow","feature_directory":"specs/007-communication-conformance","decision":"allow","reason":"","actor":"claude","checked_action":"superpowers:executing-plans"}
+{"timestamp":"2026-11-17T10:47:37.9618418Z","action":"handoff","status":"complete","feature_directory":"specs/007-communication-conformance","decision":"updated","reason":"","actor":"claude","prior_actor":"claude","snapshot_id":"20261117T1047378776180Z-complete"}
+{"event":"artifact_drift_detected","timestamp":"2026-11-17T10:47:37.9794743Z","actor":"claude","feature_directory":"specs/007-communication-conformance","drifted_artifacts":[{"path":"tasks.md","old_sha256":"467c5fbf46dc927ff63cba247946fe0f9015575365553d7362c7f9f79392e945","new_sha256":"c3fcbb3001147a9e457662d0146a05bd413f44396ce3826b6d565363d406e786"}]}

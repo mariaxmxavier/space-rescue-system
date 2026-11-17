@@ -15,6 +15,7 @@ class State:
     message_index: tuple = ()
     delivery_index: tuple = ()
     decision_index: tuple = ()
+    session_index: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,7 @@ class InstallBaselineTests(unittest.TestCase):
             message_index=("msg",),
             delivery_index=("del",),
             decision_index=("dec",),
+            session_index=("ses",),
         )
         install_baseline(SimpleNamespace(store=store), baseline, "run-2")
         self.assertEqual(
@@ -51,6 +53,7 @@ class InstallBaselineTests(unittest.TestCase):
         self.assertEqual(store.state.message_index, ("msg",))
         self.assertEqual(store.state.delivery_index, ("del",))
         self.assertEqual(store.state.decision_index, ("dec",))
+        self.assertEqual(store.state.session_index, ("ses",))
 
 
 if __name__ == "__main__":

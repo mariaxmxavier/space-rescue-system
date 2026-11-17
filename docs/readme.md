@@ -29,6 +29,12 @@
 
 - [Rescue domain specification](../specs/001-rescue-domain-model/spec.md): core rules and all six extensions.
 - [Domain model diagrams](architecture/diagrams/rescue-domain-model/README.md): Mermaid sources and rendered views.
+- [Communication specification](../specs/007-communication-conformance/spec.md): safe delivery decisions, explicit order and maintainability requirements.
+- [Communication research](../specs/007-communication-conformance/research.md): B3, exchange protocols, matching algorithms and ordering alternatives.
+- [Communication maintainability contract](../specs/007-communication-conformance/contracts/maintainability.md): nested files, explanations, diagram links and checks.
+- [Communication plan](../specs/007-communication-conformance/plan.md): layout, delivery waves with parallel tasks, constitution check.
+- [Communication data model](../specs/007-communication-conformance/data-model.md) and [design diagrams](../specs/007-communication-conformance/design-diagrams.md): sessions, reports, mission order, components and state machines.
+- [Communication quickstart](../specs/007-communication-conformance/quickstart.md): how to verify the feature.
 - [SequenceIdSource race](architecture/diagrams/id-source-race.md): ASCII timelines of the lost update without the lock, and the serialised run with it.
 - [Store optimistic commit](architecture/diagrams/store-optimistic-commit.md): ASCII timelines of parallel requests, conflict and retry, and read-only transactions.
 
@@ -41,6 +47,10 @@ Each rule of `rescue/market/` has its own file and a document beside it ([spec 0
 - Quotes: [hold_quote](../rescue/market/models/quotes/rules/hold_quote.md), [transfer_quote](../rescue/market/models/quotes/rules/transfer_quote.md), [close_quote](../rescue/market/models/quotes/rules/close_quote.md), [quote_history](../rescue/market/models/quotes/rules/quote_history.md)
 - Offers: [publish_offer_revision](../rescue/market/models/offers/rules/publish_offer_revision.md)
 - Inventory: [usage](../rescue/market/models/inventory/rules/usage.md)
+
+## Architecture decisions
+
+- [Communication ordering](architecture/communication-ordering.md): B3-style session sequencing, per-mission decision ordering, gap handling and recovery examples; implemented on branch 007-communication-conformance.
 
 ## Planning
 

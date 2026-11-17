@@ -23,6 +23,7 @@ class FinishRunTests(unittest.TestCase):
             message_index=(),
             delivery_index=(),
             decision_index=(),
+            session_index=(),
         )
         handle = SimpleNamespace(store=SimpleNamespace(snapshot=lambda: state))
         scenario = SimpleNamespace(scenario_id="SCENARIO-1", revision=1)

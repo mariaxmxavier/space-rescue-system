@@ -15,6 +15,7 @@ dev = [
 
 [tool.uv]
 required-version = "==0.13.8"
+python-preference = "system"
 
 [tool.ruff]
 line-length = 100
@@ -153,6 +154,29 @@ type = "layers"
 layers = [
     "rescue.mission.rules",
     "rescue.mission.models",
+]
+
+[[tool.importlinter.contracts]]
+name = "communication-isolated: Communication imports only rescue.values and the standard library"
+type = "forbidden"
+source_modules = ["rescue.communication"]
+forbidden_modules = [
+    "rescue.mission",
+    "rescue.market",
+    "rescue.mobilisation",
+    "rescue.experiments",
+    "rescue.application",
+    "rescue.adapters",
+    "rescue.bootstrap",
+    "rescue.demo",
+]
+
+[[tool.importlinter.contracts]]
+name = "communication-layers: Communication rules build on models, never the reverse"
+type = "layers"
+layers = [
+    "rescue.communication.rules",
+    "rescue.communication.models",
 ]
 
 [[tool.importlinter.contracts]]

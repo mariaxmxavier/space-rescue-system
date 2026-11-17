@@ -33,8 +33,10 @@ COMMAND_FIELDS = {
             "sent_at",
             "received_at",
         },
-        {"communication_rtt_seconds"},
+        {"communication_rtt_seconds", "envelope"},
     ),
+    "RecoverReports": ({"session_id", "version", "from_sequence", "count"}, set()),
+    "SynchroniseInbound": ({"session_id", "version", "next_sequence"}, set()),
     "CancelRequest": ({"mission_id", "request_id", "now", "reason"}, set()),
     "ExpireRequest": ({"mission_id", "request_id", "now"}, set()),
     "Mobilise": ({"mission_id", "policy_id", "policy_revision", "now"}, set()),
@@ -57,6 +59,15 @@ RESULT_REASONS = (
     "unavailable",
     "expired_quote",
     "revision_conflict",
+)
+SEQUENCING_RESULT_REASONS = (
+    "duplicate_sequence",
+    "stale_session",
+    "sequence_rewind",
+    "recovery_out_of_range",
+    "recovery_limit",
+    "recovery_in_progress",
+    "unknown_session",
 )
 
 
@@ -113,6 +124,14 @@ class CommandContractTests(unittest.TestCase):
                 self.assertIsNone(result.reason)
 
         for reason in RESULT_REASONS:
+            with self.subTest(reason=reason):
+                result = contracts.Result[str](status="rejected", reason=reason)
+                self.assertEqual(result.status, "rejected")
+                self.assertIsNone(result.value)
+                self.assertEqual(result.reason, reason)
+
+    def test_result_accepts_each_sequencing_reason(self):
+        for reason in SEQUENCING_RESULT_REASONS:
             with self.subTest(reason=reason):
                 result = contracts.Result[str](status="rejected", reason=reason)
                 self.assertEqual(result.status, "rejected")

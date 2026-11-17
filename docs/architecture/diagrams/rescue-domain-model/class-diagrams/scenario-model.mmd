@@ -47,6 +47,7 @@ classDiagram
             -data message_index
             -data delivery_index
             -data decision_index
+            -data session_index
         }
         class ScriptedResponse {
             -string ship_id
@@ -82,6 +83,7 @@ classDiagram
             -data message_index
             -data delivery_index
             -data decision_index
+            -data session_index
         }
         class SimulationResult {
             -boolean completed
@@ -100,13 +102,114 @@ classDiagram
             -string kind
             -data payload
             -datetime sent_at
+            -string request_id
         }
         class MessageDelivery {
             -string delivery_id
             -integer attempt_number
             -datetime received_at
-            -string disposition
-            -string reason
+            -DeliveryDisposition disposition
+            -DeliveryReason reason
+            -number communication_rtt_seconds
+            -SessionEnvelope envelope
+        }
+        class SessionEnvelope {
+            -string session_id
+            -integer version
+            -FlowDirection direction
+            -integer sequence
+        }
+        class CommunicationSession {
+            -string session_id
+            -integer version
+            -integer next_inbound
+            -integer next_outbound
+            -DecisionReport reports
+            -NotApplied gaps
+            -RecoveryRequest outstanding_recovery
+        }
+        class NotApplied {
+            -string session_id
+            -integer version
+            -integer from_sequence
+            -integer count
+        }
+        class DecisionReport {
+            -string report_id
+            -SessionEnvelope envelope
+            -string message_id
+            -string delivery_id
+            -string mission_id
+            -DeliveryDisposition disposition
+            -DeliveryReason reason
+            -integer mission_sequence
+            -integer after_mission_sequence
+        }
+        class RecoveryRequest {
+            -string session_id
+            -integer version
+            -integer from_sequence
+            -integer count
+        }
+        class SequenceControl {
+            -string session_id
+            -integer version
+            -FlowDirection direction
+            -integer next_sequence
+        }
+        class ReportCursor {
+            -string session_id
+            -integer version
+            -integer next_expected
+            -DecisionReport buffered
+        }
+        class DeliveryDisposition {
+            <<enumeration>>
+            applied
+            ignored
+            lost
+            rejected
+            late
+        }
+        class DeliveryReason {
+            <<enumeration>>
+            response_applied
+            identity_conflict
+            transport_loss
+            unknown_request
+            invalid_input
+            closed_request
+            deadline_expired
+            unknown_mission
+            unknown_ship
+            insufficient_demand
+            insufficient_capacity
+            unavailable
+            expired_quote
+            revision_conflict
+            duplicate_sequence
+        }
+        class FlowDirection {
+            <<enumeration>>
+            inbound
+            outbound
+        }
+        class RecoveryRejection {
+            <<enumeration>>
+            stale_session
+            recovery_out_of_range
+            recovery_limit
+            recovery_in_progress
+            sequence_rewind
+        }
+    }
+    namespace ScenarioBaseline {
+        class RunBaseline {
+            -data command_index
+            -data message_index
+            -data delivery_index
+            -data decision_index
+            -data session_index
         }
     }
     namespace CoreReferences {
@@ -264,4 +367,17 @@ classDiagram
     SeatRequest "0..*" --> "0..1" ShipOfferRevision : optionally preserves basis
     SeatRequest "1" --> "0..*" CommunicationMessage : correlates
     CommunicationMessage "1" *-- "1..*" MessageDelivery : tracks attempts
+    MessageDelivery "0..*" --> "0..1" SessionEnvelope : carries
+    DecisionReport "1" --> "1" SessionEnvelope : carries
+    CommunicationSession "1" *-- "0..*" DecisionReport : issues
+    CommunicationSession "1" *-- "0..*" NotApplied : records gaps
+    CommunicationSession "1" *-- "0..1" RecoveryRequest : outstanding
+    ReportCursor "0..*" --> "0..*" DecisionReport : buffers
+    MessageDelivery ..> DeliveryDisposition : disposition
+    MessageDelivery ..> DeliveryReason : reason
+    SessionEnvelope ..> FlowDirection : direction
+    SequenceControl ..> FlowDirection : direction
+    RecoveryRequest ..> RecoveryRejection : refused with
+    RunBaseline "1" --> "0..*" CommunicationSession : session_index
+    note for CommunicationSession "Rules: accept_inbound, synchronise_inbound, issue_report, recover_reports, receive_report, classify_delivery. ReportCursor is the ship-side cursor and is not persisted."
     RequestHistoryEntry "0..*" --> "0..1" CommunicationMessage : triggered by

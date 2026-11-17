@@ -28,6 +28,7 @@ class RunBaseline:
     message_index: tuple[object, ...] = ()
     delivery_index: tuple[object, ...] = ()
     decision_index: tuple[object, ...] = ()
+    session_index: tuple[object, ...] = ()
 
     def __post_init__(self) -> None:
         missions = finite_tuple(self.missions, "baseline missions")
@@ -43,6 +44,7 @@ class RunBaseline:
             "message_index",
             "delivery_index",
             "decision_index",
+            "session_index",
         ):
             value = finite_tuple(getattr(self, name), f"baseline {name}")
             if not frozen_tree(value):

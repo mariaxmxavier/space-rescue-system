@@ -35,6 +35,7 @@ class RunSnapshot:
     message_index: tuple[object, ...] = ()
     delivery_index: tuple[object, ...] = ()
     decision_index: tuple[object, ...] = ()
+    session_index: tuple[object, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.run, SimulationRun):
@@ -45,7 +46,13 @@ class RunSnapshot:
         if not isinstance(self.market, B3Market):
             raise DomainValidationError("snapshot requires a B3Market")
         object.__setattr__(self, "missions", missions)
-        for name in ("command_index", "message_index", "delivery_index", "decision_index"):
+        for name in (
+            "command_index",
+            "message_index",
+            "delivery_index",
+            "decision_index",
+            "session_index",
+        ):
             value = finite_tuple(getattr(self, name), f"snapshot {name}")
             if not frozen_tree(value):
                 raise DomainValidationError(f"snapshot {name} must be deeply immutable")

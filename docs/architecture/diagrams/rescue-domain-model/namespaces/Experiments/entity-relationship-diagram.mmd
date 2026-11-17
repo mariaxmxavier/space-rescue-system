@@ -47,6 +47,7 @@ erDiagram
         data message_index
         data delivery_index
         data decision_index
+        data session_index
     }
     ScriptedResponse {
         string ship_id
@@ -91,6 +92,7 @@ erDiagram
         data message_index
         data delivery_index
         data decision_index
+        data session_index
     }
     RescueScenario ||..|| RunBaseline : "starts from"
     RescueScenario ||..o{ ScriptedResponse : "scripts"

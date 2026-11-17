@@ -24,7 +24,7 @@ test:
 	@echo == rescue/mobilisation
 	uv run coverage report --include="rescue/mobilisation/*"
 	@echo == rescue/communication
-	uv run coverage report --include="rescue/communication/*"
+	uv run coverage report --include="rescue/communication/*" --fail-under=100
 	@echo == rescue/experiments
 	uv run coverage report --include="rescue/experiments/models/*,rescue/experiments/timeline/*,rescue/experiments/results/*" --fail-under=100
 	@echo == rescue/experiments/simulation

@@ -46,6 +46,7 @@ erDiagram
         data message_index
         data delivery_index
         data decision_index
+        data session_index
     }
     ScriptedResponse {
         string ship_id
@@ -90,11 +91,13 @@ erDiagram
         data message_index
         data delivery_index
         data decision_index
+        data session_index
     }
     %% Logical group Communication: messages and delivery attempts.
     CommunicationMessage {
         string message_id PK
         string correlation_id
+        string request_id
         string kind
         data payload
         datetime sent_at
@@ -105,6 +108,34 @@ erDiagram
         datetime received_at "optional"
         string disposition
         string reason
+        number communication_rtt_seconds "optional"
+        data envelope "optional"
+    }
+    %% Run-owned session state: inbound and outbound counters per session version; reports and gaps are its collections.
+    CommunicationSession {
+        string session_id PK
+        integer version
+        integer next_inbound
+        integer next_outbound
+        data outstanding_recovery "optional"
+    }
+    DecisionReport {
+        string report_id PK
+        data envelope
+        string message_id
+        string delivery_id
+        string mission_id "optional"
+        string disposition
+        string reason
+        integer mission_sequence "optional"
+        integer after_mission_sequence
+    }
+    %% NotApplied is a gap notice control: a value object, not stored apart from its session, so it has no primary key.
+    NotApplied {
+        string session_id
+        integer version
+        integer from_sequence
+        integer count
     }
     %% Logical group CoreReferences: Mission and SeatRequest workflow data.
     Mission {
@@ -240,3 +271,9 @@ erDiagram
     SeatRequest ||..o{ CommunicationMessage : "correlates"
     CommunicationMessage ||..|{ MessageDelivery : "tracks attempts"
     RequestHistoryEntry }o..o| CommunicationMessage : "triggered by"
+    SimulationRun ||..o{ CommunicationSession : "owns session index"
+    CommunicationSession ||..o{ DecisionReport : "issues reports"
+    CommunicationSession ||..o{ NotApplied : "records gap notices"
+    MessageDelivery }o..o| CommunicationSession : "carried in"
+    DecisionReport }o..|| MessageDelivery : "reports"
+    DecisionReport }o..o| RequestHistoryEntry : "cites mission_sequence"

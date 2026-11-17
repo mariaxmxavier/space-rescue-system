@@ -48,6 +48,7 @@ def install_baseline(handle: RunHandle, baseline: RunBaseline, run_id: str) -> N
                 message_index=baseline.message_index,
                 delivery_index=baseline.delivery_index,
                 decision_index=baseline.decision_index,
+                session_index=baseline.session_index,
             ),
             None,
         )

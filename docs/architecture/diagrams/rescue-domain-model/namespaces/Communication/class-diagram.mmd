@@ -34,13 +34,143 @@ classDiagram
         -string kind
         -data payload
         -datetime sent_at
+        -string request_id
     }
     class MessageDelivery {
         -string delivery_id
         -integer attempt_number
         -datetime received_at
-        -string disposition
-        -string reason
+        -DeliveryDisposition disposition
+        -DeliveryReason reason
+        -number communication_rtt_seconds
+        -SessionEnvelope envelope
+    }
+    class SessionEnvelope {
+        -string session_id
+        -integer version
+        -FlowDirection direction
+        -integer sequence
+    }
+    class CommunicationSession {
+        -string session_id
+        -integer version
+        -integer next_inbound
+        -integer next_outbound
+        -DecisionReport[] reports
+        -NotApplied[] gaps
+        -RecoveryRequest outstanding_recovery
+    }
+    class NotApplied {
+        -string session_id
+        -integer version
+        -integer from_sequence
+        -integer count
+    }
+    class DecisionReport {
+        -string report_id
+        -SessionEnvelope envelope
+        -string message_id
+        -string delivery_id
+        -string mission_id
+        -DeliveryDisposition disposition
+        -DeliveryReason reason
+        -integer mission_sequence
+        -integer after_mission_sequence
+    }
+    class RecoveryRequest {
+        -string session_id
+        -integer version
+        -integer from_sequence
+        -integer count
+    }
+    class SequenceControl {
+        -string session_id
+        -integer version
+        -FlowDirection direction
+        -integer next_sequence
+    }
+    class ReportCursor {
+        -string session_id
+        -integer version
+        -integer next_expected
+        -DecisionReport[] buffered
+    }
+    class DeliveryDisposition {
+        <<enumeration>>
+        applied
+        ignored
+        lost
+        rejected
+        late
+    }
+    class DeliveryReason {
+        <<enumeration>>
+        response_applied
+        identity_conflict
+        transport_loss
+        unknown_request
+        invalid_input
+        closed_request
+        deadline_expired
+        unknown_mission
+        unknown_ship
+        insufficient_demand
+        insufficient_capacity
+        unavailable
+        expired_quote
+        revision_conflict
+        duplicate_sequence
+    }
+    class FlowDirection {
+        <<enumeration>>
+        inbound
+        outbound
+    }
+    class RecoveryRejection {
+        <<enumeration>>
+        stale_session
+        recovery_out_of_range
+        recovery_limit
+        recovery_in_progress
+        sequence_rewind
+    }
+    class classify_delivery {
+        <<function>>
+    }
+    class accept_inbound {
+        <<function>>
+    }
+    class issue_report {
+        <<function>>
+    }
+    class recover_reports {
+        <<function>>
+    }
+    class synchronise_inbound {
+        <<function>>
+    }
+    class receive_report {
+        <<function>>
     }
     CommunicationMessage "1" *-- "1..*" MessageDelivery : tracks attempts
+    MessageDelivery "1" --> "0..1" SessionEnvelope : carries
+    CommunicationSession "1" *-- "0..*" DecisionReport : owns reports
+    CommunicationSession "1" *-- "0..*" NotApplied : owns gaps
+    CommunicationSession "1" --> "0..1" RecoveryRequest : outstanding recovery
+    ReportCursor "1" o-- "0..*" DecisionReport : buffers
+    DecisionReport "1" --> "1" SessionEnvelope : stamped with
+    SessionEnvelope --> FlowDirection
+    SequenceControl --> FlowDirection
+    MessageDelivery --> DeliveryDisposition
+    MessageDelivery --> DeliveryReason
+    DecisionReport --> DeliveryDisposition
+    DecisionReport --> DeliveryReason
+    classify_delivery ..> MessageDelivery : classifies
+    accept_inbound ..> SequenceControl : checks
+    issue_report ..> DecisionReport : issues
+    recover_reports ..> RecoveryRequest : answers
+    recover_reports ..> RecoveryRejection : rejects with
+    synchronise_inbound ..> CommunicationSession : advances
+    receive_report ..> ReportCursor : advances
     note for CommunicationMessage "External interactions: Messages correlate with MissionOperations requests and may trigger request-history entries."
+    note for DecisionReport "External interactions: mission_sequence references RequestHistoryEntry.mission_sequence in MissionOperations; after_mission_sequence is the last sequence already reported."

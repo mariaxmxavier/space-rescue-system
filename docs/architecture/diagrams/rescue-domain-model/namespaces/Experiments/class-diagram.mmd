@@ -47,6 +47,7 @@ classDiagram
         -data message_index
         -data delivery_index
         -data decision_index
+        -data session_index
     }
     class ScriptedResponse {
         -string ship_id
@@ -91,6 +92,7 @@ classDiagram
         -data message_index
         -data delivery_index
         -data decision_index
+        -data session_index
     }
     RescueScenario "1" *-- "1" RunBaseline : starts from
     RescueScenario "1" *-- "0..*" ScriptedResponse : scripts

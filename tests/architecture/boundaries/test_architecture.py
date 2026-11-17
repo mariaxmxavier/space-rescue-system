@@ -343,7 +343,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 no_logo=True,
             )
         self.assertEqual(exit_code, 0, output.getvalue())
-        self.assertIn("Contracts: 13 kept, 0 broken.", output.getvalue())
+        self.assertIn("Contracts: 15 kept, 0 broken.", output.getvalue())
 
     def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
@@ -406,6 +406,20 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 },
                 False,
             ),
+            "communication-isolated": (
+                {"rescue.communication"},
+                {
+                    "rescue.mission",
+                    "rescue.market",
+                    "rescue.mobilisation",
+                    "rescue.experiments",
+                    "rescue.application",
+                    "rescue.adapters",
+                    "rescue.bootstrap",
+                    "rescue.demo",
+                },
+                False,
+            ),
             "mobilisation-allowed-imports": (
                 {"rescue.mobilisation"},
                 {
@@ -457,6 +471,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 "rescue.mobilisation.models",
             ],
             "mission-layers": ["rescue.mission.rules", "rescue.mission.models"],
+            "communication-layers": ["rescue.communication.rules", "rescue.communication.models"],
         }
         declared = {}
         declared_layers = {}
