@@ -11,7 +11,7 @@
     <a class="skip-link" href="#main">Skip to main content</a>
     <header class="app-header">
       <div><p class="eyebrow">AURORA RESCUE NETWORK</p><h1>Mission control</h1></div>
-      <div class="run-summary" aria-live="polite"><span>Selected run</span><strong id="selected-run">No run selected</strong><span id="refresh-status" role="status">Waiting for a run</span></div>
+      <div class="run-summary" aria-live="polite"><span>Selected run</span><strong id="selected-run">No run selected</strong><span id="refresh-status" role="status">Waiting for a run</span><span>API origin</span><strong id="api-origin">http://127.0.0.1:8000</strong></div>
     </header>
     <main id="main">
       <section class="workspace-card" aria-labelledby="workspace-title">
@@ -33,16 +33,7 @@
       <section id="operations-panel" role="tabpanel" aria-labelledby="operations-tab">
         <div class="section-heading"><div><p class="eyebrow">LIVE RESCUE</p><h2>Coordinate operations</h2></div><button class="button-secondary" id="refresh-operations" type="button">Refresh state</button></div>
         <div id="mission-summary" class="summary-grid" aria-live="polite"></div>
-        <div id="capabilities" class="capability-grid">
-          <section class="capability-card"><h2>Register mission</h2><form id="mission-form">
-            <div class="field-grid">
-                <div class="field"><label for="mission-id">Mission ID</label><input id="mission-id" name="mission_id"></div>
-                <div class="field"><label for="station-name">Station name</label><input id="station-name" name="station_name"></div>
-                <div class="field"><label for="people-count">People to rescue</label><input id="people-count" name="people_count" type="number" min="1" step="1"></div>
-                <div class="field"><label for="created-at">Created at (seconds)</label><input id="created-at" name="created_at" inputmode="decimal" value="0"></div>
-            </div><button type="submit">Register mission</button><div class="form-result" aria-live="polite"></div>
-          </form></section>
-        </div>
+        <div id="capabilities" class="capability-grid" aria-label="Selected rescue capability"></div>
       </section>
 
       <section id="exploration-panel" role="tabpanel" aria-labelledby="exploration-tab" hidden>

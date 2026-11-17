@@ -1,6 +1,16 @@
 import { createApiClient } from "../shared/api/client.js";
 import { createWorkspace } from "../shared/state/workspace.js";
 import { createForms, createOutcomes } from "../shared/ui/controls.js";
+import { registerMissions } from "../missions/index.js";
+import { registerFleet } from "../fleet/index.js";
+import { registerQuotes } from "../quotes/index.js";
+import { registerRequests } from "../requests/index.js";
+import { registerMobilisation } from "../mobilisation/index.js";
+import { registerCommunication } from "../communication/index.js";
+import { registerExperiments } from "../experiments/index.js";
+import { registerRunInspection } from "../exploration/run/index.js";
+import { registerMissionHistory } from "../missions/history/index.js";
+import { registerDecisionInspection } from "../mobilisation/decisions/index.js";
 
 /**
  * What: composes the browser app, its shared run state and capability registration points.
@@ -12,12 +22,74 @@ export function startApp(documentRef = document) {
   const workspace = createWorkspace(api);
   const outcomes = createOutcomes();
   const capabilityRoot = documentRef.querySelector("#capabilities");
+  const explorationPanel = documentRef.querySelector("#exploration-panel");
+  let explorationRoot = documentRef.querySelector("#exploration-capabilities");
+  if (!explorationRoot) {
+    explorationRoot = documentRef.createElement("div");
+    explorationRoot.id = "exploration-capabilities";
+    explorationRoot.className = "capability-grid";
+    explorationPanel.insertBefore(explorationRoot, documentRef.querySelector("#exploration-state"));
+  }
   const forms = createForms({ root: capabilityRoot, workspace, outcomes });
   const context = Object.freeze({ root: capabilityRoot, api, workspace, forms, outcomes });
   const capabilities = new Map();
   const runIdField = documentRef.querySelector("#application-run-id");
   const centralIdField = documentRef.querySelector("#central-id");
   const error = documentRef.querySelector("#workspace-error");
+  documentRef.querySelector("#api-origin").textContent = api.origin;
+  const capabilityButtons = documentRef.createElement("nav");
+  capabilityButtons.className = "capability-navigation";
+  capabilityButtons.setAttribute("aria-label", "Rescue capabilities");
+  const capabilityViews = new Map();
+  const capabilityHandles = new Map();
+  const definitions = [
+    ["Missions", "operations", registerMissions], ["Fleet", "operations", registerFleet],
+    ["Quotes", "operations", registerQuotes], ["Requests", "operations", registerRequests],
+    ["Mobilisation", "operations", registerMobilisation], ["Communication", "exploration", registerCommunication],
+    ["Experiments", "exploration", registerExperiments], ["Run inspection", "exploration", registerRunInspection],
+    ["Mission history", "exploration", registerMissionHistory], ["Decisions", "exploration", registerDecisionInspection],
+  ];
+  capabilityRoot.replaceChildren();
+  documentRef.querySelector("#main").insertBefore(capabilityButtons, documentRef.querySelector("#operations-panel"));
+  function mountCapability(name) {
+    const definition = definitions.find(([label]) => label === name);
+    if (!definition) return null;
+    const [, tab, register] = definition;
+    let view = capabilityViews.get(name);
+    if (!view) {
+      view = documentRef.createElement("div");
+      view.className = "capability-grid";
+      capabilityViews.set(name, view);
+      const targetRoot = tab === "operations" ? capabilityRoot : explorationRoot;
+      targetRoot.append(view);
+      const capabilityForms = createForms({ root: view, workspace, outcomes });
+      capabilityHandles.set(name, register({ ...context, root: view, forms: capabilityForms }));
+    }
+    return view;
+  }
+  function showCapability(name) {
+    const definition = definitions.find(([label]) => label === name);
+    if (!definition) return;
+    const [, tab] = definition;
+    selectTab(tab);
+    const view = mountCapability(name);
+    for (const existing of capabilityViews.values()) existing.hidden = existing !== view;
+    if (!view.isConnected) (tab === "operations" ? capabilityRoot : explorationRoot).append(view);
+    for (const button of capabilityButtons.querySelectorAll("button")) {
+      button.setAttribute("aria-current", String(button.textContent === name));
+    }
+  }
+  for (const [label, tab] of definitions) {
+    const button = documentRef.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", () => showCapability(label));
+    capabilityButtons.append(button);
+  }
+  // Scenario configuration is part of run creation, so mount it even when the
+  // operator creates a run before opening the Experiments selector.
+  mountCapability("Experiments").hidden = true;
+  showCapability("Missions");
 
   function showError(message) {
     error.textContent = message;
@@ -50,11 +122,12 @@ export function startApp(documentRef = document) {
     event.preventDefault();
     error.hidden = true;
     try {
+      const experiment = capabilityHandles.get("Experiments");
+      const runConfiguration = experiment?.getRunConfiguration?.() ?? { policies: [], scenarios: [] };
       await workspace.createRun({
         application_run_id: runIdField.value,
         central_id: centralIdField.value,
-        policies: [],
-        scenarios: [],
+        ...runConfiguration,
       });
     } catch (cause) {
       showError(`Could not create run: ${cause.message}`);
@@ -82,34 +155,6 @@ export function startApp(documentRef = document) {
   documentRef.querySelector("#load-history").addEventListener("click", async () => {
     selectTab("exploration");
     try { await workspace.loadHistory(); } catch (cause) { showError(cause.message); }
-  });
-
-  documentRef.querySelector("#mission-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    error.hidden = true;
-    const form = event.currentTarget;
-    const button = form.querySelector("button");
-    const result = form.querySelector(".form-result");
-    button.disabled = true;
-    button.textContent = "Submitting…";
-    try {
-      const response = await workspace.invoke("register_mission", { command: {
-        mission_id: form.elements.mission_id.value,
-        station_name: form.elements.station_name.value,
-        people_count: Number(form.elements.people_count.value),
-        created_at: form.elements.created_at.value,
-      } });
-      outcomes.render(response, { label: "Register mission", target: result });
-    } catch (cause) {
-      result.replaceChildren();
-      const message = documentRef.createElement("p");
-      message.setAttribute("role", "alert");
-      message.textContent = cause.message;
-      result.append(message);
-    } finally {
-      button.disabled = false;
-      button.textContent = "Register mission";
-    }
   });
 
   workspace.subscribe((state) => renderWorkspace(documentRef, state));

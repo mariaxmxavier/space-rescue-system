@@ -3,7 +3,7 @@
  * When called: the Experiments capability mounts on a selected run.
  * Why: simulated results must not be mistaken for live mission state.
  */
-export function registerComparison({ root, workspace, outcomes }) {
+export function registerComparison({ root, workspace, outcomes, configuration }) {
   const form = document.createElement("form");
   const scenarioId = field(form, "Scenario ID");
   const revision = field(form, "Scenario revision", "number");
@@ -25,7 +25,11 @@ export function registerComparison({ root, workspace, outcomes }) {
       result.append(alert);
       return;
     }
-    if (!policyId.value.trim()) {
+    const configuredPolicies = configuration.values().policies;
+    const policyKeys = configuredPolicies.length
+      ? configuredPolicies.map((policy) => [policy.policy_id, policy.revision])
+      : policyId.value.trim() ? [[policyId.value, Number(policyRevision.value)]] : [];
+    if (policyKeys.length === 0) {
       const alert = document.createElement("p");
       alert.setAttribute("role", "alert");
       alert.textContent = "A configured policy is required before comparison.";
@@ -39,7 +43,7 @@ export function registerComparison({ root, workspace, outcomes }) {
         command: {
           scenario_id: scenarioId.value,
           scenario_revision: Number(revision.value),
-          policy_keys: [[policyId.value, Number(policyRevision.value)]],
+          policy_keys: policyKeys,
         },
       });
       const heading = statusLabel("Simulation baseline: configured scenario");

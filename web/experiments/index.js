@@ -19,7 +19,8 @@ export function registerExperiments({ root, workspace, outcomes }) {
   const comparison = document.createElement("section");
   comparison.setAttribute("aria-label", "Policy comparison");
   section.append(configuration, comparison);
-  registerScenarioConfiguration({ root: configuration, workspace });
-  registerComparison({ root: comparison, workspace, outcomes });
+  const configurationState = registerScenarioConfiguration({ root: configuration, workspace });
+  registerComparison({ root: comparison, workspace, outcomes, configuration: configurationState });
   root.replaceChildren(section);
+  return Object.freeze({ getRunConfiguration: configurationState.values });
 }

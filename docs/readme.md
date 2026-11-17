@@ -27,7 +27,7 @@
 
 ## Specifications and Models
 
-- [Web app specification](../specs/013-web-app/spec.md): complete browser operation and inspection scope; [design inputs](../specs/013-web-app/design-inputs.md) and [quality checklist](../specs/013-web-app/checklists/requirements.md).
+- [Web app specification](../specs/013-web-app/spec.md): complete browser operation and inspection scope; [quickstart](../specs/013-web-app/quickstart.md), [design inputs](../specs/013-web-app/design-inputs.md) and [quality checklist](../specs/013-web-app/checklists/requirements.md).
 
 - [Rescue domain specification](../specs/001-rescue-domain-model/spec.md): core rules and all six extensions.
 - [Application specification](../specs/008-application-conformance/spec.md): focused use cases, nested files, explanations, and diagram links.

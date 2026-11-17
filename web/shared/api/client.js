@@ -3,7 +3,7 @@
  * When called: the application shell starts and feature forms call the returned methods.
  * Why: HTTP details and JSON encoding stay at the outer boundary.
  */
-export function createApiClient(origin = globalThis.SPACE_RESCUE_API_ORIGIN || "http://127.0.0.1:8000") {
+export function createApiClient(origin = configuredOrigin()) {
   const base = origin.replace(/\/$/, "");
 
   async function request(path, options) {
@@ -33,6 +33,7 @@ export function createApiClient(origin = globalThis.SPACE_RESCUE_API_ORIGIN || "
   });
 
   return Object.freeze({
+    origin: base,
     createRun: (input) => post("/runs", input),
     invoke: (runId, operation, payload) => post(
       `/runs/${encodeURIComponent(runId)}/operations/${encodeURIComponent(operation)}`,
@@ -41,4 +42,13 @@ export function createApiClient(origin = globalThis.SPACE_RESCUE_API_ORIGIN || "
     readState: (runId) => request(`/runs/${encodeURIComponent(runId)}/state`),
     readHistory: (runId) => request(`/runs/${encodeURIComponent(runId)}/history`),
   });
+}
+
+/** What: selects the API origin from the page URL or explicit browser configuration. When: the shell creates the API client. Why: a separately hosted UI can target a local or deployed API without editing source. */
+function configuredOrigin() {
+  const queryOrigin = typeof location === "undefined" ? null : new URL(location.href).searchParams.get("api");
+  const savedOrigin = globalThis.localStorage?.getItem("space-rescue-api-origin");
+  const origin = queryOrigin || globalThis.SPACE_RESCUE_API_ORIGIN || savedOrigin || "http://127.0.0.1:8000";
+  if (queryOrigin) globalThis.localStorage?.setItem("space-rescue-api-origin", queryOrigin);
+  return origin;
 }
