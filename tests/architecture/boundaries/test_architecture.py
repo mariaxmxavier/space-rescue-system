@@ -128,7 +128,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 no_logo=True,
             )
         self.assertEqual(exit_code, 0, output.getvalue())
-        self.assertIn("Contracts: 5 kept, 0 broken.", output.getvalue())
+        self.assertIn("Contracts: 7 kept, 0 broken.", output.getvalue())
 
     def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
@@ -171,16 +171,32 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 },
                 False,
             ),
+            "communication-isolated": (
+                {"rescue.communication"},
+                {
+                    "rescue.mission",
+                    "rescue.market",
+                    "rescue.mobilisation",
+                    "rescue.experiments",
+                    "rescue.application",
+                    "rescue.adapters",
+                    "rescue.bootstrap",
+                    "rescue.demo",
+                },
+                False,
+            ),
+        }
+        layer_expected = {
+            "mission-layers": ["rescue.mission.rules", "rescue.mission.models"],
+            "communication-layers": ["rescue.communication.rules", "rescue.communication.models"],
         }
         declared = {}
         for contract in contracts:
             contract_id = contract["name"].split(":", 1)[0]
             self.assertNotIn("ignore_imports", contract, contract_id)
             if contract["type"] == "layers":
-                self.assertEqual(contract_id, "mission-layers")
-                self.assertEqual(
-                    contract["layers"], ["rescue.mission.rules", "rescue.mission.models"]
-                )
+                self.assertIn(contract_id, layer_expected)
+                self.assertEqual(contract["layers"], layer_expected[contract_id])
                 continue
             self.assertEqual(contract["type"], "forbidden", contract_id)
             declared[contract_id] = (

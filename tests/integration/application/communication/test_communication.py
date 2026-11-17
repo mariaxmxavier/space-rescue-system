@@ -275,15 +275,15 @@ class MessageDeliveryTests(unittest.TestCase):
                 delivery_id="delivery-1",
                 attempt_number=1,
                 received_at=Decimal("2"),
-                disposition="received",
-                reason="response_received",
+                disposition="applied",
+                reason="response_applied",
             ),
             models.MessageDelivery(
                 delivery_id="delivery-2",
                 attempt_number=2,
                 received_at=Decimal("3"),
-                disposition="received",
-                reason="response_received",
+                disposition="applied",
+                reason="response_applied",
             ),
         )
         attempts = tuple((message, delivery) for delivery in deliveries)
@@ -312,74 +312,79 @@ class MessageDeliveryTests(unittest.TestCase):
         self.assertIsNone(delivery.received_at)
         self.assertEqual(delivery.disposition, "lost")
         with self.assertRaises(FrozenInstanceError):
-            delivery.disposition = "received"
+            delivery.disposition = "applied"
 
     def test_delivery_ids_attempts_and_receipt_times_are_validated(self):
         for kwargs in (
-            {"delivery_id": "", "attempt_number": 1, "disposition": "lost", "reason": "invalid"},
+            {
+                "delivery_id": "",
+                "attempt_number": 1,
+                "disposition": "lost",
+                "reason": "transport_loss",
+            },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": 0,
                 "disposition": "lost",
-                "reason": "invalid",
+                "reason": "transport_loss",
             },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": True,
                 "disposition": "lost",
-                "reason": "invalid",
+                "reason": "transport_loss",
             },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": 1,
                 "received_at": Decimal("-1"),
-                "disposition": "received",
-                "reason": "invalid",
+                "disposition": "applied",
+                "reason": "response_applied",
             },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": 1,
                 "received_at": Decimal("NaN"),
-                "disposition": "received",
-                "reason": "invalid",
+                "disposition": "applied",
+                "reason": "response_applied",
             },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": 1,
                 "received_at": Decimal("Infinity"),
-                "disposition": "received",
-                "reason": "invalid",
+                "disposition": "applied",
+                "reason": "response_applied",
             },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": 1,
                 "received_at": Decimal("1"),
                 "communication_rtt_seconds": Decimal("-1"),
-                "disposition": "received",
-                "reason": "invalid",
+                "disposition": "applied",
+                "reason": "response_applied",
             },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": 1,
                 "received_at": Decimal("1"),
                 "communication_rtt_seconds": Decimal("NaN"),
-                "disposition": "received",
-                "reason": "invalid",
+                "disposition": "applied",
+                "reason": "response_applied",
             },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": 1,
                 "received_at": Decimal("1"),
                 "communication_rtt_seconds": Decimal("Infinity"),
-                "disposition": "received",
-                "reason": "invalid",
+                "disposition": "applied",
+                "reason": "response_applied",
             },
             {
                 "delivery_id": "delivery-1",
                 "attempt_number": 1,
                 "communication_rtt_seconds": Decimal("1"),
                 "disposition": "lost",
-                "reason": "invalid",
+                "reason": "transport_loss",
             },
         ):
             with self.subTest(kwargs=kwargs):
@@ -402,8 +407,8 @@ class CommunicationSimulationTests(unittest.TestCase):
             delivery_id="delivery-00000009",
             attempt_number=1,
             received_at=0,
-            disposition="sent",
-            reason="baseline_copy",
+            disposition="applied",
+            reason="response_applied",
         )
         scenario = replace(
             scenario,

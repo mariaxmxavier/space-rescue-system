@@ -15,7 +15,7 @@ domain-first layout stays as it is (decision recorded 2026-11-16).
 | 004 | `rescue/mission/`: invariant table tests, named outcomes | 002 | `004-mission-conformance` | Specified |
 | 005 | `rescue/market/`: generated capacity tests, drop mission type ref | 002 | `005-market-conformance` | Specified |
 | 006 | `rescue/mobilisation/`: strategy tests, declared one-way peers | 002 | `006-mobilisation-conformance` | Specified |
-| 007 | `rescue/communication/`: extract delivery classification from central | 002 | `007-communication-conformance` | Specified |
+| 007 | `rescue/communication/`: pure delivery classification, B3-style session sequencing and recovery, per-mission FIFO decision ordering, nested models/rules and UML/ER-linked explanations | 002 | `007-communication-conformance` | Implemented; awaiting merge |
 | 008 | `rescue/application/`: one service per use case, break import cycle, move `RunState` inward | 002, 003, 007 | `008-application-conformance` | Specified |
 | 009 | `rescue/experiments/`: inject run factory, split pure vs runner | 002, 008 | `009-experiments-conformance` | Specified |
 | 010 | Root modules: `values.py` core, `bootstrap.py` + `demo.py` entrypoints, full layer contract | 002, 003, 008, 009 | `010-root-modules-conformance` | Specified |

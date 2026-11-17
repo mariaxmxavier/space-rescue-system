@@ -1,5 +1,5 @@
 ---
-title: Mission operations + ShipMarket (ER logical groups; Mission owns request state)
+title: Communication
 config:
   layout: elk
   theme: base
@@ -31,6 +31,7 @@ erDiagram
     CommunicationMessage {
         string message_id PK
         string correlation_id
+        string request_id
         string kind
         data payload
         datetime sent_at
@@ -41,5 +42,38 @@ erDiagram
         datetime received_at "optional"
         string disposition
         string reason
+        number communication_rtt_seconds "optional"
+        data envelope "optional"
+    }
+    COMMUNICATION_SESSION {
+        string session_id PK
+        integer version
+        integer next_inbound
+        integer next_outbound
+    }
+    DECISION_REPORT {
+        string report_id PK
+        data envelope
+        string message_id
+        string delivery_id
+        string mission_id "optional"
+        string disposition
+        string reason
+        integer mission_sequence "optional"
+        integer after_mission_sequence
+    }
+    NOT_APPLIED {
+        string session_id
+        integer version
+        integer from_sequence
+        integer count
+    }
+    REQUEST_HISTORY_ENTRY {
+        integer mission_sequence
     }
     CommunicationMessage ||..|{ MessageDelivery : "tracks attempts"
+    COMMUNICATION_SESSION ||..o{ MessageDelivery : "sequences deliveries"
+    COMMUNICATION_SESSION ||..o{ DECISION_REPORT : "retains reports"
+    COMMUNICATION_SESSION ||..o{ NOT_APPLIED : "records gaps"
+    MessageDelivery ||..o| DECISION_REPORT : "is reported by"
+    DECISION_REPORT }o..o| REQUEST_HISTORY_ENTRY : "cross-references mission_sequence"

@@ -102,6 +102,7 @@ The repeated core concepts in this view are the same concepts shown above, not a
 A message has a stable identity across deliveries. Each attempt records its disposition, including
 loss, duplication, lateness, rejection, or application. Response messages correlate to their request.
 Simulation results exist only after completion or the configured horizon stops a run.
+Specification 007 adds the communication session, decision reports, mission order numbers and gap notices to the Communication and scenario ER views.
 
 ## Timing and field conventions
 

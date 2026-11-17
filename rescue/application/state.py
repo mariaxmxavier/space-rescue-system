@@ -6,6 +6,7 @@ from dataclasses import dataclass, fields, is_dataclass
 from decimal import Decimal
 from enum import Enum
 
+from rescue.communication.models.sessions.communication_session import CommunicationSession
 from rescue.market.models import B3Market
 from rescue.mission.models import Mission
 from rescue.values import DomainValidationError, immutable_tuple, normalize_id
@@ -37,6 +38,7 @@ class RunState:
     policies: tuple[object, ...] = ()
     scenarios: tuple[object, ...] = ()
     completed_runs: tuple[object, ...] = ()
+    session_index: tuple[CommunicationSession, ...] = ()
 
     def __post_init__(self) -> None:
         normalize_id(self.application_run_id)
@@ -49,6 +51,12 @@ class RunState:
         if len({mission.mission_id for mission in missions}) != len(missions):
             raise DomainValidationError("mission IDs must be unique within a run")
         object.__setattr__(self, "missions", missions)
+        sessions = immutable_tuple(self.session_index)
+        if any(not isinstance(session, CommunicationSession) for session in sessions):
+            raise DomainValidationError("run sessions must be CommunicationSession values")
+        if len({session.session_id for session in sessions}) != len(sessions):
+            raise DomainValidationError("session IDs must be unique within a run")
+        object.__setattr__(self, "session_index", sessions)
         for field_name in (
             "command_index",
             "message_index",
@@ -69,6 +77,7 @@ class RunState:
             "policies",
             "scenarios",
             "completed_runs",
+            "session_index",
         ):
             if not _deeply_immutable(getattr(self, field_name)):
                 raise DomainValidationError(f"{field_name} must contain deeply immutable values")

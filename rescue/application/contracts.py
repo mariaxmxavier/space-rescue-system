@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from rescue.values import Id, Instant
 
 if TYPE_CHECKING:
+    from rescue.communication.models import SessionEnvelope
     from rescue.market.models import RFQOffer, ShipAvailability, ShipOfferRevision
 
 T = TypeVar("T")
@@ -36,6 +37,13 @@ class ErrorReason(StrEnum):
     UNAVAILABLE = "unavailable"
     EXPIRED_QUOTE = "expired_quote"
     REVISION_CONFLICT = "revision_conflict"
+    DUPLICATE_SEQUENCE = "duplicate_sequence"
+    STALE_SESSION = "stale_session"
+    SEQUENCE_REWIND = "sequence_rewind"
+    RECOVERY_OUT_OF_RANGE = "recovery_out_of_range"
+    RECOVERY_LIMIT = "recovery_limit"
+    RECOVERY_IN_PROGRESS = "recovery_in_progress"
+    UNKNOWN_SESSION = "unknown_session"
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,6 +139,40 @@ class RecordResponse:
     sent_at: Instant
     received_at: Instant | None
     communication_rtt_seconds: Instant | None = None
+    envelope: SessionEnvelope | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class RecoverReports:
+    """Re-read the retained decision reports of one session version, in outbound order.
+
+    What: names the session, its version, the first outbound sequence wanted and how many to return.
+    When called: by a ship that has missed decision reports and needs them replayed.
+    Why: a recovered report must match the original (same id and sequence), so recovery replays
+      history and never recomputes it.
+    Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Communication/class-diagram.mmd
+    """
+
+    session_id: Id
+    version: int
+    from_sequence: int
+    count: int
+
+
+@dataclass(frozen=True, slots=True)
+class SynchroniseInbound:
+    """Tell central which inbound sequence number the ship sends next.
+
+    What: names the session, its version and the next inbound sequence number.
+    When called: by a ship that skips inbound numbers, so central records them as not applied.
+    Why: a gap otherwise stays open until a message fills it, and this control advances the
+      expected number without consuming a business number.
+    Diagram: docs/architecture/diagrams/rescue-domain-model/namespaces/Communication/class-diagram.mmd
+    """
+
+    session_id: Id
+    version: int
+    next_sequence: int
 
 
 @dataclass(frozen=True, slots=True)
