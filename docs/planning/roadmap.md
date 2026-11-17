@@ -17,7 +17,7 @@ domain-first layout stays as it is (decision recorded 2026-11-16).
 | 006 | `rescue/mobilisation/`: strategy tests, declared one-way peers | 002 | `006-mobilisation-conformance` | Specified |
 | 007 | `rescue/communication/`: extract delivery classification from central | 002 | `007-communication-conformance` | Specified |
 | 008 | `rescue/application/`: one service per use case, break import cycle, move `RunState` inward | 002, 003, 007 | `008-application-conformance` | Specified |
-| 009 | `rescue/experiments/`: inject run factory, split pure vs runner | 002, 008 | `009-experiments-conformance` | Specified |
+| 009 | `rescue/experiments/`: inject run factory, one class or step per file, diagrams match code | 002 | `009-experiments-conformance` | Implemented |
 | 010 | Root modules: `values.py` core, `bootstrap.py` + `demo.py` entrypoints, full layer contract | 002, 003, 008, 009 | `010-root-modules-conformance` | Specified |
 | 011 | HTTP API (FastAPI) entrypoint over the application services; JSON in/out, browser-callable | 010 | `011-http-api` | Planned |
 | 012 | `simulations/`: scripted scenario runs that drive the system through the 011 HTTP API | 011 | `012-simulations` | Planned |
@@ -41,13 +41,13 @@ Worktrees live under `~/worktrees/github.com/mariaxmxavier/space-rescue-system/<
 ## Merge order
 
 002 merges first. 003–007 can merge in any order after 002, but 007 must merge before 008,
-because both edit `central.py`. Then 008 → 009 → 010 → 011. 012 and 013 both follow 011 and can
+because both edit `central.py`. Then 008 and 009 in either order → 010 → 011. 012 and 013 both follow 011 and can
 merge in either order. Each branch rebases onto `main` before
 `/speckit-plan`.
 
 Known cross-cutting issue: `application.central` → `experiments.runner` (a function-local
-import) → `bootstrap` → `application.central` is an import cycle. It is broken by 008 and 009
-together.
+import) → `bootstrap` → `application.central` is an import cycle. 009 breaks it by injecting the run factory
+(decision 2026-11-17); 008 does not need to land first.
 
 Spec 003 adds a temporary package cycle, `application` → `adapters.ports` → `application.state`
 (FR-010). Spec 008 moves `RunState` inward and must add `rescue.application` to the
