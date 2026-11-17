@@ -4,13 +4,19 @@ A callable Python model for coordinating rescue seats, preventing shared ship ov
 
 ## Run it
 
-Use CPython **3.14.10**, pinned in `.python-version`. The project has no third-party runtime dependencies. From the repository root:
+Install uv 0.13.8 (pinned; the project refuses any other version) and make. The interpreter is CPython **3.14.10**, pinned in `.python-version` and fetched by uv. The project has no runtime dependencies. From the repository root:
 
-```powershell
-python --version
-python -m unittest discover -s tests -p "test_*.py" -v
-python -m rescue.demo
+```bash
+make install
+make check-all
+make test-unit
+make test-integration
+make test-e2e
+make test-architecture
+uv run python -m rescue.demo
 ```
+
+`make check-all` runs the format check, lint, the import contracts, and the full test suite with coverage, and reports one pass or fail. The per-type targets run one test type alone.
 
 The test suite covers mission accounting, shared capacity, concurrent operations, retries, timing, scenario comparison, communication failures, and architecture boundaries. The demo shows demand 10 reaching completion through confirmed seats after partial acceptance, refusal, and further mobilisation.
 

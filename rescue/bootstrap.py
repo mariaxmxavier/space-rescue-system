@@ -92,9 +92,7 @@ def new_run(
     store = MemoryTransactionStore(run_state)
     selected_clock = clock if clock is not None else _ZeroClock()
     selected_ids = (
-        id_source
-        if id_source is not None
-        else _SequenceIdSource(normalized_reserved_ids)
+        id_source if id_source is not None else _SequenceIdSource(normalized_reserved_ids)
     )
     central = RescueCentral(
         application_run_id=run_id,

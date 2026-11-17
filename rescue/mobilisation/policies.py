@@ -13,16 +13,12 @@ from rescue.mobilisation.models import (
 )
 from rescue.values import DomainValidationError, immutable_tuple
 
-
 _EARLIEST_ARRIVAL = "earliest_arrival"
 _LARGEST_CAPACITY = "largest_capacity"
 
 
 def _sort_key(strategy: str, candidate: Candidate) -> tuple[object, ...]:
-    arrival_instant = (
-        candidate.revision.recorded_at
-        + candidate.revision.arrival_estimate_seconds
-    )
+    arrival_instant = candidate.revision.recorded_at + candidate.revision.arrival_estimate_seconds
     if strategy == _EARLIEST_ARRIVAL:
         return (arrival_instant, candidate.ship_id)
     return (-candidate.allocatable_seats, arrival_instant, candidate.ship_id)
@@ -45,15 +41,9 @@ def _skip_reason(
         return "insufficient_demand"
     if candidate.allocatable_seats <= 0:
         return "exhausted"
-    if (
-        candidate.quote is not None
-        and candidate.quote.offered_seats > remaining_demand
-    ):
+    if candidate.quote is not None and candidate.quote.offered_seats > remaining_demand:
         return "quote_exceeds_remaining_demand"
-    if (
-        candidate.quote is not None
-        and candidate.quote.offered_seats > candidate.allocatable_seats
-    ):
+    if candidate.quote is not None and candidate.quote.offered_seats > candidate.allocatable_seats:
         return "insufficient_capacity"
     return None
 

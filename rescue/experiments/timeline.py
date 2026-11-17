@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import heapq
+from dataclasses import dataclass
 
 from rescue.values import (
     DomainValidationError,
@@ -32,8 +32,10 @@ class TimelineEvent:
             normalize_nonnegative_quantity(self.scenario_sequence),
         )
         priority = (
-            0 if self.kind == "expire" else 1
-        ) if self.priority is None else normalize_nonnegative_quantity(self.priority)
+            (0 if self.kind == "expire" else 1)
+            if self.priority is None
+            else normalize_nonnegative_quantity(self.priority)
+        )
         object.__setattr__(self, "priority", priority)
 
 

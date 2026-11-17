@@ -14,11 +14,11 @@ and communication simulation.
 
 Sources: [original problem](../../docs/context/original-problem.md) and
 [constitution](../../.specify/memory/constitution.md).
-Model views: [domain model](../../docs/diagrams/rescue-domain-model/README.md),
-[operations source](../../docs/diagrams/rescue-domain-model/class-diagrams/domain-model.mmd), and
-[simulation source](../../docs/diagrams/rescue-domain-model/class-diagrams/scenario-model.mmd).
-ER views: [operations ER source](../../docs/diagrams/rescue-domain-model/entity-relationship-diagrams/domain-model-er.mmd)
-and [scenario ER source](../../docs/diagrams/rescue-domain-model/entity-relationship-diagrams/scenario-model-er.mmd).
+Model views: [domain model](../../docs/architecture/diagrams/rescue-domain-model/README.md),
+[operations source](../../docs/architecture/diagrams/rescue-domain-model/class-diagrams/domain-model.mmd), and
+[simulation source](../../docs/architecture/diagrams/rescue-domain-model/class-diagrams/scenario-model.mmd).
+ER views: [operations ER source](../../docs/architecture/diagrams/rescue-domain-model/entity-relationship-diagrams/domain-model-er.mmd)
+and [scenario ER source](../../docs/architecture/diagrams/rescue-domain-model/entity-relationship-diagrams/scenario-model-er.mmd).
 
 ## Clarifications
 
@@ -71,7 +71,7 @@ and [scenario ER source](../../docs/diagrams/rescue-domain-model/entity-relation
   unspecified.
 - Q: Should the ship and offer concepts be grouped with B3Market in the conceptual model? → A: Yes. Use a distinct `ShipMarket` namespace for `B3Market`, `Ship`, `ShipAvailability`, `SeatRFQ`, `RFQOffer`, `ShipOffer`, and `ShipOfferRevision`; keep `Mission` and `SeatRequest` in `MissionOperations`. The namespace is an organizational grouping in the model, not a code package or service boundary. Relationships across groups remain explicit. Simulation runs retain isolated market copies and do not mutate operational market state.
 
-The [diagram index and legends](../../docs/diagrams/rescue-domain-model/README.md) link both
+The [diagram index and legends](../../docs/architecture/diagrams/rescue-domain-model/README.md) link both
 views of mission operations and scenario experiments. ER and UML views MUST preserve the same
 data concepts, attributes, relationships, and cardinalities. UML also shows the agreed
 exactly one RescueCentral application orchestrator per application run, whose identity is

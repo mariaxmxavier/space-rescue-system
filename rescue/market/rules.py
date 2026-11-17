@@ -36,9 +36,7 @@ def latest_availability(market: B3Market, ship_id: str) -> ShipAvailability | No
     _require_market(market)
     normalized_ship_id = normalize_id(ship_id)
     snapshots = [
-        snapshot
-        for snapshot in market.availabilities
-        if snapshot.ship_id == normalized_ship_id
+        snapshot for snapshot in market.availabilities if snapshot.ship_id == normalized_ship_id
     ]
     if not snapshots:
         if not any(ship.ship_id == normalized_ship_id for ship in market.ships):
@@ -51,9 +49,7 @@ def latest_availability(market: B3Market, ship_id: str) -> ShipAvailability | No
     return latest[0]
 
 
-def usage(
-    market: B3Market, missions: tuple[Mission, ...], ship_id: str
-) -> ShipUsage:
+def usage(market: B3Market, missions: tuple[Mission, ...], ship_id: str) -> ShipUsage:
     _require_market(market)
     normalized_ship_id = normalize_id(ship_id)
     availability = latest_availability(market, normalized_ship_id)
@@ -107,9 +103,7 @@ def usage(
     )
 
 
-def publish_availability(
-    market: B3Market, availability: ShipAvailability
-) -> B3Market:
+def publish_availability(market: B3Market, availability: ShipAvailability) -> B3Market:
     _require_market(market)
     if not isinstance(availability, ShipAvailability):
         raise DomainValidationError("availability must be a ShipAvailability value")
@@ -126,9 +120,7 @@ def publish_availability(
             and existing != availability
         ):
             raise DomainValidationError("conflicting availability at the same recorded_at")
-    return replace(
-        market, availabilities=(*market.availabilities, availability)
-    )
+    return replace(market, availabilities=(*market.availabilities, availability))
 
 
 def publish_offer_revision(
@@ -166,10 +158,7 @@ def publish_offer_revision(
         raise DomainValidationError("a new ship offer requires mission_id and ship_id")
     normalize_id(mission_id)
     normalize_id(ship_id)
-    if any(
-        offer.mission_id == mission_id and offer.ship_id == ship_id
-        for offer in market.offers
-    ):
+    if any(offer.mission_id == mission_id and offer.ship_id == ship_id for offer in market.offers):
         raise DomainValidationError("mission and ship already have a logical ship offer")
     new_offer = ShipOffer(
         offer_id=normalized_offer_id,
@@ -204,11 +193,7 @@ def hold_quote(
     if quote.offered_seats > rfq.requested_seats:
         raise DomainValidationError("quote exceeds its RFQ quantity")
     snapshot = next(
-        (
-            item
-            for item in market.availabilities
-            if item.availability_id == rfq.availability_id
-        ),
+        (item for item in market.availabilities if item.availability_id == rfq.availability_id),
         None,
     )
     if snapshot is None or snapshot.ship_id != rfq.ship_id or not snapshot.available:
@@ -222,9 +207,7 @@ def hold_quote(
     if quote.offered_seats > current_usage.free:
         raise DomainValidationError("insufficient ship capacity for quote hold")
     updated_rfq = replace(rfq, status="quoted")
-    updated_rfqs = tuple(
-        updated_rfq if item.rfq_id == rfq.rfq_id else item for item in market.rfqs
-    )
+    updated_rfqs = tuple(updated_rfq if item.rfq_id == rfq.rfq_id else item for item in market.rfqs)
     return replace(
         market,
         rfqs=updated_rfqs,
@@ -232,9 +215,7 @@ def hold_quote(
     )
 
 
-def transfer_quote(
-    market: B3Market, quote_id: str, request_id: str, now: Instant
-) -> B3Market:
+def transfer_quote(market: B3Market, quote_id: str, request_id: str, now: Instant) -> B3Market:
     _require_market(market)
     normalized_quote_id = normalize_id(quote_id)
     normalized_request_id = normalize_id(request_id)
@@ -250,13 +231,13 @@ def transfer_quote(
     accepted = replace(quote, status="accepted", request_id=normalized_request_id)
     return replace(
         market,
-        quotes=tuple(accepted if item.offer_id == normalized_quote_id else item for item in market.quotes),
+        quotes=tuple(
+            accepted if item.offer_id == normalized_quote_id else item for item in market.quotes
+        ),
     )
 
 
-def close_quote(
-    market: B3Market, quote_id: str, status: str, now: Instant
-) -> B3Market:
+def close_quote(market: B3Market, quote_id: str, status: str, now: Instant) -> B3Market:
     _require_market(market)
     normalized_quote_id = normalize_id(quote_id)
     instant = normalize_instant(now)
@@ -275,5 +256,7 @@ def close_quote(
     closed = replace(quote, status=status)
     return replace(
         market,
-        quotes=tuple(closed if item.offer_id == normalized_quote_id else item for item in market.quotes),
+        quotes=tuple(
+            closed if item.offer_id == normalized_quote_id else item for item in market.quotes
+        ),
     )

@@ -48,7 +48,7 @@ def normalize_instant(value: object) -> Instant:
         raise DomainValidationError("instant must be an integer, decimal string, or Decimal")
     try:
         instant = Decimal(value)
-    except (InvalidOperation, ValueError):
+    except InvalidOperation, ValueError:
         raise DomainValidationError("instant must be a valid decimal value") from None
     if not instant.is_finite() or instant < 0:
         raise DomainValidationError("instant must be finite and nonnegative")

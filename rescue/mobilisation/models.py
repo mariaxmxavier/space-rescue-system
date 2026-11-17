@@ -56,9 +56,7 @@ class MobilisationPolicy:
         object.__setattr__(self, "policy_id", normalize_id(self.policy_id))
         object.__setattr__(self, "revision", normalize_positive_quantity(self.revision))
         object.__setattr__(self, "name", _name(self.name, "policy name"))
-        object.__setattr__(
-            self, "selection_criteria", _selection_criteria(self.selection_criteria)
-        )
+        object.__setattr__(self, "selection_criteria", _selection_criteria(self.selection_criteria))
 
     @property
     def strategy(self) -> str:
@@ -84,9 +82,7 @@ class Candidate:
         if not isinstance(self.revision, ShipOfferRevision):
             raise DomainValidationError("candidate revision must be a ShipOfferRevision")
         object.__setattr__(self, "ship_id", normalize_id(self.ship_id))
-        object.__setattr__(
-            self, "free_seats", normalize_nonnegative_quantity(self.free_seats)
-        )
+        object.__setattr__(self, "free_seats", normalize_nonnegative_quantity(self.free_seats))
         if self.quote is not None and not isinstance(self.quote, RFQOffer):
             raise DomainValidationError("candidate quote must be an RFQOffer or None")
 

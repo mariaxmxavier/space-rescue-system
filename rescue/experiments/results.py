@@ -8,10 +8,7 @@ from rescue.mission.models import Mission
 from rescue.mission.rules import progress
 from rescue.values import DomainValidationError
 
-
-_TERMINAL_ACTIONS = frozenset(
-    {"accepted", "partially_accepted", "refused", "cancelled", "expired"}
-)
+_TERMINAL_ACTIONS = frozenset({"accepted", "partially_accepted", "refused", "cancelled", "expired"})
 
 
 def _revision(mission: Mission, request, snapshot: RunSnapshot) -> ShipOfferRevision | None:
@@ -21,8 +18,7 @@ def _revision(mission: Mission, request, snapshot: RunSnapshot) -> ShipOfferRevi
         (
             revision
             for offer in snapshot.market.offers
-            if offer.mission_id == mission.mission_id
-            and offer.ship_id == request.ship_id
+            if offer.mission_id == mission.mission_id and offer.ship_id == request.ship_id
             for revision in offer.revisions
             if revision.revision_id == request.revision_id
         ),
@@ -33,11 +29,7 @@ def _revision(mission: Mission, request, snapshot: RunSnapshot) -> ShipOfferRevi
 def _arrival_instant(mission: Mission, request, snapshot: RunSnapshot):
     if request.quote_id is not None:
         quote = next(
-            (
-                item
-                for item in snapshot.market.quotes
-                if item.offer_id == request.quote_id
-            ),
+            (item for item in snapshot.market.quotes if item.offer_id == request.quote_id),
             None,
         )
         if isinstance(quote, RFQOffer):
@@ -88,9 +80,7 @@ def summarize(run: RunSnapshot) -> SimulationResult:
         for arrival in (_arrival_instant(mission, request, run),)
         if arrival is not None
     )
-    latest_arrival = (
-        max(confirmed_arrivals) - started_at if confirmed_arrivals else None
-    )
+    latest_arrival = max(confirmed_arrivals) - started_at if confirmed_arrivals else None
     if latest_arrival is not None and latest_arrival < 0:
         latest_arrival = 0
     return SimulationResult(

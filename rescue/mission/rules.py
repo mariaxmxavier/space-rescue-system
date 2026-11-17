@@ -8,8 +8,8 @@ from rescue.mission.models import (
     Mission,
     MissionData,
     MissionProgress,
-    RequestTiming,
     RequestHistoryEntry,
+    RequestTiming,
     SeatRequest,
 )
 from rescue.values import DomainValidationError, TransitionContext, normalize_id, normalize_instant
@@ -33,9 +33,7 @@ def register(data: MissionData) -> Mission:
 def _account(mission: Mission) -> tuple[int, int]:
     confirmed = sum(request.confirmed_seats for request in mission.requests)
     pending = sum(
-        request.requested_seats
-        for request in mission.requests
-        if request.outcome == "pending"
+        request.requested_seats for request in mission.requests if request.outcome == "pending"
     )
     if confirmed < 0 or pending < 0 or confirmed + pending > mission.people_count:
         raise DomainValidationError("mission seat accounting invariant violated")
@@ -68,9 +66,7 @@ def _append_history(
     )
 
 
-def add_request(
-    mission: Mission, request: SeatRequest, context: TransitionContext
-) -> Mission:
+def add_request(mission: Mission, request: SeatRequest, context: TransitionContext) -> Mission:
     if not isinstance(mission, Mission) or not isinstance(request, SeatRequest):
         raise DomainValidationError("add_request requires Mission and SeatRequest values")
     if not isinstance(context, TransitionContext):
@@ -134,14 +130,14 @@ def apply_outcome(
         raise DomainValidationError(f"{outcome} outcome cannot confirm seats")
     if context.at < request.submitted_at:
         raise DomainValidationError("outcome cannot precede request submission")
-    if request.response_deadline is not None and outcome in {
-        "accepted", "partially_accepted", "refused"
-    } and context.at >= request.response_deadline:
+    if (
+        request.response_deadline is not None
+        and outcome in {"accepted", "partially_accepted", "refused"}
+        and context.at >= request.response_deadline
+    ):
         raise DomainValidationError("response is at or after request deadline")
 
-    response_time = (
-        None if outcome in {"cancelled", "expired"} else context.at
-    )
+    response_time = None if outcome in {"cancelled", "expired"} else context.at
     updated_request = replace(
         request,
         outcome=outcome,

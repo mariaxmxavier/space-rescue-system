@@ -16,7 +16,6 @@ from rescue.values import (
 )
 from rescue.values import normalize_instant as _normalize_instant_value
 
-
 _REQUEST_OUTCOMES = frozenset(
     {"pending", "accepted", "partially_accepted", "refused", "cancelled", "expired"}
 )

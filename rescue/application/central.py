@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from decimal import Decimal
 from typing import TYPE_CHECKING, TypeVar
 
 from rescue.application.contracts import (
@@ -13,14 +12,14 @@ from rescue.application.contracts import (
     CreateRequest,
     ExpireRequest,
     Mobilise,
+    PublishAvailability,
+    PublishOffer,
     RecordQuote,
     RecordResponse,
     RegisterMission,
     RegisterShip,
     RejectQuote,
     RequestQuotes,
-    PublishAvailability,
-    PublishOffer,
     Result,
 )
 from rescue.application.ports import Clock, IdSource, TransactionStore
@@ -28,7 +27,6 @@ from rescue.application.state import RunState
 from rescue.communication.models import CommunicationMessage, MessageDelivery
 from rescue.market import rules as market_rules
 from rescue.market.models import (
-    B3Market,
     RFQOffer,
     SeatRFQ,
     Ship,
@@ -37,8 +35,19 @@ from rescue.market.models import (
     ShipOfferRevision,
 )
 from rescue.mission import rules as mission_rules
-from rescue.mission.models import Mission, MissionData, MissionProgress, RequestHistoryEntry, SeatRequest
-from rescue.mobilisation.models import Candidate, DecisionContext, MobilisationDecision, MobilisationPolicy
+from rescue.mission.models import (
+    Mission,
+    MissionData,
+    MissionProgress,
+    RequestHistoryEntry,
+    SeatRequest,
+)
+from rescue.mobilisation.models import (
+    Candidate,
+    DecisionContext,
+    MobilisationDecision,
+    MobilisationPolicy,
+)
 from rescue.mobilisation.policies import select_offers
 from rescue.values import (
     DomainValidationError,
@@ -74,8 +83,7 @@ def _set_mission(state: RunState, mission: Mission) -> RunState:
     return replace(
         state,
         missions=tuple(
-            mission if item.mission_id == mission.mission_id else item
-            for item in state.missions
+            mission if item.mission_id == mission.mission_id else item for item in state.missions
         ),
     )
 
@@ -144,9 +152,7 @@ def _request_capacity_reason(
     if inventory.shortfall or quantity > inventory.free:
         return "insufficient_capacity"
     revision_usage = sum(
-        request.requested_seats
-        if request.outcome == "pending"
-        else request.confirmed_seats
+        request.requested_seats if request.outcome == "pending" else request.confirmed_seats
         for current_mission in state.missions
         for request in current_mission.requests
         if request.revision_id == revision_id
@@ -194,8 +200,7 @@ def _decision_link_reason(
         (
             item
             for item in state.decision_index
-            if isinstance(item, MobilisationDecision)
-            and item.decision_id == decision_id
+            if isinstance(item, MobilisationDecision) and item.decision_id == decision_id
         ),
         None,
     )
@@ -204,11 +209,7 @@ def _decision_link_reason(
     if decision.mission_id != mission_id:
         return "revision_conflict"
     evaluation = next(
-        (
-            item
-            for item in decision.evaluations
-            if item.selected and item.ship_id == ship_id
-        ),
+        (item for item in decision.evaluations if item.selected and item.ship_id == ship_id),
         None,
     )
     if evaluation is None:
@@ -257,9 +258,7 @@ def _create_request(
         requested_seats = normalize_positive_quantity(requested_seats)
         revision_id = normalize_id(revision_id) if revision_id is not None else None
         instant = normalize_instant(now)
-        deadline = (
-            None if response_deadline is None else normalize_instant(response_deadline)
-        )
+        deadline = None if response_deadline is None else normalize_instant(response_deadline)
         decision_id = None if decision_id is None else normalize_id(decision_id)
         payload = (
             mission_id,
@@ -303,12 +302,18 @@ def _create_request(
             if rfq is None or rfq.mission_id != mission_id or rfq.ship_id != ship_id:
                 return state, _result("rejected", reason="identity_conflict")
             if quote.status != "held":
-                return state, _result("rejected", reason="expired_quote" if quote.status == "expired" else "identity_conflict")
+                return state, _result(
+                    "rejected",
+                    reason="expired_quote" if quote.status == "expired" else "identity_conflict",
+                )
             if quote.expires_at <= instant:
                 return state, _result("rejected", reason="expired_quote")
             if requested_seats != quote.offered_seats:
                 return state, _result("rejected", reason="identity_conflict")
-            if revision_id is not None and _offer_revision(state, mission_id, ship_id, revision_id) is None:
+            if (
+                revision_id is not None
+                and _offer_revision(state, mission_id, ship_id, revision_id) is None
+            ):
                 return state, _result("rejected", reason="revision_conflict")
         if deadline is not None and deadline <= instant:
             return state, _result("rejected", reason="invalid_input")
@@ -368,7 +373,9 @@ class RescueCentral:
                 )
                 if _mission(state, mission.mission_id) is not None:
                     return state, _result("rejected", reason="identity_conflict")
-                return replace(state, missions=(*state.missions, mission)), _result("applied", mission)
+                return replace(state, missions=(*state.missions, mission)), _result(
+                    "applied", mission
+                )
             except (DomainValidationError, TypeError) as error:
                 return state, _result("rejected", reason=_reason(error))
 
@@ -421,8 +428,7 @@ class RescueCentral:
                     None,
                 )
                 if existing_offer is not None and (
-                    existing_offer.mission_id != mission_id
-                    or existing_offer.ship_id != ship_id
+                    existing_offer.mission_id != mission_id or existing_offer.ship_id != ship_id
                 ):
                     return state, _result("rejected", reason="identity_conflict")
                 for offer in state.market.offers:
@@ -522,7 +528,9 @@ class RescueCentral:
                 payload = (
                     mission_id,
                     payload_quote,
-                    None if command.response_deadline is None else normalize_instant(command.response_deadline),
+                    None
+                    if command.response_deadline is None
+                    else normalize_instant(command.response_deadline),
                     None if command.decision_id is None else normalize_id(command.decision_id),
                     None if command.revision_id is None else normalize_id(command.revision_id),
                 )
@@ -537,8 +545,12 @@ class RescueCentral:
                 if rfq is None or rfq.mission_id != mission_id:
                     return state, _result("rejected", reason="identity_conflict")
                 if quote.expires_at <= normalize_instant(command.now):
-                    expired_market = market_rules.close_quote(state.market, quote_id, "expired", command.now)
-                    return replace(state, market=expired_market), _result("rejected", reason="expired_quote")
+                    expired_market = market_rules.close_quote(
+                        state.market, quote_id, "expired", command.now
+                    )
+                    return replace(state, market=expired_market), _result(
+                        "rejected", reason="expired_quote"
+                    )
                 result_state, result = _create_request(
                     self,
                     state,
@@ -609,7 +621,9 @@ class RescueCentral:
                 expired_ids: list[str] = []
                 for quote in tuple(market.quotes):
                     if quote.status == "held" and quote.expires_at <= instant:
-                        market = market_rules.close_quote(market, quote.offer_id, "expired", instant)
+                        market = market_rules.close_quote(
+                            market, quote.offer_id, "expired", instant
+                        )
                         expired_ids.append(quote.offer_id)
                 updated_rfqs = []
                 for rfq in market.rfqs:
@@ -630,14 +644,18 @@ class RescueCentral:
         return self.store.transact(operation)
 
     def cancel_request(self, command: CancelRequest) -> Result[RequestSnapshot]:
-        return self._close_request(command.mission_id, command.request_id, command.now, "cancelled", command.reason)
+        return self._close_request(
+            command.mission_id, command.request_id, command.now, "cancelled", command.reason
+        )
 
     def expire_request(self, command: ExpireRequest) -> Result[RequestSnapshot]:
         def operation(state: RunState):
             mission = _mission(state, command.mission_id)
             if mission is None:
                 return state, _result("rejected", reason="unknown_mission")
-            request = next((item for item in mission.requests if item.request_id == command.request_id), None)
+            request = next(
+                (item for item in mission.requests if item.request_id == command.request_id), None
+            )
             if request is None:
                 return state, _result("rejected", reason="unknown_request")
             if request.outcome != "pending":
@@ -651,12 +669,15 @@ class RescueCentral:
                     request.request_id,
                     "expired",
                     0,
-                    TransitionContext(
-                        self.id_source.next_id("event"), instant, "request_expired"
-                    ),
+                    TransitionContext(self.id_source.next_id("event"), instant, "request_expired"),
                 )
                 updated_state = _set_mission(state, updated)
-                return updated_state, _result("applied", next(item for item in updated.requests if item.request_id == request.request_id))
+                return updated_state, _result(
+                    "applied",
+                    next(
+                        item for item in updated.requests if item.request_id == request.request_id
+                    ),
+                )
             except (DomainValidationError, TypeError) as error:
                 return state, _result("rejected", reason=_reason(error))
 
@@ -667,7 +688,9 @@ class RescueCentral:
             mission = _mission(state, mission_id)
             if mission is None:
                 return state, _result("rejected", reason="unknown_mission")
-            request = next((item for item in mission.requests if item.request_id == request_id), None)
+            request = next(
+                (item for item in mission.requests if item.request_id == request_id), None
+            )
             if request is None:
                 return state, _result("rejected", reason="unknown_request")
             if request.outcome != "pending":
@@ -685,7 +708,9 @@ class RescueCentral:
                     ),
                 )
                 updated_state = _set_mission(state, updated)
-                result_request = next(item for item in updated.requests if item.request_id == request_id)
+                result_request = next(
+                    item for item in updated.requests if item.request_id == request_id
+                )
                 return updated_state, _result("applied", result_request)
             except (DomainValidationError, TypeError) as error:
                 return state, _result("rejected", reason=_reason(error))
@@ -701,9 +726,7 @@ class RescueCentral:
                 attempt = normalize_positive_quantity(command.attempt_number)
                 sent_at = normalize_instant(command.sent_at)
                 received_at = (
-                    None
-                    if command.received_at is None
-                    else normalize_instant(command.received_at)
+                    None if command.received_at is None else normalize_instant(command.received_at)
                 )
                 communication_rtt = (
                     None
@@ -722,19 +745,26 @@ class RescueCentral:
                     sent_at=sent_at,
                 )
                 known_delivery = next(
-                    (item for item in state.delivery_index if isinstance(item, tuple) and len(item) == 3 and item[0] == delivery_id),
+                    (
+                        item
+                        for item in state.delivery_index
+                        if isinstance(item, tuple) and len(item) == 3 and item[0] == delivery_id
+                    ),
                     None,
                 )
                 existing_message = next(
-                    (item for item in state.message_index if isinstance(item, tuple) and len(item) == 2 and item[0].message_id == message_id),
+                    (
+                        item
+                        for item in state.message_index
+                        if isinstance(item, tuple)
+                        and len(item) == 2
+                        and item[0].message_id == message_id
+                    ),
                     None,
                 )
                 if known_delivery is not None:
                     existing = known_delivery[2]
-                    same_message = (
-                        existing_message is not None
-                        and existing_message[0] == message
-                    )
+                    same_message = existing_message is not None and existing_message[0] == message
                     if (
                         known_delivery[1] == message_id
                         and same_message
@@ -745,7 +775,13 @@ class RescueCentral:
                         return state, _result("ignored")
                     return state, _result("rejected", reason="identity_conflict")
 
-                def publish_delivery(target_state: RunState, disposition: str, delivery_reason: str, *, keep_message: bool = True):
+                def publish_delivery(
+                    target_state: RunState,
+                    disposition: str,
+                    delivery_reason: str,
+                    *,
+                    keep_message: bool = True,
+                ):
                     delivery = MessageDelivery(
                         delivery_id=delivery_id,
                         attempt_number=attempt,
@@ -762,30 +798,41 @@ class RescueCentral:
                             messages = (*messages, (message, (delivery,)))
                         else:
                             messages = tuple(
-                                (item[0], (*item[1], delivery)) if item is existing_message else item
+                                (item[0], (*item[1], delivery))
+                                if item is existing_message
+                                else item
                                 for item in messages
                             )
                     updated = replace(
                         target_state,
                         message_index=messages,
-                        delivery_index=(*target_state.delivery_index, (delivery_id, message_id, delivery)),
+                        delivery_index=(
+                            *target_state.delivery_index,
+                            (delivery_id, message_id, delivery),
+                        ),
                     )
                     return updated
 
                 if existing_message is not None and existing_message[0] != message:
-                    updated = publish_delivery(state, "rejected", "identity_conflict", keep_message=False)
+                    updated = publish_delivery(
+                        state, "rejected", "identity_conflict", keep_message=False
+                    )
                     return updated, _result("rejected", reason="identity_conflict")
 
                 mission = next(
-                    (candidate for candidate in state.missions if any(item.request_id == request_id for item in candidate.requests)),
+                    (
+                        candidate
+                        for candidate in state.missions
+                        if any(item.request_id == request_id for item in candidate.requests)
+                    ),
                     None,
                 )
                 if mission is None:
                     if received_at is None:
-                        return publish_delivery(state, "lost", "transport_loss"), _result(
-                            "applied"
-                        )
-                    return publish_delivery(state, "ignored", "unknown_request"), _result("ignored", reason="unknown_request")
+                        return publish_delivery(state, "lost", "transport_loss"), _result("applied")
+                    return publish_delivery(state, "ignored", "unknown_request"), _result(
+                        "ignored", reason="unknown_request"
+                    )
                 request = next(item for item in mission.requests if item.request_id == request_id)
                 if sent_at < request.submitted_at:
                     return publish_delivery(state, "rejected", "invalid_input"), _result(
@@ -804,8 +851,13 @@ class RescueCentral:
                         return publish_delivery(state, "late", "deadline_expired"), _result(
                             "ignored", request, "late"
                         )
-                    return publish_delivery(state, "ignored", "closed_request"), _result("ignored", request, "closed_request")
-                if request.response_deadline is not None and received_at >= request.response_deadline:
+                    return publish_delivery(state, "ignored", "closed_request"), _result(
+                        "ignored", request, "closed_request"
+                    )
+                if (
+                    request.response_deadline is not None
+                    and received_at >= request.response_deadline
+                ):
                     expired = mission_rules.apply_outcome(
                         mission,
                         request_id,
@@ -819,7 +871,9 @@ class RescueCentral:
                         ),
                     )
                     updated = _set_mission(state, expired)
-                    result_request = next(item for item in expired.requests if item.request_id == request_id)
+                    result_request = next(
+                        item for item in expired.requests if item.request_id == request_id
+                    )
                     updated = publish_delivery(updated, "late", "deadline_expired")
                     return updated, _result("ignored", result_request, "late")
                 try:
@@ -841,7 +895,9 @@ class RescueCentral:
                         "rejected", reason=reason
                     )
                 updated = _set_mission(state, updated_mission)
-                result_request = next(item for item in updated_mission.requests if item.request_id == request_id)
+                result_request = next(
+                    item for item in updated_mission.requests if item.request_id == request_id
+                )
                 updated = publish_delivery(updated, "applied", "response_applied")
                 return updated, _result("applied", result_request)
             except (DomainValidationError, TypeError) as error:
@@ -882,8 +938,7 @@ class RescueCentral:
                     (
                         item
                         for item in state.decision_index
-                        if isinstance(item, MobilisationDecision)
-                        and item.decision_id == normalized
+                        if isinstance(item, MobilisationDecision) and item.decision_id == normalized
                     ),
                     None,
                 )
@@ -902,9 +957,7 @@ class RescueCentral:
                 deliveries = tuple(
                     item[2]
                     for item in state.delivery_index
-                    if isinstance(item, tuple)
-                    and len(item) == 3
-                    and item[1] == normalized
+                    if isinstance(item, tuple) and len(item) == 3 and item[1] == normalized
                 )
                 if not deliveries:
                     return state, _result("rejected", reason="unknown_message")
@@ -943,8 +996,7 @@ class RescueCentral:
                 (
                     item
                     for item in state.scenarios
-                    if item.scenario_id == scenario_id
-                    and item.revision == scenario_revision
+                    if item.scenario_id == scenario_id and item.revision == scenario_revision
                 ),
                 None,
             )
@@ -964,7 +1016,7 @@ class RescueCentral:
                 if policy is None:
                     raise DomainValidationError("unknown policy revision")
                 policies.append(policy)
-        except (DomainValidationError, TypeError):
+        except DomainValidationError, TypeError:
             return _result("rejected", reason="invalid_input")
 
         from rescue.experiments.runner import simulate
@@ -974,7 +1026,7 @@ class RescueCentral:
                 simulate(scenario, policy, self.id_source.next_id("simulation"))
                 for policy in policies
             )
-        except (DomainValidationError, TypeError):
+        except DomainValidationError, TypeError:
             return _result("rejected", reason="invalid_input")
         return _result("applied", snapshots)
 
@@ -1002,9 +1054,7 @@ class RescueCentral:
                     return state, _result("rejected", reason="invalid_input")
 
                 offers = tuple(
-                    offer
-                    for offer in state.market.offers
-                    if offer.mission_id == mission_id
+                    offer for offer in state.market.offers if offer.mission_id == mission_id
                 )
                 candidates: list[Candidate] = []
                 for offer in sorted(offers, key=lambda item: item.ship_id):

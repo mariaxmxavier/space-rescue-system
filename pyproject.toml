@@ -3,3 +3,86 @@ name = "space-rescue-system"
 version = "0.1.0"
 requires-python = "==3.14.10"
 dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff==0.17.5",
+    "pytest==9.2.0",
+    "pytest-cov==7.1.0",
+    "coverage==7.17.3",
+    "import-linter==2.16",
+]
+
+[tool.uv]
+required-version = "==0.13.8"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--import-mode=importlib --strict-markers"
+
+[tool.coverage.run]
+source = ["rescue"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.importlinter]
+root_package = "rescue"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "domain-outward: Domain packages do not import application, adapters or bootstrap"
+type = "forbidden"
+source_modules = [
+    "rescue.mission",
+    "rescue.market",
+    "rescue.mobilisation",
+    "rescue.communication",
+    "rescue.experiments.models",
+    "rescue.experiments.results",
+]
+forbidden_modules = [
+    "rescue.application",
+    "rescue.adapters",
+    "rescue.bootstrap",
+]
+
+[[tool.importlinter.contracts]]
+name = "domain-io: Domain packages do not import I/O, environment, clock or network modules"
+type = "forbidden"
+source_modules = [
+    "rescue.mission",
+    "rescue.market",
+    "rescue.mobilisation",
+    "rescue.communication",
+    "rescue.experiments.models",
+    "rescue.experiments.results",
+]
+forbidden_modules = [
+    "os",
+    "time",
+    "socket",
+    "urllib",
+    "http",
+    "subprocess",
+    "sqlite3",
+    "requests",
+    "httpx",
+    "sqlalchemy",
+]
+
+[[tool.importlinter.contracts]]
+name = "application-no-memory: Application does not import the memory adapter"
+type = "forbidden"
+source_modules = ["rescue.application"]
+forbidden_modules = ["rescue.adapters.memory"]
+allow_indirect_imports = true

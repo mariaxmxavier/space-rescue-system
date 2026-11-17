@@ -5,10 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
-from rescue.communication.models import CommunicationMessage, MessageDelivery
 from rescue.market.models import B3Market, ShipAvailability
 from rescue.mission.models import Mission
-from rescue.mobilisation.models import MobilisationDecision
 from rescue.values import (
     DomainValidationError,
     Instant,
@@ -174,7 +172,9 @@ class RescueScenario:
         if any(not isinstance(change, ShipAvailability) for change in changes):
             raise DomainValidationError("availability_changes must be ShipAvailability values")
         if any(not isinstance(profile, CommunicationProfile) for profile in profiles):
-            raise DomainValidationError("communication_profiles must contain CommunicationProfile values")
+            raise DomainValidationError(
+                "communication_profiles must contain CommunicationProfile values"
+            )
         ship_ids = {ship.ship_id for ship in self.baseline.market.ships}
         if any(rule.ship_id not in ship_ids for rule in responses):
             raise DomainValidationError("response rule references an unknown baseline ship")
@@ -187,11 +187,11 @@ class RescueScenario:
             raise DomainValidationError("a ship request ordinal can have only one response rule")
         profile_ids = tuple(profile.profile_id for profile in profiles)
         profile_ships = tuple(profile.ship_id for profile in profiles)
-        if len(profile_ids) != len(set(profile_ids)) or len(profile_ships) != len(set(profile_ships)):
+        if len(profile_ids) != len(set(profile_ids)) or len(profile_ships) != len(
+            set(profile_ships)
+        ):
             raise DomainValidationError("communication profiles must have unique IDs and ships")
-        availability_keys = tuple(
-            (change.ship_id, change.recorded_at) for change in changes
-        )
+        availability_keys = tuple((change.ship_id, change.recorded_at) for change in changes)
         if len(availability_keys) != len(set(availability_keys)):
             raise DomainValidationError("a ship cannot have duplicate scenario availability times")
         object.__setattr__(self, "response_rules", responses)
@@ -220,7 +220,9 @@ class SimulationResult:
                 object.__setattr__(self, name, normalize_instant(value))
         if self.completed:
             if self.unmet_demand != 0 or self.confirmation_elapsed_seconds is None:
-                raise DomainValidationError("completed results require zero unmet demand and a completion time")
+                raise DomainValidationError(
+                    "completed results require zero unmet demand and a completion time"
+                )
         elif self.confirmation_elapsed_seconds is not None:
             raise DomainValidationError("incomplete results cannot have a completion time")
 
@@ -240,8 +242,12 @@ class SimulationRun:
     def __post_init__(self) -> None:
         for name in ("run_id", "scenario_id", "policy_id"):
             object.__setattr__(self, name, normalize_id(getattr(self, name)))
-        object.__setattr__(self, "scenario_revision", normalize_positive_quantity(self.scenario_revision))
-        object.__setattr__(self, "policy_revision", normalize_positive_quantity(self.policy_revision))
+        object.__setattr__(
+            self, "scenario_revision", normalize_positive_quantity(self.scenario_revision)
+        )
+        object.__setattr__(
+            self, "policy_revision", normalize_positive_quantity(self.policy_revision)
+        )
         started_at = normalize_instant(self.started_at)
         finished_at = None if self.finished_at is None else normalize_instant(self.finished_at)
         if finished_at is not None and finished_at < started_at:

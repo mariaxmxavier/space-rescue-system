@@ -12,4 +12,8 @@
 ## Specifications and Models
 
 - [Rescue domain specification](../specs/001-rescue-domain-model/spec.md): core rules and all six extensions.
-- [Domain model diagrams](diagrams/rescue-domain-model/README.md): Mermaid sources and rendered views.
+- [Domain model diagrams](architecture/diagrams/rescue-domain-model/README.md): Mermaid sources and rendered views.
+
+## Planning
+
+- [Roadmap](planning/roadmap.md): per-package conformance order, specs 002 to 013.

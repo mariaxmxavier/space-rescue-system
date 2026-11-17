@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from rescue.values import Id, Instant
 
 if TYPE_CHECKING:
-    from rescue.experiments.models import RunSnapshot
     from rescue.market.models import RFQOffer, ShipAvailability, ShipOfferRevision
 
 T = TypeVar("T")
@@ -48,9 +47,7 @@ class Result(Generic[T]):
     def __post_init__(self) -> None:
         if self.status not in {status.value for status in ResultStatus}:
             raise ValueError(f"unknown result status: {self.status!r}")
-        if self.reason is not None and self.reason not in {
-            reason.value for reason in ErrorReason
-        }:
+        if self.reason is not None and self.reason not in {reason.value for reason in ErrorReason}:
             raise ValueError(f"unknown result reason: {self.reason!r}")
 
 

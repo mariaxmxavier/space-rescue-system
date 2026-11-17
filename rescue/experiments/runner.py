@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass, fields, is_dataclass, replace
 from decimal import Decimal
-import random
 
 from rescue.application.contracts import (
     CreateRequest,
@@ -18,12 +18,11 @@ from rescue.experiments.models import (
     RescueScenario,
     RunBaseline,
     RunSnapshot,
-    SimulationRun,
     ScriptedResponse,
+    SimulationRun,
 )
 from rescue.experiments.results import summarize
 from rescue.experiments.timeline import Timeline, TimelineEvent
-from rescue.market.models import ShipAvailability
 from rescue.mission.models import Mission
 from rescue.mission.rules import progress
 from rescue.mobilisation.models import MobilisationPolicy
@@ -134,9 +133,7 @@ def simulate(
                     market_id=f"{normalized_run_id}-market",
                 ),
                 missions=baseline.missions,
-                command_index=_copy_command_index(
-                    baseline.command_index, normalized_run_id
-                ),
+                command_index=_copy_command_index(baseline.command_index, normalized_run_id),
                 message_index=baseline.message_index,
                 delivery_index=baseline.delivery_index,
                 decision_index=baseline.decision_index,
@@ -176,8 +173,7 @@ def simulate(
         )
 
     response_rules = {
-        (rule.ship_id, rule.request_ordinal): rule
-        for rule in scenario.response_rules
+        (rule.ship_id, rule.request_ordinal): rule for rule in scenario.response_rules
     }
     profiles = {profile.ship_id: profile for profile in scenario.communication_profiles}
     ship_request_ordinals: dict[str, int] = {}
@@ -197,9 +193,7 @@ def simulate(
                         payload=(mission.mission_id, request.request_id),
                     )
                 )
-            rule = response_rules.get(
-                (request.ship_id, ship_request_ordinals[request.ship_id])
-            )
+            rule = response_rules.get((request.ship_id, ship_request_ordinals[request.ship_id]))
             if rule is not None:
                 ordinal = ship_request_ordinals[request.ship_id]
                 _schedule_response(
@@ -231,16 +225,10 @@ def simulate(
                     payload=(mission_id, request.request_id),
                 )
             )
-        ship_request_ordinals[request.ship_id] = (
-            ship_request_ordinals.get(request.ship_id, 0) + 1
-        )
-        rule = response_rules.get(
-            (request.ship_id, ship_request_ordinals[request.ship_id])
-        )
+        ship_request_ordinals[request.ship_id] = ship_request_ordinals.get(request.ship_id, 0) + 1
+        rule = response_rules.get((request.ship_id, ship_request_ordinals[request.ship_id]))
         if rule is not None:
-            mission = next(
-                item for item in current_missions() if item.mission_id == mission_id
-            )
+            mission = next(item for item in current_missions() if item.mission_id == mission_id)
             _schedule_response(
                 timeline,
                 rule,
@@ -254,9 +242,7 @@ def simulate(
             )
 
     def mobilise_mission(mission_id: str, now: Decimal) -> None:
-        mission = next(
-            item for item in current_missions() if item.mission_id == mission_id
-        )
+        mission = next(item for item in current_missions() if item.mission_id == mission_id)
         if progress(mission).additional_needed == 0:
             return
         selection = context.central.mobilise(
@@ -268,9 +254,7 @@ def simulate(
             )
         )
         if selection.status != "applied":
-            raise DomainValidationError(
-                f"scenario mobilisation failed: {selection.reason}"
-            )
+            raise DomainValidationError(f"scenario mobilisation failed: {selection.reason}")
         for evaluation in selection.value.selected:
             created = context.central.create_request(
                 CreateRequest(
@@ -399,15 +383,9 @@ def _schedule_response(
     sent_at = request.submitted_at + outbound + decision
     expected_receipt = sent_at + returning
     lost = profile is not None and request_ordinal in profile.loss_rule
-    duplicated = (
-        profile is not None
-        and request_ordinal in profile.duplication_rule
-        and not lost
-    )
+    duplicated = profile is not None and request_ordinal in profile.duplication_rule and not lost
     delivery_priority = (
-        2
-        if profile is not None and request_ordinal in profile.reordering_rule
-        else 1
+        2 if profile is not None and request_ordinal in profile.reordering_rule else 1
     )
 
     def payload(attempt_number: int) -> _ResponsePayload:
@@ -420,9 +398,7 @@ def _schedule_response(
             attempt_number=attempt_number,
             sent_at=sent_at,
             received_at=None if lost else expected_receipt,
-            communication_rtt_seconds=(
-                None if lost else outbound + returning
-            ),
+            communication_rtt_seconds=(None if lost else outbound + returning),
         )
 
     timeline.schedule(

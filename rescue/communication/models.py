@@ -14,7 +14,6 @@ from rescue.values import (
     normalize_positive_quantity,
 )
 
-
 PayloadValue = str | int | bool | Decimal | None
 Payload = tuple[tuple[PayloadValue, PayloadValue], ...]
 
@@ -54,7 +53,8 @@ def _is_primitive(value: object) -> bool:
     return (
         value is None
         or type(value) in (str, int, bool)
-        or isinstance(value, Decimal) and value.is_finite()
+        or isinstance(value, Decimal)
+        and value.is_finite()
     )
 
 

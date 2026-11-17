@@ -63,7 +63,7 @@ Completed [research.md](research.md): runtime, architecture, consistency, identi
 
 ## Phase 1: Design
 
-Completed [data-model.md](data-model.md), [callable contracts](contracts/callable-api.md) and [quickstart.md](quickstart.md). Existing [ER/UML views](../../docs/diagrams/rescue-domain-model/README.md) remain unchanged conceptual references. Their namespaces do not mandate deployment or package boundaries.
+Completed [data-model.md](data-model.md), [callable contracts](contracts/callable-api.md) and [quickstart.md](quickstart.md). Existing [ER/UML views](../../docs/architecture/diagrams/rescue-domain-model/README.md) remain unchanged conceptual references. Their namespaces do not mandate deployment or package boundaries.
 
 ## Project Structure
 

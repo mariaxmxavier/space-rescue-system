@@ -181,7 +181,5 @@ class ShipUsage:
     shortfall: int
 
     def __post_init__(self) -> None:
-        for field_name in (
-            "total", "held", "pending", "confirmed", "used", "free", "shortfall"
-        ):
+        for field_name in ("total", "held", "pending", "confirmed", "used", "free", "shortfall"):
             normalize_nonnegative_quantity(getattr(self, field_name))
