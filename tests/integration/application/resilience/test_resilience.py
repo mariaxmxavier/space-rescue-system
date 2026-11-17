@@ -16,7 +16,7 @@ from rescue.experiments.models import (
     RunBaseline,
     ScriptedResponse,
 )
-from rescue.experiments.runner import simulate
+from rescue.experiments.simulation import simulate
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.offers import ShipOfferRevision
 from rescue.mobilisation.models import MobilisationPolicy
@@ -118,7 +118,7 @@ class ResilienceSimulationTests(unittest.TestCase):
             ),
         )
 
-        snapshot = simulate(scenario, _policy(), run_id="RUN-REMOBILISE")
+        snapshot = simulate(scenario, _policy(), run_id="RUN-REMOBILISE", start_run=new_run)
 
         self.assertEqual(snapshot.run.status, "completed")
         self.assertEqual(snapshot.run.result.confirmed_seats, 2)
@@ -149,7 +149,7 @@ class ResilienceSimulationTests(unittest.TestCase):
             availability_changes=(availability,),
         )
 
-        snapshot = simulate(scenario, _policy(), run_id="RUN-LOSS-CAPACITY")
+        snapshot = simulate(scenario, _policy(), run_id="RUN-LOSS-CAPACITY", start_run=new_run)
 
         self.assertEqual(snapshot.run.status, "horizon_reached")
         self.assertFalse(snapshot.run.result.completed)
@@ -176,7 +176,8 @@ class ResilienceSimulationTests(unittest.TestCase):
         )
 
         snapshots = tuple(
-            simulate(scenario, _policy(), run_id=f"RUN-REPEAT-{index}") for index in range(3)
+            simulate(scenario, _policy(), run_id=f"RUN-REPEAT-{index}", start_run=new_run)
+            for index in range(3)
         )
         normalized = tuple(
             (

@@ -74,6 +74,7 @@ def new_run(
         store=store,
         clock=selected_clock,
         id_source=selected_ids,
+        start_run=new_run,
     )
     return RunContext(
         application_run_id=run_id,

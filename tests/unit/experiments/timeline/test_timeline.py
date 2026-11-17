@@ -3,7 +3,9 @@
 import unittest
 from decimal import Decimal
 
-from rescue.experiments.timeline import Timeline, TimelineEvent
+from rescue.experiments.timeline import TimelineEvent
+from rescue.experiments.timeline.timeline import Timeline
+from rescue.values import DomainValidationError
 
 
 class TimelineTests(unittest.TestCase):
@@ -58,18 +60,28 @@ class TimelineTests(unittest.TestCase):
         timeline = Timeline(horizon=10, event_budget=1)
         timeline.schedule(TimelineEvent(1, "response", 1, payload="first"))
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DomainValidationError):
             timeline.schedule(TimelineEvent(2, "response", 2, payload="over-budget"))
 
         self.assertEqual(timeline.pop_next().payload, "first")
         self.assertIsNone(timeline.pop_next())
 
-    def test_expiration_priority_is_defaulted_to_zero_and_other_events_to_one(self):
-        expiration = TimelineEvent(1, "expire", 1)
-        response = TimelineEvent(1, "response", 1)
+    def test_non_positive_horizon_is_rejected(self):
+        with self.assertRaises(DomainValidationError):
+            Timeline(horizon=0, event_budget=1)
 
-        self.assertEqual(expiration.priority, 0)
-        self.assertEqual(response.priority, 1)
+    def test_non_event_values_are_rejected(self):
+        timeline = Timeline(horizon=10, event_budget=1)
+
+        with self.assertRaises(DomainValidationError):
+            timeline.schedule("not an event")
+
+    def test_scheduled_count_counts_scheduled_events(self):
+        timeline = Timeline(horizon=10, event_budget=3)
+        timeline.schedule(TimelineEvent(1, "response", 1))
+        timeline.schedule(TimelineEvent(2, "response", 2))
+
+        self.assertEqual(timeline.scheduled_count, 2)
 
 
 if __name__ == "__main__":

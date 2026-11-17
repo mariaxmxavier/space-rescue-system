@@ -37,9 +37,27 @@ classDiagram
         -data availability_changes
         -number time_horizon_seconds
         -integer seed
+        -integer event_budget
+        -data communication_profiles
+    }
+    class RunBaseline {
+        -data missions
+        -data market
+        -data command_index
+        -data message_index
+        -data delivery_index
+        -data decision_index
+        -data session_index
+    }
+    class ScriptedResponse {
+        -string ship_id
+        -integer request_ordinal
+        -string outcome
+        -integer confirmed_seats
     }
     class CommunicationProfile {
         -string profile_id
+        -string ship_id
         -number outbound_delay_seconds
         -number decision_delay_seconds
         -number return_delay_seconds
@@ -49,9 +67,14 @@ classDiagram
     }
     class SimulationRun {
         -string run_id
+        -string scenario_id
+        -integer scenario_revision
+        -string policy_id
+        -integer policy_revision
         -datetime started_at
         -datetime finished_at
         -string status
+        -data result
     }
     class SimulationResult {
         -boolean completed
@@ -62,7 +85,19 @@ classDiagram
         -number confirmation_elapsed_seconds
         -number latest_arrival_estimate_seconds
     }
+    class RunSnapshot {
+        -data missions
+        -data market
+        -data command_index
+        -data message_index
+        -data delivery_index
+        -data decision_index
+        -data session_index
+    }
+    RescueScenario "1" *-- "1" RunBaseline : starts from
+    RescueScenario "1" *-- "0..*" ScriptedResponse : scripts
     RescueScenario "1" *-- "0..*" CommunicationProfile : configures
     SimulationRun "0..*" --> "1" RescueScenario : uses revision
     SimulationRun "1" *-- "0..1" SimulationResult : produces at finish
+    RunSnapshot "1" *-- "1" SimulationRun : wraps
     note for RescueScenario "External interactions: Communication profiles target baseline ShipMarket ships; each run uses MissionOperations, ShipMarket and Mobilisation copies."

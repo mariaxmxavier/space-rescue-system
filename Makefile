@@ -26,7 +26,9 @@ test:
 	@echo == rescue/communication
 	uv run coverage report --include="rescue/communication/*" --fail-under=100
 	@echo == rescue/experiments
-	uv run coverage report --include="rescue/experiments/*"
+	uv run coverage report --include="rescue/experiments/models/*,rescue/experiments/timeline/*,rescue/experiments/results/*" --fail-under=100
+	@echo == rescue/experiments/simulation
+	uv run coverage report --include="rescue/experiments/simulation/*" --fail-under=95
 	@echo == rescue/application
 	uv run coverage report --include="rescue/application/*"
 	@echo == rescue/adapters

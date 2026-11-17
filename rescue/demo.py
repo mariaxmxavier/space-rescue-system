@@ -13,7 +13,7 @@ from rescue.experiments.models import (
     RunSnapshot,
     ScriptedResponse,
 )
-from rescue.experiments.runner import simulate
+from rescue.experiments.simulation import simulate
 from rescue.market.models.availability import ShipAvailability
 from rescue.market.models.b3_market import B3Market
 from rescue.market.models.fleet import Ship
@@ -179,7 +179,7 @@ def run_demo() -> DemoReport:
     policies = _policies()
     scenarios = _scenarios(baseline)
     partial_refusal = scenarios[1]
-    primary_run = simulate(partial_refusal, policies[0], run_id="DEMO-PRIMARY")
+    primary_run = simulate(partial_refusal, policies[0], run_id="DEMO-PRIMARY", start_run=new_run)
 
     comparison_context = new_run(
         "DEMO-COMPARISON",

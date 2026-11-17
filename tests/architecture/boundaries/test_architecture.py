@@ -343,13 +343,14 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 no_logo=True,
             )
         self.assertEqual(exit_code, 0, output.getvalue())
-        self.assertIn("Contracts: 13 kept, 0 broken.", output.getvalue())
+        self.assertIn("Contracts: 15 kept, 0 broken.", output.getvalue())
 
     def test_declared_import_contracts_match_the_reviewed_table(self):
         with (REPOSITORY_ROOT / "pyproject.toml").open("rb") as file:
             contracts = tomllib.load(file)["tool"]["importlinter"]["contracts"]
         domain_sources = {f"rescue.{package}" for package in DOMAIN_PACKAGES} | {
             "rescue.experiments.models",
+            "rescue.experiments.timeline",
             "rescue.experiments.results",
         }
         io_modules = {
@@ -447,6 +448,20 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 }
                 | {f"rescue.{package}" for package in DOMAIN_PACKAGES},
                 True,
+            ),
+            "experiments-pure-core": (
+                {
+                    "rescue.experiments.models",
+                    "rescue.experiments.timeline",
+                    "rescue.experiments.results",
+                },
+                {"rescue.experiments.simulation"},
+                False,
+            ),
+            "experiments-no-bootstrap": (
+                {"rescue.experiments"},
+                {"rescue.bootstrap", "rescue.demo", "rescue.application.central"},
+                False,
             ),
         }
         expected_layers = {
