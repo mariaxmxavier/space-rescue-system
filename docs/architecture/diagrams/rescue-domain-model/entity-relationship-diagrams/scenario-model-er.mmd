@@ -89,6 +89,13 @@ erDiagram
         integer people_count
         datetime created_at
     }
+    %% MissionData is registration input: a value object, not stored, so it has no primary key.
+    MissionData {
+        string mission_id
+        string station_name
+        integer people_count
+        datetime created_at
+    }
     %% Shared Mission semantics: people_count is fixed after registration.
     %% Logical group ShipMarket begins: Ship, availability, ship offers, RFQs and quote offers.
     B3Market {
@@ -141,22 +148,35 @@ erDiagram
     SeatRequest {
         string request_id PK
         string command_id
+        string mission_id
+        string ship_id
         integer requested_seats
         integer confirmed_seats
-        string outcome
+        RequestOutcome outcome
         datetime submitted_at
         datetime response_received_at "optional"
         datetime response_deadline "optional"
         datetime closed_at "optional"
+        string quote_id "optional"
+        string revision_id "optional"
+        string decision_id "optional"
+    }
+    %% RequestTiming is an elapsed-time projection: a value object, not stored, so it has no primary key.
+    RequestTiming {
+        datetime submitted_at
+        datetime response_received_at "optional"
+        decimal waiting_seconds
+        decimal response_elapsed_seconds "optional"
     }
     RequestHistoryEntry {
         string event_id PK
         integer mission_sequence
         datetime recorded_at
-        string action
+        HistoryAction action
         integer confirmed_seats_delta
         integer pending_seats_delta
         string reason
+        string message_id "optional"
     }
     MobilisationPolicy {
         string policy_id PK
@@ -182,6 +202,9 @@ erDiagram
     Ship ||..o{ SeatRFQ : "addressed ship"
     SeatRFQ ||..o| RFQOffer : "receives at most one response"
     Mission ||..o{ SeatRequest : "owns"
+    Mission ||..o{ RequestHistoryEntry : "records changes"
+    MissionData ||..|| Mission : "registers"
+    SeatRequest ||..|| RequestTiming : "derives"
     SeatRequest }o..o| ShipOfferRevision : "optionally preserves basis"
     RFQOffer o|..o| SeatRequest : "optional accepted quote starts pending ship confirmation"
     SeatRequest ||..o{ CommunicationMessage : "correlates"

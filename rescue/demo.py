@@ -21,7 +21,7 @@ from rescue.market.models import (
     ShipOffer,
     ShipOfferRevision,
 )
-from rescue.mission.models import MissionData
+from rescue.mission.models import MissionData, RequestOutcome
 from rescue.mission.rules import progress, register
 from rescue.mobilisation.models import MobilisationPolicy
 
@@ -125,18 +125,18 @@ def _scenarios(baseline: RunBaseline) -> tuple[RescueScenario, ...]:
         "SCENARIO-ORDINARY",
         baseline,
         responses=(
-            ScriptedResponse("SHIP-EARLY", 1, "accepted"),
-            ScriptedResponse("SHIP-LARGE", 1, "accepted"),
+            ScriptedResponse("SHIP-EARLY", 1, RequestOutcome.ACCEPTED),
+            ScriptedResponse("SHIP-LARGE", 1, RequestOutcome.ACCEPTED),
         ),
     )
     partial_refusal = _scenario(
         "SCENARIO-PARTIAL-REFUSAL",
         baseline,
         responses=(
-            ScriptedResponse("SHIP-EARLY", 1, "partially_accepted", 4),
-            ScriptedResponse("SHIP-LARGE", 1, "refused"),
-            ScriptedResponse("SHIP-EARLY", 2, "accepted"),
-            ScriptedResponse("SHIP-LARGE", 2, "accepted"),
+            ScriptedResponse("SHIP-EARLY", 1, RequestOutcome.PARTIALLY_ACCEPTED, 4),
+            ScriptedResponse("SHIP-LARGE", 1, RequestOutcome.REFUSED),
+            ScriptedResponse("SHIP-EARLY", 2, RequestOutcome.ACCEPTED),
+            ScriptedResponse("SHIP-LARGE", 2, RequestOutcome.ACCEPTED),
         ),
     )
     delayed_loss = _scenario(
@@ -144,8 +144,8 @@ def _scenarios(baseline: RunBaseline) -> tuple[RescueScenario, ...]:
         baseline,
         horizon=8,
         responses=(
-            ScriptedResponse("SHIP-EARLY", 1, "accepted"),
-            ScriptedResponse("SHIP-LARGE", 1, "accepted"),
+            ScriptedResponse("SHIP-EARLY", 1, RequestOutcome.ACCEPTED),
+            ScriptedResponse("SHIP-LARGE", 1, RequestOutcome.ACCEPTED),
         ),
         availability_changes=(
             ShipAvailability("AVAIL-EARLY-REDUCED", "SHIP-EARLY", 5, 4, True, 2),

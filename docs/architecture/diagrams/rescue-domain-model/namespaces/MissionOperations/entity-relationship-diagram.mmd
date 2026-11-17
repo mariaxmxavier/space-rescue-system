@@ -41,22 +41,28 @@ erDiagram
     SeatRequest {
         string request_id PK
         string command_id
+        string mission_id
+        string ship_id
         integer requested_seats
         integer confirmed_seats
-        string outcome
+        RequestOutcome outcome
         datetime submitted_at
         datetime response_received_at "optional"
         datetime response_deadline "optional"
         datetime closed_at "optional"
+        string quote_id "optional"
+        string revision_id "optional"
+        string decision_id "optional"
     }
     RequestHistoryEntry {
         string event_id PK
         integer mission_sequence
         datetime recorded_at
-        string action
+        HistoryAction action
         integer confirmed_seats_delta
         integer pending_seats_delta
         string reason
+        string message_id "optional"
     }
     MissionProgress {
         integer demand
@@ -64,9 +70,9 @@ erDiagram
         integer pending
         integer unconfirmed
         integer additional_needed
-        string status
+        ProgressStatus status
     }
     RescueCentral ||..o{ Mission : "registry lookup by mission_id"
     Mission ||..o{ SeatRequest : "owns"
-    SeatRequest ||..|{ RequestHistoryEntry : "records changes"
+    Mission ||..o{ RequestHistoryEntry : "records changes"
     Mission ||..|| MissionProgress : "derives"

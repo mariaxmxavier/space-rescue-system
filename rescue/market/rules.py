@@ -14,6 +14,7 @@ from rescue.market.models import (
     ShipOfferRevision,
     ShipUsage,
 )
+from rescue.mission.models import RequestOutcome
 from rescue.values import DomainValidationError, Instant, normalize_id, normalize_instant
 
 if TYPE_CHECKING:
@@ -82,9 +83,9 @@ def usage(market: B3Market, missions: tuple[Mission, ...], ship_id: str) -> Ship
         for request in mission.requests:
             if request.ship_id != normalized_ship_id:
                 continue
-            if request.outcome == "pending":
+            if request.outcome == RequestOutcome.PENDING:
                 pending += request.requested_seats
-            elif request.outcome in {"accepted", "partially_accepted"}:
+            elif request.outcome in {RequestOutcome.ACCEPTED, RequestOutcome.PARTIALLY_ACCEPTED}:
                 confirmed += request.confirmed_seats
 
     used = held + pending + confirmed

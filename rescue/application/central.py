@@ -40,6 +40,7 @@ from rescue.mission.models import (
     MissionData,
     MissionProgress,
     RequestHistoryEntry,
+    RequestOutcome,
     SeatRequest,
 )
 from rescue.mobilisation.models import (
@@ -152,11 +153,18 @@ def _request_capacity_reason(
     if inventory.shortfall or quantity > inventory.free:
         return "insufficient_capacity"
     revision_usage = sum(
-        request.requested_seats if request.outcome == "pending" else request.confirmed_seats
+        request.requested_seats
+        if request.outcome == RequestOutcome.PENDING
+        else request.confirmed_seats
         for current_mission in state.missions
         for request in current_mission.requests
         if request.revision_id == revision_id
-        and request.outcome in {"pending", "accepted", "partially_accepted"}
+        and request.outcome
+        in {
+            RequestOutcome.PENDING,
+            RequestOutcome.ACCEPTED,
+            RequestOutcome.PARTIALLY_ACCEPTED,
+        }
     )
     if quantity > max(0, revision.capacity - revision_usage):
         return "insufficient_capacity"
@@ -325,7 +333,7 @@ def _create_request(
             ship_id=ship_id,
             requested_seats=requested_seats,
             confirmed_seats=0,
-            outcome="pending",
+            outcome=RequestOutcome.PENDING,
             submitted_at=instant,
             response_deadline=deadline,
             quote_id=None if quote is None else quote.offer_id,
@@ -645,7 +653,11 @@ class RescueCentral:
 
     def cancel_request(self, command: CancelRequest) -> Result[RequestSnapshot]:
         return self._close_request(
-            command.mission_id, command.request_id, command.now, "cancelled", command.reason
+            command.mission_id,
+            command.request_id,
+            command.now,
+            RequestOutcome.CANCELLED,
+            command.reason,
         )
 
     def expire_request(self, command: ExpireRequest) -> Result[RequestSnapshot]:
@@ -658,7 +670,7 @@ class RescueCentral:
             )
             if request is None:
                 return state, _result("rejected", reason="unknown_request")
-            if request.outcome != "pending":
+            if request.outcome != RequestOutcome.PENDING:
                 return state, _result("ignored", request, "closed_request")
             try:
                 instant = normalize_instant(command.now)
@@ -667,7 +679,7 @@ class RescueCentral:
                 updated = mission_rules.apply_outcome(
                     mission,
                     request.request_id,
-                    "expired",
+                    RequestOutcome.EXPIRED,
                     0,
                     TransitionContext(self.id_source.next_id("event"), instant, "request_expired"),
                 )
@@ -693,7 +705,7 @@ class RescueCentral:
             )
             if request is None:
                 return state, _result("rejected", reason="unknown_request")
-            if request.outcome != "pending":
+            if request.outcome != RequestOutcome.PENDING:
                 return state, _result("ignored", request, "closed_request")
             try:
                 updated = mission_rules.apply_outcome(
@@ -842,9 +854,9 @@ class RescueCentral:
                     return publish_delivery(state, "lost", "transport_loss"), _result(
                         "applied", request
                     )
-                if request.outcome != "pending":
+                if request.outcome != RequestOutcome.PENDING:
                     if (
-                        request.outcome == "expired"
+                        request.outcome == RequestOutcome.EXPIRED
                         and request.response_deadline is not None
                         and received_at >= request.response_deadline
                     ):
@@ -861,7 +873,7 @@ class RescueCentral:
                     expired = mission_rules.apply_outcome(
                         mission,
                         request_id,
-                        "expired",
+                        RequestOutcome.EXPIRED,
                         0,
                         TransitionContext(
                             self.id_source.next_id("event"),
@@ -1062,12 +1074,17 @@ class RescueCentral:
                     inventory = market_rules.usage(state.market, state.missions, offer.ship_id)
                     revision_used = sum(
                         request.requested_seats
-                        if request.outcome == "pending"
+                        if request.outcome == RequestOutcome.PENDING
                         else request.confirmed_seats
                         for current_mission in state.missions
                         for request in current_mission.requests
                         if request.revision_id == revision.revision_id
-                        and request.outcome in {"pending", "accepted", "partially_accepted"}
+                        and request.outcome
+                        in {
+                            RequestOutcome.PENDING,
+                            RequestOutcome.ACCEPTED,
+                            RequestOutcome.PARTIALLY_ACCEPTED,
+                        }
                     )
                     free_for_revision = max(0, revision.capacity - revision_used)
                     candidates.append(
