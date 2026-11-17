@@ -11,8 +11,8 @@ from collections.abc import Callable
 from dataclasses import replace
 
 from rescue.adapters.ports import TransactionStore
-from rescue.application.state import RunState
 from rescue.market.models.b3_market import B3Market
+from rescue.state import RunState
 
 
 def initial_state() -> RunState:

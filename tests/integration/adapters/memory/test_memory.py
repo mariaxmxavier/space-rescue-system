@@ -15,11 +15,11 @@ from dataclasses import replace
 from threading import Barrier
 
 from rescue.adapters.memory import MemoryTransactionStore
-from rescue.application.state import RunState
 from rescue.market.models.b3_market import B3Market
 from rescue.market.models.fleet import Ship
 from rescue.mission.models import MissionData
 from rescue.mission.rules import register
+from rescue.state import RunState
 
 
 def initial_state():

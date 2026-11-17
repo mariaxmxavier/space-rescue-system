@@ -1,0 +1,53 @@
+---
+title: Application (ER logical groups; RunState is the published run state)
+config:
+  layout: elk
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial
+  themeVariables:
+    primaryColor: '#e5e9f0'
+    primaryTextColor: '#2e3440'
+    primaryBorderColor: '#5e81ac'
+    lineColor: '#4c566a'
+    tertiaryColor: '#eceff4'
+    fontFamily: 'Arial, sans-serif'
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: LINEAR_SEGMENTS
+  class:
+    nodeSpacing: 90
+    rankSpacing: 100
+    padding: 24
+    diagramPadding: 40
+  er:
+    nodeSpacing: 90
+    rankSpacing: 100
+    diagramPadding: 30
+---
+erDiagram
+    direction TB
+    RunState {
+        string application_run_id PK
+        string central_id
+        B3Market market
+        Mission[] missions
+        tuple command_index
+        tuple message_index
+        tuple delivery_index
+        tuple decision_index
+        tuple policies
+        tuple scenarios
+        tuple completed_runs
+        CommunicationSession[] session_index
+    }
+    RunState ||--|| B3Market : "market"
+    RunState ||--o{ Mission : "missions"
+    RunState ||--o{ CommunicationSession : "session_index"
+    RunState ||--o{ Command : "command_index"
+    RunState ||--o{ Message : "message_index"
+    RunState ||--o{ Delivery : "delivery_index"
+    RunState ||--o{ Decision : "decision_index"
+    RunState ||--o{ Policy : "policies"
+    RunState ||--o{ Scenario : "scenarios"
+    RunState ||--o{ CompletedRun : "completed_runs"

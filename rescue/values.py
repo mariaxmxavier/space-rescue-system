@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, is_dataclass
 from decimal import Decimal, InvalidOperation
+from enum import Enum
 from typing import Iterable, TypeVar
 
 Id = str
@@ -60,6 +61,28 @@ def immutable_tuple(values: Iterable[T]) -> tuple[T, ...]:
     if isinstance(values, (str, bytes)):
         raise DomainValidationError("a string is not a collection of snapshot values")
     return tuple(values)
+
+
+def is_deeply_immutable(value: object) -> bool:
+    """Report whether a value is immutable all the way down.
+
+    What: True for None, exact str, int, bool and bytes, Decimal, Enum, tuples of immutables and
+    frozen dataclasses of immutables; False for anything else.
+    When called: while RunState is constructed in rescue/state/run_state.py and while the
+    scenario and run values of rescue/experiments/models.py validate their fields.
+    Why: a run's state must not change after it is built, and a shallow frozen check would let a
+    list or a non-frozen dataclass hide inside it.
+    """
+    if value is None or type(value) in (str, int, bool, bytes) or isinstance(value, Decimal | Enum):
+        return True
+    if isinstance(value, tuple):
+        return all(is_deeply_immutable(item) for item in value)
+    if is_dataclass(value):
+        parameters = getattr(type(value), "__dataclass_params__", None)
+        return bool(parameters and parameters.frozen) and all(
+            is_deeply_immutable(getattr(value, field.name)) for field in fields(value)
+        )
+    return False
 
 
 @dataclass(frozen=True, slots=True)

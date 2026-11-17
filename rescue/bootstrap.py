@@ -7,10 +7,11 @@ from dataclasses import dataclass
 from rescue.adapters.memory import MemoryTransactionStore, SequenceIdSource, ZeroClock
 from rescue.adapters.ports import Clock, IdSource, TransactionStore
 from rescue.application.central import RescueCentral
-from rescue.application.state import RunState
 from rescue.experiments.models import RescueScenario
+from rescue.experiments.simulator import RunnerSimulator
 from rescue.market.models.b3_market import B3Market
 from rescue.mobilisation.models import MobilisationPolicy
+from rescue.state import RunState
 from rescue.values import DomainValidationError, Id, normalize_id
 
 
@@ -74,7 +75,7 @@ def new_run(
         store=store,
         clock=selected_clock,
         id_source=selected_ids,
-        start_run=new_run,
+        simulator=RunnerSimulator(start_run=new_run),
     )
     return RunContext(
         application_run_id=run_id,
