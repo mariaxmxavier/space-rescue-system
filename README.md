@@ -24,6 +24,16 @@ uv run pytest tests/unit/market tests/integration/application/market_history tes
 
 The test suite covers mission accounting, shared capacity, concurrent operations, retries, timing, scenario comparison, communication failures, and architecture boundaries. The demo shows demand 10 reaching completion through confirmed seats after partial acceptance, refusal, and further mobilisation.
 
+## Local HTTP API
+
+Install dependencies with `make install`, then start the API from the repository root:
+
+```bash
+uv run uvicorn rescue.api.app:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Open `http://127.0.0.1:8000/docs` for the generated operation schemas. The service binds to loopback and keeps runs and complete call histories in memory; restarting the process clears them. Configure allowed browser origins when creating the app. Calls without an `Origin` header are supported for local command-line clients. History reads include earlier full responses and are themselves recorded, so frequent reads can grow memory usage substantially. See the [HTTP contract](specs/011-http-api/contracts/http-api.md) and [quickstart](specs/011-http-api/quickstart.md).
+
 ## Design
 
 - `rescue/mission/` owns mission requests, terminal transitions, progress, timing projections, and applied history.

@@ -321,6 +321,17 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                         f"{_relative(path)} imports the memory adapter module {module!r}",
                     )
 
+    def test_transport_api_is_not_imported_by_application_or_domain(self):
+        """Keep HTTP transport at the outer boundary."""
+        for package in (*DOMAIN_PACKAGES, "application", "state"):
+            for path in _python_files(package):
+                for module in _absolute_modules(_parse(path)):
+                    with self.subTest(file=_relative(path), import_name=module):
+                        self.assertFalse(
+                            module == "rescue.api" or module.startswith("rescue.api."),
+                            f"{_relative(path)} imports transport module {module!r}",
+                        )
+
     def test_adapters_import_only_allowed_modules(self):
         """Check that every import in ``rescue/adapters`` is on the allowlist.
 
