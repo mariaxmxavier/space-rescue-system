@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-17T04:06:44.7472674Z",
-  "feature_directory": "specs/005-market-conformance",
+  "updated_at": "2026-11-17T02:50:45Z",
+  "feature_directory": "C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/003-adapters-conformance/specs/003-adapters-conformance",
   "source_of_truth": {
     "constitution": ".specify/memory/constitution.md",
-    "spec": "specs/005-market-conformance/spec.md",
-    "plan": "specs/005-market-conformance/plan.md",
-    "tasks": "specs/005-market-conformance/tasks.md"
+    "spec": "C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/003-adapters-conformance/specs/003-adapters-conformance/spec.md",
+    "plan": "C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/003-adapters-conformance/specs/003-adapters-conformance/plan.md",
+    "tasks": "C:/Users/dudax/worktrees/github.com/mariaxmxavier/space-rescue-system/003-adapters-conformance/specs/003-adapters-conformance/tasks.md"
   },
   "supersedes": [
     "speckit.implement"
@@ -24,11 +24,11 @@
   "artifact_owner": "codex",
   "review_only_agents": [],
   "notes": null,
-  "last_snapshot_id": "20261117T0406447242282Z-executing",
+  "last_snapshot_id": "20261117T025044254Z-executing",
   "instructions": "Use /speckit-superpowers-bridge (Claude Code) or $speckit-superpowers-bridge (Codex). The bridge orchestrates native Superpowers skills against tasks.md; do not run speckit.implement and do not invoke superpowers:writing-plans / :brainstorming for an active Spec Kit feature.",
   "artifacts_sha256": {
-    "spec.md": "c7cf53ca986df35bc3aef46b1a7292a2a140486dd28762575a213d501deb6577",
-    "plan.md": "4c71160b8e2a18e36561fdb1fa5d3a2892147b66cb5b42ed9de81f24234d09d1",
-    "tasks.md": "dbe6a5d0ad750c2a731b902ba01f83864cb9bf8d30dfca22dd402acee12d5dc1"
+    "spec.md": "9b97846fc46991a89b335a3fe9e767c3b85ce578ddac8b46acc63e7bb7aab65f",
+    "plan.md": "0d46f91d7bfa1ee14a3896bbeaef82b492237bf41d3176b42a254b634ad0f990",
+    "tasks.md": "740de4b797f6acba85f2cba77e901953d53f94054fb66279648dd5b381a23c20"
   }
 }

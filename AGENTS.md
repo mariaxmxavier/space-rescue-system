@@ -33,11 +33,12 @@ Run one test type at a time with `make test-unit`, `make test-integration`, `mak
 
 `rescue/` is the package, one folder per capability: `mission`, `market`, `mobilisation`, `communication`, `experiments`, `application` and `adapters`, plus the root modules `values.py`, `bootstrap.py` and `demo.py`.
 
-Import rules live under `[tool.importlinter]` in `pyproject.toml`. Do not break them. The three contracts:
+Import rules live under `[tool.importlinter]` in `pyproject.toml`. Do not break them. The four contracts:
 
 - `domain-outward`: domain packages (`mission`, `market`, `mobilisation`, `communication`, `experiments.models`, `experiments.results`) must not import `application`, `adapters` or `bootstrap`.
 - `domain-io`: the same domain modules must not import `os`, `time`, `socket`, `urllib`, `http`, `subprocess`, `sqlite3`, `requests`, `httpx` or `sqlalchemy`.
-- `application-no-memory`: `application` must not import `rescue.adapters.memory`.
+- `application-no-memory`: only `bootstrap` imports `rescue.adapters.memory`; `application`, `experiments` and `demo` must not.
+- `adapters-inward`: `adapters` imports only `rescue.application.state`, `rescue.values` and the standard library, enforced by import-linter and by an allowlist test over every import. Ports live in `rescue/adapters/ports/`, implementations in `rescue/adapters/memory/`, one class per file.
 
 ## 4. Test location
 
@@ -77,3 +78,4 @@ Spec artifacts live in `specs/<feature>/`.
 - Do not commit, push or open a pull request unless the maintainer asks.
 - Do not edit `.specify/bridge-snapshots/`.
 - Behaviour under `rescue/` must not change unless a task says so.
+- **Rules:** this repository's rules for agents are in `docs/rules/`. At the start of an activity, load them with the rulebook skill; change them only through it, by pull request. Preferences and corrections go to the rulebook, never to the CLI's memory; project state goes to the spine and the repository's docs.
